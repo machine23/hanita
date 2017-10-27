@@ -41,6 +41,7 @@ class Client:
         if self.connection:
             self.connection.close()
             self.connection = None
+        print("Client is closed")
 
 
 
