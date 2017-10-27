@@ -24,6 +24,8 @@
 
 ### Формат сообщения presence
 
+Поля action и time - обязательны.
+
 ```json
 {
     "action" : "presence",
