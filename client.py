@@ -14,7 +14,7 @@ class Client:
         """ Формируем сообщение """
         pass
 
-    def send_msg(self, message):
+    def send(self, message):
         """ Отсылаем сообщение на сервер """
         pass
 
@@ -29,3 +29,26 @@ class Client:
     def close(self):
         """ Закрываем клиент """
         pass
+
+
+def main():
+    """ Точка входа """
+    try:
+        user = Client("John Doe")
+        msg = user.create_msg("presence", time.time())
+        user.send(msg)
+
+        resp = user.get_response()
+
+        print(user.parse_response(resp))
+    
+    except Exception as err:
+        print("Error:", err)
+
+    finally:
+        user.close()
+
+
+#########################
+if __name__ == "__main__":
+    main()
