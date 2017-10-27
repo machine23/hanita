@@ -1,3 +1,4 @@
+import json
 import socket
 import sys
 import time
@@ -43,7 +44,8 @@ class Client:
 
     def parse_response(self, resp):
         """ Разбираем ответ от сервера """
-        pass
+        r = json.loads(resp)
+        return r
 
     def close(self):
         """ Закрываем клиент """
