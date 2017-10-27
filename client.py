@@ -22,7 +22,16 @@ class Client:
     
     def create_msg(self, action, timestamp=None):
         """ Формируем сообщение """
-        pass
+        msg = {
+            "action": action,
+            "time": timestamp,
+            "type": "status",
+            "user": {
+                "account_name": self.user,
+                "status": self.status
+            }
+        }
+        return msg
 
     def send(self, message):
         """ Отсылаем сообщение на сервер """
