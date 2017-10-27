@@ -4,10 +4,8 @@ from client import Client
 
 @pytest.fixture(scope="module")
 def client(request):
-    print("Create Client")
     client = Client("John")
     def teardown():
-        print("Close Client")
         client.close()
     request.addfinalizer(teardown)
     return client
