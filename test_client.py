@@ -34,4 +34,10 @@ def test_get_response(client):
 
 
 def test_parse_response(client):
-    assert True
+    resp = b'{"response":200,"time":1,"alert":"ok"}'
+    expected = {
+        "response": 200,
+        "time": 1,
+        "alert": "ok"
+    }
+    assert client.parse_response(resp) == expected
