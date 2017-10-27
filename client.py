@@ -4,6 +4,9 @@ import sys
 import time
 
 
+BUFFER_SIZE = 1024
+
+
 class ClientError(Exception):
     """ Класс для ошибок клиента """
     pass
@@ -44,7 +47,13 @@ class Client:
 
     def get_response(self):
         """ Получаем ответ от сервера """
-        pass
+        resp = b""
+        while True:
+            data = self.connection.recv(BUFFER_SIZE)
+            if not data:
+                break
+            resp += data
+        return resp
 
     def parse_response(self, resp):
         """ Разбираем ответ от сервера """
