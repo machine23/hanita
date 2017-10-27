@@ -38,3 +38,19 @@
 }
 ```
 
+### Формат ответа сервера
+```json
+{
+    "response": 1xx / 2xx,
+    "time": <unix timestamp>,
+    "alert": "message (optional for 2xx codes)"
+}
+```
+или
+```json
+{
+    "response": 4xx / 5xx,
+    "time": <unix timestamp>,
+    "error": "error message (optional)"
+}
+```
