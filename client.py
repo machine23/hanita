@@ -36,7 +36,11 @@ class Client:
 
     def send(self, message):
         """ Отсылаем сообщение на сервер """
-        pass
+        try:
+            msg = json.dumps(message)
+            self.connection.sendall(msg.encode("utf-8"))
+        except socket.error as err:
+            print("Ошибка отправки сообщения:", err)
 
     def get_response(self):
         """ Получаем ответ от сервера """
