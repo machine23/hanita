@@ -3,12 +3,22 @@ import sys
 import time
 
 
+class ClientError(Exception):
+    """ Класс для ошибок клиента """
+    pass
+
+
 class Client:
     def __init__(self, user, addr="", port=7777, status=""):
         self.user = user
         self.status = status
         self.addr = addr
         self.port = port
+        try:
+            self.connection = socket.create_connection((addr, port))
+        except socket.error as err:
+            print("Ошибка соединения:", err)
+            self.connection = None
     
     def create_msg(self, action, timestamp=None):
         """ Формируем сообщение """
@@ -28,7 +38,10 @@ class Client:
 
     def close(self):
         """ Закрываем клиент """
-        pass
+        if self.connection:
+            self.connection.close()
+            self.connection = None
+
 
 
 def main():
