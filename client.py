@@ -1,5 +1,5 @@
-import argparse
 import socket
+import sys
 import time
 
 
@@ -33,8 +33,15 @@ class Client:
 
 def main():
     """ Точка входа """
+    argv = sys.argv
+    addr = argv[1] if len(argv) > 1 else "127.0.0.1"
     try:
-        user = Client("John Doe")
+        port = int(argv[2])
+    except (ValueError, IndexError):
+        port = 7777
+
+    try:
+        user = Client("John Doe", addr, port)
         msg = user.create_msg("presence", time.time())
         user.send(msg)
 
