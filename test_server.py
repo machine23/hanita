@@ -44,9 +44,8 @@ def test_close(server):
     server.close()
     assert server.sock is None
 
+
 ### Тесты, которые нужно заполнить в будущем ###
-
-
 def test_accept(server):
     pass
 
