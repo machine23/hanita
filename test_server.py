@@ -33,3 +33,27 @@ def test_create_response_wrong_json(server):
     expected = {"response": 400, "error": "неправильный JSON-объект"}
     msg = "this is not json"
     assert server.create_response(msg) == expected
+
+
+def test_client_close(server):
+    server.client_close()
+    assert server.client is None
+
+
+def test_close(server):
+    server.close()
+    assert server.sock is None
+
+### Тесты, которые нужно заполнить в будущем ###
+
+
+def test_accept(server):
+    pass
+
+
+def test_get(server):
+    pass
+
+
+def test_send(server):
+    pass
