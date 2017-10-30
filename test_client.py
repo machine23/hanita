@@ -11,7 +11,10 @@ def client(request):
     request.addfinalizer(teardown)
     return client
 
+def test_connect(client):
+    pass
 
+    
 def test_create_msg(client):
     assert client.create_msg("a", 1) == {
         "action": "a",
