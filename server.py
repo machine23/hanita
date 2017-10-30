@@ -18,11 +18,11 @@ class Server:
             self.sock.bind((self.addr, self.port))
             self.sock.listen()
             print("\nStarting server at http://{}:{}"
-                            .format(self.addr, self.port))
+                  .format(self.addr, self.port))
         except socket.error as err:
             self.close()
             print("Error:", err)
-    
+
     def accept(self):
         """ Разрешаем подключиться клиенту """
         if not self.client:
@@ -43,7 +43,7 @@ class Server:
         except socket.error as err:
             print("Error Server.get():", err)
         return self.parse_msg(msg)
-    
+
     def parse_msg(self, message):
         """ Парсим сообщение от клиента """
         if message:
@@ -51,17 +51,16 @@ class Server:
                 return json.loads(message.decode("utf-8"))
             except json.JSONDecodeError as err:
                 print("Error Server.parse_msg():", err)
-        
-    
+
     def create_response(self, message):
         """ Формируем ответ клиенту """
         try:
             if message["action"] in actions.actions_list:
-                return { "response": 200, "alert": "ok" }
+                return {"response": 200, "alert": "ok"}
             else:
-                return { "response": 400, "error": "неправильный запрос" }
+                return {"response": 400, "error": "неправильный запрос"}
         except (KeyError, TypeError):
-            return { "response": 400, "error": "неправильный JSON-объект" }
+            return {"response": 400, "error": "неправильный JSON-объект"}
 
     def send(self, response):
         """ Отправляем сообщение клиенту """
@@ -74,7 +73,7 @@ class Server:
             print("Send to", self.client_addr, resp)
         except Exception as err:
             print("Error Server.send():", err)
-    
+
     def client_close(self):
         """ Закрываем соединение с клиентом """
         if self.client:
@@ -94,7 +93,7 @@ class Server:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-a", dest="addr", default="127.0.0.1",
-                         help="IP-адрес для прослушивания")
+                        help="IP-адрес для прослушивания")
     parser.add_argument("-p", dest="port", type=int, default=7777,
                         help="TCP-порт (по умолчанию 7777)")
 
@@ -110,9 +109,9 @@ if __name__ == "__main__":
                 print("msg", msg)
                 resp = server.create_response(msg)
                 server.send(resp)
-                
+
             # server.client_close()
     except KeyboardInterrupt:
         print("Server close")
-    
+
     server.close()

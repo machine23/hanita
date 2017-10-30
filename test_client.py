@@ -3,18 +3,16 @@ from client import Client
 
 
 @pytest.fixture(scope="module")
-def client(request):
+def client():
     client = Client("John")
-
-    def teardown():
-        client.close()
-    request.addfinalizer(teardown)
+    yield client
     return client
+
 
 def test_connect(client):
     pass
 
-    
+
 def test_create_msg(client):
     assert client.create_msg("a", 1) == {
         "action": "a",

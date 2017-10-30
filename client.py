@@ -98,13 +98,12 @@ def main():
         user.connect(args.addr, args.port)
         msg = user.create_msg(actions.PRESENCE, time.time())
 
-        for _ in range(3):
-            user.send(msg)
-            resp = user.get_response()
+        user.send(msg)
+        resp = user.get_response()
 
-            if resp:
-                print("Response from server:", end="")
-                pprint(user.parse_response(resp))
+        if resp:
+            print("Response from server:", end="")
+            pprint(user.parse_response(resp))
 
     except Exception as err:
         raise ClientError("Что-то пошло не так") from err
