@@ -88,7 +88,8 @@ class Client:
 def main():
     """ Точка входа """
     parser = argparse.ArgumentParser()
-    parser.add_argument("addr", help="IP сервера")
+    parser.add_argument("addr", default="127.0.0.1", nargs="?",
+                        help="IP сервера (по умолчанию 127.0.0.1)")
     parser.add_argument("port", type=int, default=7777, nargs="?",
                         help="TCP-порт сервера (по умолчанию 7777)")
     args = parser.parse_args()
