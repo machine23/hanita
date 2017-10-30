@@ -37,7 +37,7 @@ def test_create_response_wrong_json(server):
 
 def test_client_close(server):
     server.client_close()
-    assert server.client is None
+    assert server.client is None and server.client_addr is None
 
 
 def test_close(server):
