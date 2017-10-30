@@ -2,7 +2,7 @@ import pytest
 from client import Client
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def client():
     client = Client("John")
     yield client
