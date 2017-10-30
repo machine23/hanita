@@ -13,17 +13,27 @@ class ClientError(Exception):
 
 
 class Client:
-    def __init__(self, user, addr="", port=7777, status=""):
+    def __init__(self, user, status=""):
         self.user = user
         self.status = status
+        self.addr = None
+        self.port = None
+        self.connection = None
+
+    def connect(self, addr="", port=7777):
+        if self.connection:
+            print("Соединение уже установленно")
+            return
+
         self.addr = addr
-        self.port = port
+        self.port = property
         try:
-            self.connection = socket.create_connection((addr, port))
+            self.connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.connection.connect((addr, port))
         except socket.error as err:
-            print("Ошибка соединения:", err)
-            self.connection = None
-    
+            self.close()
+            print("Ошибка установки соединения:", err)
+
     def create_msg(self, action, timestamp=None):
         """ Формируем сообщение """
         msg = {
@@ -65,8 +75,6 @@ class Client:
         if self.connection:
             self.connection.close()
             self.connection = None
-        print("Client is closed")
-
 
 
 def main():
@@ -86,7 +94,7 @@ def main():
         resp = user.get_response()
 
         print(user.parse_response(resp))
-    
+
     except Exception as err:
         print("Error:", err)
 

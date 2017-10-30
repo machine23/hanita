@@ -5,6 +5,7 @@ from client import Client
 @pytest.fixture(scope="module")
 def client(request):
     client = Client("John")
+
     def teardown():
         client.close()
     request.addfinalizer(teardown)
@@ -13,7 +14,7 @@ def client(request):
 
 def test_create_msg(client):
     assert client.create_msg("a", 1) == {
-        "action": "a", 
+        "action": "a",
         "time": 1,
         "type": "status",
         "user": {
