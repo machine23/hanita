@@ -4,8 +4,10 @@ import socket
 import sys
 import time
 
+import actions
 
-BUFFER_SIZE = 1024
+
+RECV_BUFFER = 1024
 
 
 class ClientError(Exception):
@@ -67,7 +69,7 @@ class Client:
             return
         resp = b""
         while True:
-            data = self.connection.recv(BUFFER_SIZE)
+            data = self.connection.recv(RECV_BUFFER)
             if not data:
                 break
             resp += data
@@ -85,6 +87,7 @@ class Client:
             self.connection = None
 
 
+###################################################
 def main():
     """ Точка входа """
     parser = argparse.ArgumentParser()
@@ -96,7 +99,7 @@ def main():
     user = Client("John Doe")
     try:
         user.connect(args.addr, args.port)
-        msg = user.create_msg("presence", time.time())
+        msg = user.create_msg(actions.PRESENCE, time.time())
         user.send(msg)
 
         resp = user.get_response()
