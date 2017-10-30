@@ -1,3 +1,4 @@
+import argparse
 import json
 import socket
 import sys
@@ -49,6 +50,10 @@ class Client:
 
     def send(self, message):
         """ Отсылаем сообщение на сервер """
+        if not self.connection:
+            print("Нет соединения")
+            return
+
         try:
             msg = json.dumps(message)
             self.connection.sendall(msg.encode("utf-8"))
@@ -57,6 +62,9 @@ class Client:
 
     def get_response(self):
         """ Получаем ответ от сервера """
+        if not self.connection:
+            print("Нет соединения")
+            return
         resp = b""
         while True:
             data = self.connection.recv(BUFFER_SIZE)
@@ -79,15 +87,15 @@ class Client:
 
 def main():
     """ Точка входа """
-    argv = sys.argv
-    addr = argv[1] if len(argv) > 1 else "127.0.0.1"
-    try:
-        port = int(argv[2])
-    except (ValueError, IndexError):
-        port = 7777
+    parser = argparse.ArgumentParser()
+    parser.add_argument("addr", help="IP сервера")
+    parser.add_argument("port", type=int, default=7777, nargs="?",
+                        help="TCP-порт сервера (по умолчанию 7777)")
+    args = parser.parse_args()
 
+    user = Client("John Doe")
     try:
-        user = Client("John Doe", addr, port)
+        user.connect(args.addr, args.port)
         msg = user.create_msg("presence", time.time())
         user.send(msg)
 
@@ -96,7 +104,7 @@ def main():
         print(user.parse_response(resp))
 
     except Exception as err:
-        print("Error:", err)
+        raise ClientError("Что-то пошло не так") from err
 
     finally:
         user.close()
