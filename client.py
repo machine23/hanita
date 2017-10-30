@@ -3,6 +3,7 @@ import json
 import socket
 import sys
 import time
+from pprint import pprint
 
 import actions
 
@@ -29,7 +30,7 @@ class Client:
             return
 
         self.addr = addr
-        self.port = property
+        self.port = port
         try:
             self.connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.connection.connect((addr, port))
@@ -59,6 +60,7 @@ class Client:
         try:
             msg = json.dumps(message)
             self.connection.sendall(msg.encode("utf-8"))
+            print("Send to {}:{} {}".format(self.addr, self.port, message))
         except socket.error as err:
             print("Ошибка отправки сообщения:", err)
 
@@ -67,12 +69,7 @@ class Client:
         if not self.connection:
             print("Нет соединения")
             return
-        resp = b""
-        while True:
-            data = self.connection.recv(RECV_BUFFER)
-            if not data:
-                break
-            resp += data
+        resp = self.connection.recv(RECV_BUFFER)
         return resp
 
     def parse_response(self, resp):
@@ -100,12 +97,14 @@ def main():
     try:
         user.connect(args.addr, args.port)
         msg = user.create_msg(actions.PRESENCE, time.time())
-        user.send(msg)
 
-        resp = user.get_response()
+        for _ in range(3):
+            user.send(msg)
+            resp = user.get_response()
 
-        if resp:
-            print(user.parse_response(resp))
+            if resp:
+                print("Response from server:", end="")
+                pprint(user.parse_response(resp))
 
     except Exception as err:
         raise ClientError("Что-то пошло не так") from err
