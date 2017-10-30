@@ -101,7 +101,8 @@ def main():
 
         resp = user.get_response()
 
-        print(user.parse_response(resp))
+        if resp:
+            print(user.parse_response(resp))
 
     except Exception as err:
         raise ClientError("Что-то пошло не так") from err
