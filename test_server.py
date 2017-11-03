@@ -24,13 +24,13 @@ def test_create_response_ok(server):
 
 
 def test_create_response_wrong_msg(server):
-    expected = {"response": 400, "error": "неправильный запрос"}
+    expected = {"response": 400, "error": "неправильный запрос/JSON-объект"}
     msg = {"action": "wrong action"}
     assert server.create_response(msg) == expected
 
 
 def test_create_response_wrong_json(server):
-    expected = {"response": 400, "error": "неправильный JSON-объект"}
+    expected = {"response": 400, "error": "неправильный запрос/JSON-объект"}
     msg = "this is not json"
     assert server.create_response(msg) == expected
 
