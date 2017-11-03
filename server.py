@@ -18,15 +18,15 @@ class Server:
         self.port = port
         self.client = None
         self.client_addr = None
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
-            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.sock.bind((self.addr, self.port))
             self.sock.listen()
             print("\nStarting server at http://{}:{}"
-                  .format(self.addr, self.port))
-        except socket.error as err:
+                    .format(self.addr, self.port))
+        except:
             self.close()
-            print("Error:", err)
+            raise
 
     def accept(self):
         """ Разрешаем подключиться клиенту """
