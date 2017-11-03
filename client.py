@@ -26,8 +26,7 @@ class Client:
 
     def connect(self, addr="", port=7777):
         if self.connection:
-            print("Соединение уже установленно")
-            return
+            raise ClientError("Соединение уже установлено")
 
         self.addr = addr
         self.port = port
@@ -35,8 +34,7 @@ class Client:
             self.connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.connection.connect((addr, port))
         except socket.error as err:
-            self.close()
-            print("Ошибка установки соединения:", err)
+            raise ClientError("Ошибка установки соединения: " + str(err))
 
     def create_msg(self, action, timestamp=None):
         """ Формируем сообщение """
@@ -54,21 +52,17 @@ class Client:
     def send(self, message):
         """ Отсылаем сообщение на сервер """
         if not self.connection:
-            print("Нет соединения")
-            return
+            raise ClienError("Нет соединения")
 
-        try:
-            msg = json.dumps(message)
-            self.connection.sendall(msg.encode("utf-8"))
-            print("Send to {}:{} {}".format(self.addr, self.port, message))
-        except socket.error as err:
-            print("Ошибка отправки сообщения:", err)
+        msg = json.dumps(message)
+        self.connection.sendall(msg.encode("utf-8"))
+        print("Send to {}:{} {}".format(self.addr, self.port, message))
 
     def get_response(self):
         """ Получаем ответ от сервера """
         if not self.connection:
-            print("Нет соединения")
-            return
+            raise ClientError("Нет соединения")
+
         resp = self.connection.recv(RECV_BUFFER)
         return resp
 
