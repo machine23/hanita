@@ -38,6 +38,9 @@ class Client:
 
     def create_msg(self, action, timestamp=None):
         """ Формируем сообщение """
+        if timestamp is None:
+            timestamp = time.time()
+        
         msg = {
             "action": action,
             "time": timestamp,
