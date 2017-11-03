@@ -7,6 +7,11 @@ import actions
 RECV_BUFFER = 1024
 
 
+class ServerError(Exception):
+    """ класс для ошибок сервера """
+    pass
+
+
 class Server:
     def __init__(self, addr, port):
         self.addr = addr
@@ -36,43 +41,28 @@ class Server:
     def get(self):
         """ Получаем сообщение от клиента """
         if not self.client:
-            print("Нет присоединенных клиентов")
-            return
-        try:
-            msg = self.client.recv(RECV_BUFFER)
-        except socket.error as err:
-            print("Error Server.get():", err)
+            raise ServerError("Нет присоединенных клиентов")
+        msg = self.client.recv(RECV_BUFFER)
         return self.parse_msg(msg)
 
     def parse_msg(self, message):
         """ Парсим сообщение от клиента """
-        if message:
-            try:
-                return json.loads(message.decode("utf-8"))
-            except json.JSONDecodeError as err:
-                print("Error Server.parse_msg():", err)
+        return json.loads(message.decode("utf-8"))
 
     def create_response(self, message):
         """ Формируем ответ клиенту """
-        try:
+        if isinstance(message, dict):
             if message["action"] in actions.actions_list:
                 return {"response": 200, "alert": "ok"}
-            else:
-                return {"response": 400, "error": "неправильный запрос"}
-        except (KeyError, TypeError):
-            return {"response": 400, "error": "неправильный JSON-объект"}
+        return {"response": 400, "error": "неправильный запрос/JSON-объект"}
 
     def send(self, response):
         """ Отправляем сообщение клиенту """
         if not self.client:
-            print("Нет присоединенных клиентов")
-            return
-        try:
-            resp = json.dumps(response)
-            self.client.sendall(resp.encode("utf-8"))
-            print("Send to", self.client_addr, resp)
-        except Exception as err:
-            print("Error Server.send():", err)
+            raise ServerError("Нет присоединенных клиентов")
+        resp = json.dumps(response)
+        self.client.sendall(resp.encode("utf-8"))
+        print("Send to", self.client_addr, resp)
 
     def client_close(self):
         """ Закрываем соединение с клиентом """
