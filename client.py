@@ -54,25 +54,21 @@ class Client:
 
     def send(self, message):
         """ Отсылаем сообщение на сервер """
-        if not self.connection:
+        if self.connection is None:
             raise ClienError("Нет соединения")
-
         msg = json.dumps(message)
         self.connection.sendall(msg.encode("utf-8"))
-        print("Send to {}:{} {}".format(self.addr, self.port, message))
 
     def get_response(self):
         """ Получаем ответ от сервера """
-        if not self.connection:
+        if self.connection is None:
             raise ClientError("Нет соединения")
-
         resp = self.connection.recv(RECV_BUFFER)
         return resp
 
     def parse_response(self, resp):
         """ Разбираем ответ от сервера """
-        r = json.loads(resp)
-        return r
+        return json.loads(resp)
 
     def close(self):
         """ Закрываем клиент """
