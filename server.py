@@ -30,17 +30,13 @@ class Server:
 
     def accept(self):
         """ Разрешаем подключиться клиенту """
-        if not self.client:
-            try:
-                self.client, self.client_addr = self.sock.accept()
-                print("Запрос на соединение от", self.client_addr)
-            except socket.error as err:
-                self.client_close()
-                print("Error Server.accept():", err)
+        if self.client is None:
+            self.client, self.client_addr = self.sock.accept()
+            print("Запрос на соединение от", self.client_addr)
 
     def get(self):
         """ Получаем сообщение от клиента """
-        if not self.client:
+        if self.client is None:
             raise ServerError("Нет присоединенных клиентов")
         msg = self.client.recv(RECV_BUFFER)
         return self.parse_msg(msg)
@@ -58,11 +54,14 @@ class Server:
 
     def send(self, response):
         """ Отправляем сообщение клиенту """
-        if not self.client:
+        if self.client is None:
             raise ServerError("Нет присоединенных клиентов")
-        resp = json.dumps(response)
-        self.client.sendall(resp.encode("utf-8"))
-        print("Send to", self.client_addr, resp)
+        if isinstance(response, dict):
+            resp = json.dumps(response)
+            self.client.sendall(resp.encode("utf-8"))
+            print("Send to", self.client_addr, resp)
+        else:
+            raise ServerError("неправильный формат ответа")
 
     def client_close(self):
         """ Закрываем соединение с клиентом """
