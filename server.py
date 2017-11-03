@@ -24,7 +24,7 @@ class Server:
             self.sock.listen()
             print("\nStarting server at http://{}:{}"
                     .format(self.addr, self.port))
-        except:
+        except Exception:
             self.close()
             raise
 
