@@ -69,7 +69,6 @@ class Client:
         resp = self.connection.recv(RECV_BUFFER)
         return self.parse_response(resp)
 
-
     def close(self):
         """ Закрываем клиент """
         if self.connection:
@@ -119,6 +118,24 @@ def read_args():
 
 
 ###############################################################################
+# input_and_send
+###############################################################################
+def input_and_send(user):
+    """ Ввод и отправка сообщения """
+    user_msg = input("Ваше сообщение: ")
+    if not user_msg:
+        print("Good bye")
+        user.close()
+        quit()
+    msg = user.create_message(actions.MSG, "#chat", user_msg)
+    user.send(msg)
+    resp = user.get_response()
+    if resp:
+        print("Response from server: ", end="")
+        print(resp["response"], resp["alert"])
+
+
+###############################################################################
 # main
 ###############################################################################
 def main():
@@ -141,21 +158,10 @@ def main():
     if resp:
         print("Response from server:", end="")
         print(resp["response"], resp["alert"])
-    
+
     if args.w:
         while True:
-            user_msg = input("Ваше сообщение: ")
-            if not user_msg:
-                print("Good bye")
-                user.close()
-                quit()
-            msg = user.create_message(actions.MSG, "#chat", user_msg)
-            user.send(msg)
-            resp = user.get_response()
-            if resp:
-                print("Response from server:", end="")
-                print(resp["response"], resp["alert"])
-
+            input_and_send(user)
 
     user.close()
 
