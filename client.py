@@ -3,10 +3,8 @@ import json
 import socket
 import sys
 import time
-from pprint import pprint
 
 import actions
-
 
 RECV_BUFFER = 1024
 
@@ -36,8 +34,8 @@ class Client:
         try:
             self.connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.connection.connect((addr, port))
-        except socket.error as err:
-            raise ClientError("Ошибка установки соединения: " + str(err))
+        except socket.error:
+            raise ClientError("Ошибка установки соединения")
 
     def create_message(self, action, to_user=None, message=None, timestamp=None):
         """ Формируем сообщение """
@@ -60,16 +58,17 @@ class Client:
         msg = json.dumps(message)
         self.connection.sendall(msg.encode("utf-8"))
 
+    def parse_response(self, resp):
+        """ Разбираем ответ от сервера """
+        return json.loads(resp)
+
     def get_response(self):
         """ Получаем ответ от сервера """
         if self.connection is None:
             raise ClientError("Нет соединения")
         resp = self.connection.recv(RECV_BUFFER)
-        return resp
+        return self.parse_response(resp)
 
-    def parse_response(self, resp):
-        """ Разбираем ответ от сервера """
-        return json.loads(resp)
 
     def close(self):
         """ Закрываем клиент """
@@ -129,20 +128,36 @@ def main():
     user = Client("John Doe")
     try:
         user.connect(args.addr, args.port)
-        msg = user.create_message(actions.PRESENCE, time.time())
-
-        user.send(msg)
-        resp = user.get_response()
-
-        if resp:
-            print("Response from server:", end="")
-            pprint(user.parse_response(resp))
-
-    except Exception as err:
-        raise ClientError("Что-то пошло не так") from err
-
-    finally:
+    except ClientError:
+        print("Не удается подключится к серверу")
         user.close()
+        quit()
+
+    msg = user.create_message(actions.PRESENCE)
+
+    user.send(msg)
+    resp = user.get_response()
+
+    if resp:
+        print("Response from server:", end="")
+        print(resp["response"], resp["alert"])
+    
+    if args.w:
+        while True:
+            user_msg = input("Ваше сообщение: ")
+            if not user_msg:
+                print("Good bye")
+                user.close()
+                quit()
+            msg = user.create_message(actions.MSG, "#chat", user_msg)
+            user.send(msg)
+            resp = user.get_response()
+            if resp:
+                print("Response from server:", end="")
+                print(resp["response"], resp["alert"])
+
+
+    user.close()
 
 
 ###############################################################################
