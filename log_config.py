@@ -4,7 +4,7 @@ import logging
 logger = logging.getLogger("server.main")
 
 formatter = logging.Formatter(
-    "%(asctime)s %(levelname)s\t%(module)s %(funcName)s %(message)s")
+    "%(asctime)s %(levelname)s\t%(module)s %(message)s")
 
 file_handler = logging.FileHandler("server.main.log")
 file_handler.setLevel(logging.DEBUG)
