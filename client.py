@@ -16,6 +16,9 @@ class ClientError(Exception):
     pass
 
 
+###############################################################################
+# class Client
+###############################################################################
 class Client:
     def __init__(self, user, status=""):
         self.user = user
@@ -36,20 +39,18 @@ class Client:
         except socket.error as err:
             raise ClientError("Ошибка установки соединения: " + str(err))
 
-    def create_msg(self, action, timestamp=None):
+    def create_message(self, action, to_user=None, message=None, timestamp=None):
         """ Формируем сообщение """
+        if action not in actions.actions_list:
+            raise ClientError("Не правильный action")
         if timestamp is None:
             timestamp = time.time()
-        
-        msg = {
-            "action": action,
-            "time": timestamp,
-            "type": "status",
-            "user": {
-                "account_name": self.user,
-                "status": self.status
-            }
-        }
+
+        msg = None
+        if action == actions.PRESENCE:
+            msg = actions.create_presence(self.user)
+        elif action == actions.MSG:
+            msg = actions.create_msg(self.user, to_user, message)
         return msg
 
     def send(self, message):
@@ -77,20 +78,58 @@ class Client:
             self.connection = None
 
 
-###################################################
+###############################################################################
+# read_args
+###############################################################################
+def read_args():
+    """ Получаем аргументы командной строки """
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "addr",
+        default="127.0.0.1",
+        nargs="?",
+        help="IP сервера (по умолчанию 127.0.0.1)"
+    )
+    parser.add_argument(
+        "port",
+        type=int,
+        default=7777,
+        nargs="?",
+        help="TCP-порт сервера (по умолчанию 7777)"
+    )
+    parser.add_argument(
+        "-r",
+        action="store_true",
+        help="определяет режим работы на получение сообщений"
+    )
+    parser.add_argument(
+        "-w",
+        action="store_true",
+        help="включает режим отправки сообщений"
+    )
+
+    args = parser.parse_args()
+    if args.r == args.w:
+        print(
+            "Пожалуйста, определите режим работы:",
+            "\n\t-w на отправку сообщений",
+            "\n\t-r на получение сообщений"
+        )
+        quit()
+    return args
+
+
+###############################################################################
+# main
+###############################################################################
 def main():
     """ Точка входа """
-    parser = argparse.ArgumentParser()
-    parser.add_argument("addr", default="127.0.0.1", nargs="?",
-                        help="IP сервера (по умолчанию 127.0.0.1)")
-    parser.add_argument("port", type=int, default=7777, nargs="?",
-                        help="TCP-порт сервера (по умолчанию 7777)")
-    args = parser.parse_args()
+    args = read_args()
 
     user = Client("John Doe")
     try:
         user.connect(args.addr, args.port)
-        msg = user.create_msg(actions.PRESENCE, time.time())
+        msg = user.create_message(actions.PRESENCE, time.time())
 
         user.send(msg)
         resp = user.get_response()
@@ -106,6 +145,6 @@ def main():
         user.close()
 
 
-#########################
+###############################################################################
 if __name__ == "__main__":
     main()
