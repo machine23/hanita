@@ -33,12 +33,13 @@ class Actions:
         """
         if timestamp is None:
             timestamp = time.time()
-        msg = {
-            "action": MSG,
-            "time": timestamp,
-            "to": to_user,
-            "from": self.user,
-            "encoding": encoding,
-            "message": message
-        }
-        return msg
+        if message:
+            msg = {
+                "action": MSG,
+                "time": timestamp,
+                "to": to_user,
+                "from": self.user,
+                "encoding": encoding,
+                "message": message
+            }
+            return msg
