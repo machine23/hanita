@@ -62,12 +62,12 @@ class Client:
         """ Разбираем ответ от сервера """
         return json.loads(resp)
 
-    def get_response(self):
+    def get(self):
         """ Получаем ответ от сервера """
         if self.connection is None:
             raise ClientError("Нет соединения")
         resp = self.connection.recv(RECV_BUFFER)
-        return self.parse_response(resp)
+        return self.parse_response(resp) if resp else None
 
     def close(self):
         """ Закрываем клиент """
@@ -80,7 +80,10 @@ class Client:
 # read_args
 ###############################################################################
 def read_args():
-    """ Получаем аргументы командной строки """
+    """ 
+    Получаем аргументы командной строки.
+
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "addr",
@@ -120,10 +123,30 @@ def read_args():
 
 
 ###############################################################################
+# send_presence
+###############################################################################
+def send_presence(user):
+    """
+    Отправка сообщения Presence на сервер.
+    """
+    msg = user.create_message(actions.PRESENCE)
+
+    user.send(msg)
+    resp = user.get()
+
+    if resp:
+        print("Response from server:", end="")
+        print(resp["response"], resp["alert"])
+
+
+###############################################################################
 # input_and_send
 ###############################################################################
 def input_and_send(user):
-    """ Ввод и отправка сообщения """
+    """ 
+    Ввод и отправка сообщения.
+    Ввод пустой строки завершает приложение
+    """
     user_msg = input("Ваше сообщение: ")
     if not user_msg:
         print("Good bye")
@@ -131,10 +154,24 @@ def input_and_send(user):
         quit()
     msg = user.create_message(actions.MSG, "#chat", user_msg)
     user.send(msg)
-    resp = user.get_response()
+    resp = user.get()
     if resp:
         print("Response from server: ", end="")
         print(resp["response"], resp["alert"])
+
+
+###############################################################################
+# get_and_print
+###############################################################################
+def get_and_print(user):
+    """
+    Получаем сообщение от сервера и вывод его в консоль.
+    """
+    msg = user.get()
+    if msg and msg["action"] == actions.MSG:
+        name = msg["from"]
+        message = msg["message"]
+        print("{}: {}".format(name, message))
 
 
 ###############################################################################
@@ -152,20 +189,18 @@ def main():
         user.close()
         quit()
 
-    msg = user.create_message(actions.PRESENCE)
-
-    user.send(msg)
-    resp = user.get_response()
-
-    if resp:
-        print("Response from server:", end="")
-        print(resp["response"], resp["alert"])
+    send_presence(user)
 
     if args.write:
         while True:
             input_and_send(user)
+    elif args.read:
+        while True:
+            get_and_print(user)
+    
 
     user.close()
+
 
 
 ###############################################################################
