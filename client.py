@@ -97,17 +97,19 @@ def read_args():
     )
     parser.add_argument(
         "-r",
+        dest="read",
         action="store_true",
         help="определяет режим работы на получение сообщений"
     )
     parser.add_argument(
         "-w",
+        dest="write",
         action="store_true",
         help="включает режим отправки сообщений"
     )
 
     args = parser.parse_args()
-    if args.r == args.w:
+    if args.read and args.write:
         print(
             "Пожалуйста, определите режим работы:",
             "\n\t-w на отправку сообщений",
@@ -159,7 +161,7 @@ def main():
         print("Response from server:", end="")
         print(resp["response"], resp["alert"])
 
-    if args.w:
+    if args.write:
         while True:
             input_and_send(user)
 
