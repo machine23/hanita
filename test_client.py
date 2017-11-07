@@ -1,5 +1,10 @@
+import json
+import socket
+
 import pytest
-from client import Client
+
+import actions
+from client import Client, ClientError
 
 
 @pytest.fixture
@@ -9,16 +14,69 @@ def client():
     return client
 
 
-def test_create_msg(client):
-    assert client.create_msg("a", 1) == {
-        "action": "a",
+class MySocket:
+    """ заглушка для socket.socket """
+
+    def __init__(self, sock_type=socket.AF_INET, sock_family=socket.SOCK_STREAM):
+        self.data = b""
+        self.addr = None
+
+    def send(self, data):
+        self.data = data
+        return len(data)
+
+    def sendall(self, data):
+        self.data = data
+
+    def recv(self, buffersize):
+        return b'{"response":200}'
+
+    def connect(self, address):
+        if isinstance(address, tuple) \
+                and len(address) == 2 \
+                and isinstance(address[0], str) \
+                and isinstance(address[1], int):
+            self.addr = address
+        else:
+            raise socket.error
+
+    def close(self):
+        self.data = b""
+        self.addr = None
+
+
+@pytest.fixture
+def my_socket():
+    orig_socket = socket.socket
+    socket.socket = MySocket
+    yield
+    socket.socket = orig_socket
+
+
+def test_create_message(client):
+    with pytest.raises(ClientError):
+        client.create_message("bad action")
+
+    expected = {
+        "action": actions.PRESENCE,
         "time": 1,
         "type": "status",
         "user": {
             "account_name": "John",
-            "status": ""
+            "status": None
         }
     }
+    assert expected == client.create_message(actions.PRESENCE, timestamp=1)
+    expected = {
+        "action": actions.MSG,
+        "time": 1,
+        "to": "Mike",
+        "from": "John",
+        "encoding": "ascii",
+        "message": "hello"
+    }
+    assert expected == client.create_message(
+        actions.MSG, to_user="Mike", message="hello", timestamp=1)
 
 
 def test_parse_response(client):
@@ -36,14 +94,33 @@ def test_close(client):
     assert client.connection is None
 
 
-### Тесты, которые нужно заполнить в будущем ###
-def test_connect(client):
-    pass
+def test_connect(client, my_socket):
+    client.connect("127.0.0.1")
+    assert client.connection.addr == ("127.0.0.1", 7777)
+    with pytest.raises(ClientError):
+        client.connect()
+    client.close()
+    with pytest.raises(ClientError):
+        client.connect(127001, 8080)
 
 
-def test_send(client):
-    assert True
+def test_send(client, my_socket):
+    client.close()
+    with pytest.raises(ClientError):
+        client.send("hello")
+    client.connect()
+    expected = b'{"a": "b"}'
+    client.send({"a": "b"})
+    assert expected == client.connection.data
 
 
-def test_get_response(client):
-    assert True
+def test_get(client, my_socket, monkeypatch):
+    client.close()
+    with pytest.raises(ClientError):
+        client.get()
+    client.connect()
+    expected = {"response": 200}
+    assert expected == client.get()
+    monkeypatch.setattr(client.connection, "recv", lambda x: None)
+    with pytest.raises(ClientError):
+        client.get()
