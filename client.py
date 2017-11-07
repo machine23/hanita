@@ -41,18 +41,21 @@ class Client:
         except socket.error:
             raise ClientError("Ошибка установки соединения")
 
-    def create_message(self, action, to_user=None, message=None, timestamp=None):
+    def create_message(self, action, to_user=None, message=None,
+                       status=None, timestamp=None):
         """ Формируем сообщение """
         if action not in actions.actions_list:
-            raise ClientError("Не правильный action")
+            raise ClientError("Неправильный action")
         if timestamp is None:
             timestamp = time.time()
 
         msg = None
         if action == actions.PRESENCE:
-            msg = actions.create_presence(self.user)
+            msg = actions.create_presence(self.user,
+                                          status=status, timestamp=timestamp)
         elif action == actions.MSG:
-            msg = actions.create_msg(self.user, to_user, message)
+            msg = actions.create_msg(
+                self.user, to_user, message, timestamp=timestamp)
         return msg
 
     def send(self, message):
@@ -73,9 +76,7 @@ class Client:
             raise ClientError("Нет соединения")
         resp = self.connection.recv(RECV_BUFFER)
         if not resp:
-            print("Пропало соединение с сервером")
-            self.close()
-            sys.exit(0)
+            raise ClientError("Пропало соединение с сервером")
         return self.parse_response(resp)
 
     def close(self):
@@ -163,7 +164,12 @@ def input_and_send(user):
         sys.exit(0)
     msg = user.create_message(actions.MSG, "#chat", user_msg)
     user.send(msg)
-    resp = user.get()
+    try:
+        resp = user.get()
+    except ClientError as err:
+        print(err)
+        user.close()
+        sys.exit(0)
     if resp:
         if "alert" in resp:
             print(resp["alert"])
@@ -180,7 +186,12 @@ def get_and_print(user):
     """
     Получаем сообщение от сервера и вывод его в консоль.
     """
-    msg = user.get()
+    try:
+        msg = user.get()
+    except ClientError as err:
+        print(err)
+        user.close()
+        sys.exit(0)
     if msg and msg["action"] == actions.MSG:
         name = msg["from"]
         message = msg["message"]
