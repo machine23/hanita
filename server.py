@@ -1,5 +1,7 @@
+""" server.py """
 import argparse
 import json
+import select
 import socket
 
 import actions
@@ -16,15 +18,18 @@ class ServerError(Exception):
 # Server
 ###############################################################################
 class Server:
+    """ class Server """
+
     def __init__(self, addr, port):
         self.addr = addr
         self.port = port
-        self.client = None
-        self.client_addr = None
+        self.clients = []
+        self.requests = {}
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             self.sock.bind((self.addr, self.port))
-            self.sock.listen()
+            self.sock.listen(5)
+            self.sock.settimeout(0.2)
             print("\nStarting server at http://{}:{}"
                   .format(self.addr, self.port))
         except Exception:
@@ -33,49 +38,95 @@ class Server:
 
     def accept(self):
         """ Разрешаем подключиться клиенту """
-        if self.client is None:
-            self.client, self.client_addr = self.sock.accept()
-            print("Запрос на соединение от", self.client_addr)
+        try:
+            client, client_addr = self.sock.accept()
+        except OSError:
+            pass
+        else:
+            print("Запрос на соединение от", client_addr)
+            self.clients.append(client)
 
-    def get(self):
+    def get(self, client):
         """ Получаем сообщение от клиента """
-        if self.client is None:
-            raise ServerError("Нет присоединенных клиентов")
-        msg = self.client.recv(RECV_BUFFER)
-        return self.parse_msg(msg) if msg else None
+        if client not in self.clients:
+            raise ServerError("get: Неизвестный клиент")
+        try:
+            bmsg = client.recv(RECV_BUFFER)
+        except socket.error:
+            client.close()
+            self.clients.remove(client)
+        else:
+            if bmsg:
+                msg = self.parse_msg(bmsg)
+                self.send(client, self.create_response(msg))
+                return msg
 
-    def parse_msg(self, message):
+    def run_chat(self):
+        """ Запускаем чат """
+        wait = 0
+        r = []
+        w = []
+        try:
+            r, w, _ = select.select(self.clients, self.clients, [], wait)
+        except InterruptedError:
+            pass
+        for client in r:
+            try:
+                msg = self.get(client)
+            except ServerError:
+                pass
+            else:
+                if msg and msg["action"] == actions.MSG:
+                    self.send_from_to_all(client, w, msg)
+
+    @staticmethod
+    def parse_msg(message):
         """ Парсим сообщение от клиента """
         return json.loads(message.decode("utf-8"))
 
+    @staticmethod
+    def check_msg(message):
+        """ Проверяем соответствие сообщения протоколу """
+        if isinstance(message, dict):
+            return message["action"] in actions.actions_list
+        return False
+
     def create_response(self, message):
         """ Формируем ответ клиенту """
-        if isinstance(message, dict):
-            if message["action"] in actions.actions_list:
-                return {"response": 200, "alert": "ok"}
+        if self.check_msg(message):
+            return {"response": 200, "alert": "ok"}
         return {"response": 400, "error": "неправильный запрос/JSON-объект"}
 
-    def send(self, response):
+    def send(self, client, message):
         """ Отправляем сообщение клиенту """
-        if self.client is None:
-            raise ServerError("Нет присоединенных клиентов")
-        if isinstance(response, dict):
-            resp = json.dumps(response)
-            self.client.sendall(resp.encode("utf-8"))
-            print("Send to", self.client_addr, resp)
+        if client not in self.clients:
+            raise ServerError("send: Неизвестный клиент")
+        if isinstance(message, dict):
+            msg = json.dumps(message)
+            try:
+                client.sendall(msg.encode("utf-8"))
+            except socket.error:
+                client.close()
+                self.clients.remove(client)
         else:
             raise ServerError("неправильный формат ответа")
 
-    def client_close(self):
+    def send_from_to_all(self, _from, to_whom, message):
+        """ Отправляем сообщение от клиента всем остальным """
+        if isinstance(to_whom, list):
+            for client in to_whom:
+                if client is not _from:
+                    self.send(client, message)
+
+    def clients_close(self):
         """ Закрываем соединение с клиентом """
-        if self.client:
-            self.client.close()
-            self.client = None
-            self.client_addr = None
+        for client in self.clients:
+            client.close()
+        self.clients.clear()
 
     def close(self):
         """ Закрываем сервер """
-        self.client_close()
+        self.clients_close()
         if self.sock:
             self.sock.close()
             self.sock = None
@@ -85,6 +136,7 @@ class Server:
 # read_args
 ###############################################################################
 def read_args():
+    """ Читаем аргументы командной строки """
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "-a",
@@ -108,6 +160,7 @@ def read_args():
 # main
 ###############################################################################
 def main():
+    """ mainloop """
     args = read_args()
 
     server = Server(args.addr, args.port)
@@ -115,16 +168,10 @@ def main():
     try:
         while True:
             server.accept()
-            msg = server.get()
-            if msg:
-                print("msg", msg)
-                resp = server.create_response(msg)
-                server.send(resp)
-            else:
-                server.client_close()
+            server.run_chat()
 
     except KeyboardInterrupt:
-        print("Server close")
+        print("\nServer close")
 
     server.close()
 
