@@ -1,3 +1,4 @@
+""" Hanita client class and client mainloop """
 import argparse
 import json
 import socket
@@ -18,6 +19,8 @@ class ClientError(Exception):
 # class Client
 ###############################################################################
 class Client:
+    """ класс Client """
+
     def __init__(self, user, status=""):
         self.user = user
         self.status = status
@@ -26,6 +29,7 @@ class Client:
         self.connection = None
 
     def connect(self, addr="", port=7777):
+        """ Устанавливаем соединение с сервером """
         if self.connection:
             raise ClientError("Соединение уже установлено")
 
@@ -54,11 +58,12 @@ class Client:
     def send(self, message):
         """ Отсылаем сообщение на сервер """
         if self.connection is None:
-            raise ClienError("Нет соединения")
+            raise ClientError("Нет соединения")
         msg = json.dumps(message)
         self.connection.sendall(msg.encode("utf-8"))
 
-    def parse_response(self, resp):
+    @staticmethod
+    def parse_response(resp):
         """ Разбираем ответ от сервера """
         return json.loads(resp)
 
@@ -67,7 +72,11 @@ class Client:
         if self.connection is None:
             raise ClientError("Нет соединения")
         resp = self.connection.recv(RECV_BUFFER)
-        return self.parse_response(resp) if resp else None
+        if not resp:
+            print("Пропало соединение с сервером")
+            self.close()
+            sys.exit(0)
+        return self.parse_response(resp)
 
     def close(self):
         """ Закрываем клиент """
@@ -80,7 +89,7 @@ class Client:
 # read_args
 ###############################################################################
 def read_args():
-    """ 
+    """
     Получаем аргументы командной строки.
 
     """
@@ -118,7 +127,7 @@ def read_args():
             "\n\t-w на отправку сообщений",
             "\n\t-r на получение сообщений"
         )
-        quit()
+        sys.exit(0)
     return args
 
 
@@ -143,7 +152,7 @@ def send_presence(user):
 # input_and_send
 ###############################################################################
 def input_and_send(user):
-    """ 
+    """
     Ввод и отправка сообщения.
     Ввод пустой строки завершает приложение
     """
@@ -151,13 +160,17 @@ def input_and_send(user):
     if not user_msg:
         print("Good bye")
         user.close()
-        quit()
+        sys.exit(0)
     msg = user.create_message(actions.MSG, "#chat", user_msg)
     user.send(msg)
     resp = user.get()
     if resp:
-        print("Response from server: ", end="")
-        print(resp["response"], resp["alert"])
+        if "alert" in resp:
+            print(resp["alert"])
+        elif "error" in resp:
+            print(resp["error"])
+        else:
+            print(resp)
 
 
 ###############################################################################
@@ -187,7 +200,7 @@ def main():
     except ClientError:
         print("Не удается подключится к серверу")
         user.close()
-        quit()
+        sys.exit(0)
 
     send_presence(user)
 
@@ -197,7 +210,6 @@ def main():
     elif args.read:
         while True:
             get_and_print(user)
-    
 
     user.close()
 
