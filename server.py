@@ -1,12 +1,32 @@
 """ server.py """
 import argparse
+import functools
 import json
+import logging
 import select
 import socket
 
 import actions
+import log_config
 
 RECV_BUFFER = 1024
+
+logger = logging.getLogger("server.main")
+
+
+def log(func):
+    @functools.wraps(func)
+    def inner(*args, **kwargs):
+        msg = ", ".join(str(item) for item in args) if args else ""
+        if kwargs:
+            s_kwargs = ", ".join(
+                "{}={}".format(k, v) for k, v in kwargs.items()
+            )
+            msg += (", " if msg else "") + s_kwargs
+        name = func.__name__
+        logger.info("%s (%s)", name, msg)
+        return func(*args, **kwargs)
+    return inner
 
 
 class ServerError(Exception):
@@ -45,6 +65,7 @@ class Server:
             print("Запрос на соединение от", client_addr)
             self.clients.append(client)
 
+    @log
     def get(self, client):
         """ Получаем сообщение от клиента """
         if client not in self.clients:
@@ -96,6 +117,7 @@ class Server:
             return {"response": 200, "alert": "ok"}
         return {"response": 400, "error": "неправильный запрос/JSON-объект"}
 
+    @log
     def send(self, client, message):
         """ Отправляем сообщение клиенту """
         if client not in self.clients:
@@ -110,6 +132,7 @@ class Server:
         else:
             raise ServerError("неправильный формат ответа")
 
+    @log
     def send_from_to_all(self, from_, to_whom, message):
         """ Отправляем сообщение от клиента всем остальным """
         if isinstance(to_whom, list):
@@ -123,6 +146,7 @@ class Server:
             client.close()
         self.clients.clear()
 
+    @log
     def close(self):
         """ Закрываем сервер """
         self.clients_close()
