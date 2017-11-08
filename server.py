@@ -24,7 +24,6 @@ class Server:
         self.addr = addr
         self.port = port
         self.clients = []
-        self.requests = {}
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             self.sock.bind((self.addr, self.port))
@@ -111,11 +110,11 @@ class Server:
         else:
             raise ServerError("неправильный формат ответа")
 
-    def send_from_to_all(self, _from, to_whom, message):
+    def send_from_to_all(self, from_, to_whom, message):
         """ Отправляем сообщение от клиента всем остальным """
         if isinstance(to_whom, list):
             for client in to_whom:
-                if client is not _from:
+                if client is not from_:
                     self.send(client, message)
 
     def clients_close(self):
