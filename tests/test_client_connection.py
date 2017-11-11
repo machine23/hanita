@@ -39,12 +39,12 @@ def socket_mock():
     yield
     socket.create_connection = orig_conn
 
+
 @pytest.fixture
 def conn(socket_mock):
     conn = ClientConnection()
     yield conn
     conn.close()
-
 
 
 def test_connect(conn):
