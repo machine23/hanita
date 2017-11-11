@@ -42,8 +42,7 @@ class ClientConnection:
     def get(self):
         """ Получает сообщение от сервера """
         byte_msg = self.connection.recv(BUFFERSIZE)
-        json_msg = byte_msg.decode()
-        return json.loads(byte_msg)
+        return json.loads(byte_msg) if byte_msg else None
 
     def close(self):
         """ Закрывает соединение с сервером """
