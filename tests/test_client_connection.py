@@ -33,31 +33,42 @@ class MySocket:
 
 
 @pytest.fixture
-def connection():
-    conn = ClientConnection()
-    yield conn
-    conn.close()
-
-
-@pytest.fixture
 def socket_mock():
     orig_conn = socket.create_connection
     socket.create_connection = MySocket
     yield
     socket.create_connection = orig_conn
 
-
-def test_connect(connection, socket_mock):
-    pass
-
-
-def test_send(connection, socket_mock):
-    pass
+@pytest.fixture
+def conn(socket_mock):
+    conn = ClientConnection()
+    yield conn
+    conn.close()
 
 
-def test_get(connection, socket_mock):
-    pass
+
+def test_connect(conn):
+    assert conn.connection == None
+    conn.connect()
+    assert isinstance(conn.connection, MySocket)
+    with pytest.raises(ClientConnectionError):
+        conn.connect()
 
 
-def test_close(connection, socket_mock):
-    pass
+def test_send(conn):
+    conn.connect()
+    conn.send({"a": "b"})
+    assert conn.connection.data == b'{"a": "b"}'
+    with pytest.raises(ClientConnectionError):
+        conn.send("bad message")
+
+
+def test_get(conn):
+    conn.connect()
+    assert conn.get() == {"action": "test"}
+
+
+def test_close(conn):
+    conn.connect()
+    conn.close()
+    assert conn.connection is None
