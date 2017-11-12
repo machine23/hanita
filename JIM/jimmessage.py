@@ -22,12 +22,6 @@ class JIMMessage:
 
     actions = (AUTHENTICATE, QUIT, PRESENCE, PROBE, MSG, JOIN, LEAVE)
 
-    def __init__(self, user_name=None, status=None):
-        if user_name is None:
-            user_name = "Guest"
-        self.name = user_name
-        self.status = status
-
     def _base(self, action):
         """
         Создает базовое сообщение с двумя обязательными полями:
@@ -43,11 +37,11 @@ class JIMMessage:
         }
         return msg
 
-    def authenticate(self, password):
+    def authenticate(self, user_name, password):
         """ Посылается при аутентификации клиента """
         msg = self._base(AUTHENTICATE)
         msg["user"] = {
-            "accaunt_name": self.name,
+            "accaunt_name": user_name,
             "password": password
         }
         return msg
@@ -57,14 +51,14 @@ class JIMMessage:
         msg = self._base(QUIT)
         return msg
 
-    def presence(self):
+    def presence(self, user_name, status=None):
         """ Сообщение присутствия """
         msg = self._base(PRESENCE)
         msg["user"] = {
-            "accaunt_name": self.name,
+            "accaunt_name": user_name,
         }
-        if self.status:
-            msg["user"]["status"] = self.status
+        if status:
+            msg["user"]["status"] = status
         return msg
 
     def probe(self):
@@ -72,11 +66,11 @@ class JIMMessage:
         msg = self._base(PROBE)
         return msg
 
-    def msg(self, to_user, message):
+    def msg(self, user_name, to_user, message):
         """ Сообщение пользователю или в чат """
         msg = self._base(MSG)
         msg["to"] = to_user
-        msg["from"] = self.name
+        msg["from"] = user_name
         msg["message"] = message
         return msg
 
