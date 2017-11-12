@@ -23,76 +23,59 @@ class JIMMesage:
         self.name = user_name
         self.status = status
 
-    def authenticate(self, password):
-        """ Посылается при аутентификации клиента """
-        msg = {
-            "action": AUTHENTICATE,
-            "time": time.time(),
-            "user": {
-                "accaunt_name": self.name,
-                "password": password
-            }
-        }
-        return msg
-
     @staticmethod
-    def quit():
-        """ Посылается при отключении от сервера """
+    def _base(action):
         msg = {
-            "action": QUIT,
+            "action": action,
             "time": time.time()
         }
         return msg
 
+    def authenticate(self, password):
+        """ Посылается при аутентификации клиента """
+        msg = self._base(AUTHENTICATE)
+        msg["user"] = {
+            "accaunt_name": self.name,
+            "password": password
+        }
+        return msg
+
+    def quit(self):
+        """ Посылается при отключении от сервера """
+        msg = self._base(QUIT)
+        return msg
+
     def presence(self):
         """ Сообщение присутствия """
-        msg = {
-            "action": PRESENCE,
-            "time": time.time(),
-            "user": {
-                "accaunt_name": self.name,
-            }
+        msg = self._base(PRESENCE)
+        msg["user"] = {
+            "accaunt_name": self.name,
         }
         if self.status:
             msg["user"]["status"] = self.status
         return msg
 
-    @staticmethod
-    def probe():
+    def probe(self):
         """ Сообщение-проверка присутствия """
-        msg = {
-            "action": PROBE,
-            "time": time.time()
-        }
+        msg = self._base(PROBE)
         return msg
 
     def msg(self, to_user, message):
         """ Сообщение пользователю или в чат """
-        msg = {
-            "action": MSG,
-            "time": time.time(),
-            "to": to_user,
-            "from": self.name,
-            "message": message
-        }
+        msg = self._base(MSG)
+        msg["to"] = to_user
+        msg["from"] = self.name
+        msg["message"] = message
         return msg
 
-    @staticmethod
-    def join(chat_id):
+    def join(self, chat_id):
         """ Присоединиться к чату """
-        msg = {
-            "action": JOIN,
-            "time": time.time(),
-            "room": chat_id
-        }
+        msg = self._base(JOIN)
+        msg["room"] = chat_id
         return msg
 
-    @staticmethod
-    def leave(chat_id):
+    def leave(self, chat_id):
         """ Покинуть чат """
-        msg = {
-            "action": LEAVE,
-            "time": time.time(),
-            "room": chat_id
-        }
+        msg = self._base(LEAVE)
+        msg["room"] = chat_id
         return msg
