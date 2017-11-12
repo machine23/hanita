@@ -12,7 +12,12 @@ JOIN = "join"
 LEAVE = "leave"
 
 
-class JIMMesage:
+class JIMMessageError(Exception):
+    """ класс исключений для JIMMessage """
+    pass
+
+
+class JIMMessage:
     """ класс, реализует сообщения по протоколу JIM """
 
     actions = (AUTHENTICATE, QUIT, PRESENCE, PROBE, MSG, JOIN, LEAVE)
@@ -23,8 +28,15 @@ class JIMMesage:
         self.name = user_name
         self.status = status
 
-    @staticmethod
-    def _base(action):
+    def _base(self, action):
+        """
+        Создает базовое сообщение с двумя обязательными полями:
+        action и time. В случае, если значение параметра action
+        отсутствует в списке JIMMessage.actions генерируется
+        исключение JIMMessageError.
+        """
+        if action not in self.actions:
+            raise JIMMessageError("wrong action")
         msg = {
             "action": action,
             "time": time.time()
