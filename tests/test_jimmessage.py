@@ -11,18 +11,6 @@ def message():
 
 
 class TestJIMMessage:
-    def test_base(self, message):
-        expect = {
-            "action": "probe",
-            "time": time.time()
-        }
-        result = message._base("probe")
-        assert expect.keys() == result.keys()
-        assert expect["action"] == result["action"]
-        assert abs(expect["time"] - result["time"]) < 0.1
-        with pytest.raises(JIMMessageError):
-            message._base("not an action")
-
     def test_authenticate(self, message):
         expect = {
             "action": "authenticate",
