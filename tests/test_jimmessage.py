@@ -2,12 +2,12 @@
 import pytest
 import time
 
-from JIM import JIMMessage, JIMMessageError
+from JIM import JIMMessage, JIMClientMessage, JIMMessageError
 
 
 @pytest.fixture
 def message():
-    return JIMMessage()
+    return JIMClientMessage()
 
 
 class TestJIMMessage:

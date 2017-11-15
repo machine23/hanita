@@ -43,7 +43,7 @@ class JIMMessageAttr:
 # ### JIMMessage
 ###############################################################################
 class JIMMessage(dict):
-    """ класс, реализует сообщения по протоколу JIM """
+    """ Базовый класс для реализации сообщений/ответов клиент/сервер """
     AUTHENTICATE = "authenticate"
     QUIT = "quit"
     PRESENCE = "presence"
@@ -54,74 +54,6 @@ class JIMMessage(dict):
 
     actions = (AUTHENTICATE, QUIT, PRESENCE, PROBE, MSG, JOIN, LEAVE)
 
-    action = JIMMessageAttr("action")
-    time = JIMMessageAttr("time")
-    user = JIMMessageAttr("user")
-    to_user = JIMMessageAttr("to")
-    from_user = JIMMessageAttr("from")
-    message = JIMMessageAttr("message")
-    room = JIMMessageAttr("room")
-
-    def __init__(self, action=None, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.action = action
-        self.time = time.time()
-
-    def authenticate(self, user_name, password):
-        """ Посылается при аутентификации клиента """
-        msg = JIMMessage(self.AUTHENTICATE)
-        msg.user = {
-            "accaunt_name": user_name,
-            "password": password
-        }
-        return msg
-
-    def quit(self):
-        """ Посылается при отключении от сервера """
-        msg = JIMMessage(self.QUIT)
-        return msg
-
-    def presence(self, user_name, status=None):
-        """ Сообщение присутствия """
-        msg = JIMMessage(self.PRESENCE)
-        msg.user = {
-            "accaunt_name": user_name,
-        }
-        if status:
-            msg.user["status"] = status
-        return msg
-
-    def probe(self):
-        """ Сообщение-проверка присутствия """
-        msg = JIMMessage(self.PROBE)
-        return msg
-
-    def msg(self, user_name, to_user, message):
-        """ Сообщение пользователю или в чат """
-        msg = JIMMessage(self.MSG)
-        msg.to_user = to_user
-        msg.from_user = user_name
-        msg.message = message
-        return msg
-
-    def join(self, chat_id):
-        """ Присоединиться к чату """
-        msg = JIMMessage(self.JOIN)
-        msg.room = chat_id
-        return msg
-
-    def leave(self, chat_id):
-        """ Покинуть чат """
-        msg = JIMMessage(self.LEAVE)
-        msg.room = chat_id
-        return msg
-
-
-###############################################################################
-# ### JIMResponse
-###############################################################################
-class JIMResponse(dict):
-    """ Класс: ответ от сервера """
     status = {
         100: "базовое уведомление",
         101: "важное уведомление",
@@ -139,9 +71,84 @@ class JIMResponse(dict):
     }
 
     response = JIMMessageAttr("response")
-    time = JIMMessageAttr("time")
     alert = JIMMessageAttr("alert")
     error = JIMMessageAttr("error")
+
+    action = JIMMessageAttr("action")
+    time = JIMMessageAttr("time")
+    user = JIMMessageAttr("user")
+    to_user = JIMMessageAttr("to")
+    from_user = JIMMessageAttr("from")
+    message = JIMMessageAttr("message")
+    room = JIMMessageAttr("room")
+
+
+###############################################################################
+# ### JIMClientMessage
+###############################################################################
+class JIMClientMessage(JIMMessage):
+    """ Класс сообщения от клиента """
+
+    def __init__(self, action=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.action = action
+        self.time = time.time()
+
+    def authenticate(self, user_name, password):
+        """ Посылается при аутентификации клиента """
+        msg = JIMClientMessage(self.AUTHENTICATE)
+        msg.user = {
+            "accaunt_name": user_name,
+            "password": password
+        }
+        return msg
+
+    def quit(self):
+        """ Посылается при отключении от сервера """
+        msg = JIMClientMessage(self.QUIT)
+        return msg
+
+    def presence(self, user_name, status=None):
+        """ Сообщение присутствия """
+        msg = JIMClientMessage(self.PRESENCE)
+        msg.user = {
+            "accaunt_name": user_name,
+        }
+        if status:
+            msg.user["status"] = status
+        return msg
+
+    def probe(self):
+        """ Сообщение-проверка присутствия """
+        msg = JIMClientMessage(self.PROBE)
+        return msg
+
+    def msg(self, user_name, to_user, message):
+        """ Сообщение пользователю или в чат """
+        msg = JIMClientMessage(self.MSG)
+        msg.to_user = to_user
+        msg.from_user = user_name
+        msg.message = message
+        return msg
+
+    def join(self, chat_id):
+        """ Присоединиться к чату """
+        msg = JIMClientMessage(self.JOIN)
+        msg.room = chat_id
+        return msg
+
+    def leave(self, chat_id):
+        """ Покинуть чат """
+        msg = JIMClientMessage(self.LEAVE)
+        msg.room = chat_id
+        return msg
+
+
+###############################################################################
+# ### JIMResponse
+###############################################################################
+class JIMResponse(JIMMessage):
+    """ Класс: ответ от сервера """
 
     def __init__(self, code, message=None, *args, **kwargs):
         super().__init__(*args, **kwargs)

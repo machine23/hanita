@@ -1,1 +1,1 @@
-from .jimmessage import JIMMessage, JIMMessageError
+from .jimmessage import *
