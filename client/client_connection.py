@@ -4,6 +4,8 @@
 import json
 import socket
 
+from JIM import JIMMessage
+
 BUFFERSIZE = 1024
 
 
@@ -35,7 +37,10 @@ class ClientConnection:
         """ Устанавливаем соединение с сервером """
         if self.connection:
             raise ClientConnectionError("Соединение уже установлено")
-        self.connection = socket.create_connection((self.host, self.port))
+        try:
+            self.connection = socket.create_connection((self.host, self.port))
+        except socket.error as err:
+            raise ClientConnectionError(err)
 
     def send(self, message):
         """ Отправляет сообщение на сервер """
@@ -48,7 +53,9 @@ class ClientConnection:
     def get(self):
         """ Получает сообщение от сервера """
         byte_msg = self.connection.recv(BUFFERSIZE)
-        return json.loads(byte_msg) if byte_msg else None
+        if byte_msg:
+            json_msg = json.loads(byte_msg)
+            return JIMMessage(json_msg)
 
     def close(self):
         """ Закрывает соединение с сервером """

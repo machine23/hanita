@@ -33,6 +33,11 @@ class BaseClientView(metaclass=abc.ABCMeta):
         """ Отображение сообщения """
         pass
 
+    @abc.abstractmethod
+    def render_info(self, info):
+        """ Информационное сообщение """
+        pass
+
 
 ###############################################################################
 # ### ConsoleClientView
@@ -65,3 +70,8 @@ class ConsoleClientView(BaseClientView):
         """ Отображение сообщения """
         if message.action == JIMMessage.MSG:
             print("{}: {}".format(message.from_user, message.message))
+
+    @staticmethod
+    def render_info(info):
+        """ отображение информационного сообщения """
+        print("\n\t", info)

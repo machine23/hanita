@@ -94,23 +94,26 @@ class JIMClientMessage(JIMMessage):
         self.action = action
         self.time = time.time()
 
-    def authenticate(self, user_name, password):
+    @staticmethod
+    def authenticate(user_name, password):
         """ Посылается при аутентификации клиента """
-        msg = JIMClientMessage(self.AUTHENTICATE)
+        msg = JIMClientMessage(JIMMessage.AUTHENTICATE)
         msg.user = {
             "accaunt_name": user_name,
             "password": password
         }
         return msg
 
-    def quit(self):
+    @staticmethod
+    def quit():
         """ Посылается при отключении от сервера """
-        msg = JIMClientMessage(self.QUIT)
+        msg = JIMClientMessage(JIMMessage.QUIT)
         return msg
 
-    def presence(self, user_name, status=None):
+    @staticmethod
+    def presence(user_name, status=None):
         """ Сообщение присутствия """
-        msg = JIMClientMessage(self.PRESENCE)
+        msg = JIMClientMessage(JIMMessage.PRESENCE)
         msg.user = {
             "accaunt_name": user_name,
         }
@@ -118,28 +121,32 @@ class JIMClientMessage(JIMMessage):
             msg.user["status"] = status
         return msg
 
-    def probe(self):
+    @staticmethod
+    def probe():
         """ Сообщение-проверка присутствия """
-        msg = JIMClientMessage(self.PROBE)
+        msg = JIMClientMessage(JIMMessage.PROBE)
         return msg
 
-    def msg(self, user_name, to_user, message):
+    @staticmethod
+    def msg(user_name, to_user, message):
         """ Сообщение пользователю или в чат """
-        msg = JIMClientMessage(self.MSG)
+        msg = JIMClientMessage(JIMMessage.MSG)
         msg.to_user = to_user
         msg.from_user = user_name
         msg.message = message
         return msg
 
-    def join(self, chat_id):
+    @staticmethod
+    def join(chat_id):
         """ Присоединиться к чату """
-        msg = JIMClientMessage(self.JOIN)
+        msg = JIMClientMessage(JIMMessage.JOIN)
         msg.room = chat_id
         return msg
 
-    def leave(self, chat_id):
+    @staticmethod
+    def leave(chat_id):
         """ Покинуть чат """
-        msg = JIMClientMessage(self.LEAVE)
+        msg = JIMClientMessage(JIMMessage.LEAVE)
         msg.room = chat_id
         return msg
 

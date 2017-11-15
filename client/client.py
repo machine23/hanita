@@ -1,15 +1,16 @@
 """ Hanita client class and client mainloop """
 import argparse
-import json
-import socket
 import sys
-import time
 
-import actions
+from JIM import JIMClientMessage
 
-RECV_BUFFER = 1024
+from .client_connection import ClientConnection, ClientConnectionError
+from .client_view import BaseClientView, ConsoleClientView
 
 
+###############################################################################
+# ### ClientError
+###############################################################################
 class ClientError(Exception):
     """ Класс для ошибок клиента """
     pass
@@ -21,69 +22,65 @@ class ClientError(Exception):
 class Client:
     """ класс Client """
 
-    def __init__(self, user, status=""):
+    def __init__(self, user: str, conn: ClientConnection, view: BaseClientView):
         self.user = user
-        self.status = status
-        self.addr = None
-        self.port = None
-        self.connection = None
-
-    def connect(self, addr="", port=7777):
-        """ Устанавливаем соединение с сервером """
-        if self.connection:
-            raise ClientError("Соединение уже установлено")
-
-        self.addr = addr
-        self.port = port
+        self.conn = conn
+        self.view = view
         try:
-            self.connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.connection.connect((addr, port))
-        except socket.error:
-            raise ClientError("Ошибка установки соединения")
+            self.conn.connect()
+        except ClientConnectionError as err:
+            self.close(err)
 
-    def create_message(self, action, to_user=None, message=None,
-                       status=None, timestamp=None):
-        """ Формируем сообщение """
-        if action not in actions.actions_list:
-            raise ClientError("Неправильный action")
-        if timestamp is None:
-            timestamp = time.time()
+    def send_presence(self):
+        """ Сообщаем серверу о присутствии """
+        msg = JIMClientMessage.presence(self.user)
+        self.send_to_server(msg)
 
-        msg = None
-        if action == actions.PRESENCE:
-            msg = actions.create_presence(self.user,
-                                          status=status, timestamp=timestamp)
-        elif action == actions.MSG:
-            msg = actions.create_msg(
-                self.user, to_user, message, timestamp=timestamp)
-        return msg
+    def send_msg(self, to_user, message):
+        """
+        Отправляем на сервер сообщение от пользователя.
+        """
+        msg = JIMClientMessage.msg(self.user, to_user, message)
+        self.send_to_server(msg)
 
-    def send(self, message):
-        """ Отсылаем сообщение на сервер """
-        if self.connection is None:
-            raise ClientError("Нет соединения")
-        msg = json.dumps(message)
-        self.connection.sendall(msg.encode("utf-8"))
+    def send_to_server(self, message):
+        """
+        Отправляем на сервер и обрабатываем ответ от сервера.
+        """
+        self.conn.send(message)
+        resp = self.conn.get()
+        if resp is None:
+            self.close("Потеряна связь с сервером")
+        if resp.error:
+            self.view.render_info(resp.error)
 
-    @staticmethod
-    def parse_response(resp):
-        """ Разбираем ответ от сервера """
-        return json.loads(resp)
+    def get_from(self):
+        """ Получаем и обрабатываем сообщение, присланное от другого клиента """
+        msg = self.conn.get()
+        if msg.action == msg.MSG:
+            self.view.render_message(msg)
 
-    def get(self):
-        """ Получаем ответ от сервера """
-        if self.connection is None:
-            raise ClientError("Нет соединения")
-        resp = self.connection.recv(RECV_BUFFER)
-        if not resp:
-            raise ClientError("Пропало соединение с сервером")
-        return self.parse_response(resp)
+    def run(self, mode=None):
+        """ Главный цикл работы клиента """
+        self.send_presence()
+        while True:
+            if mode == "read":
+                self.get_from()
+            elif mode == "write":
+                user_msg = input(">>> ")
+                self.send_msg("#all", user_msg)
+            else:
+                break
+        self.view.render_info("Good bye!")
+        self.close()
 
-    def close(self):
+    def close(self, info=""):
         """ Закрываем клиент """
-        if self.connection:
-            self.connection.close()
-            self.connection = None
+        if self.conn:
+            self.conn.close()
+        if info:
+            self.view.render_info(info)
+        sys.exit()
 
 
 ###############################################################################
@@ -133,96 +130,28 @@ def read_args():
 
 
 ###############################################################################
-# send_presence
-###############################################################################
-def send_presence(user):
-    """
-    Отправка сообщения Presence на сервер.
-    """
-    msg = user.create_message(actions.PRESENCE)
-
-    user.send(msg)
-    resp = user.get()
-
-    if resp:
-        print("Response from server:", end="")
-        print(resp["response"], resp["alert"])
-
-
-###############################################################################
-# input_and_send
-###############################################################################
-def input_and_send(user):
-    """
-    Ввод и отправка сообщения.
-    Ввод пустой строки завершает приложение
-    """
-    user_msg = input("Ваше сообщение: ")
-    if not user_msg:
-        print("Good bye")
-        user.close()
-        sys.exit(0)
-    msg = user.create_message(actions.MSG, "#chat", user_msg)
-    user.send(msg)
-    try:
-        resp = user.get()
-    except ClientError as err:
-        print(err)
-        user.close()
-        sys.exit(0)
-    if resp:
-        if "alert" in resp:
-            print(resp["alert"])
-        elif "error" in resp:
-            print(resp["error"])
-        else:
-            print(resp)
-
-
-###############################################################################
-# get_and_print
-###############################################################################
-def get_and_print(user):
-    """
-    Получаем сообщение от сервера и вывод его в консоль.
-    """
-    try:
-        msg = user.get()
-    except ClientError as err:
-        print(err)
-        user.close()
-        sys.exit(0)
-    if msg and msg["action"] == actions.MSG:
-        name = msg["from"]
-        message = msg["message"]
-        print("{}: {}".format(name, message))
-
-
-###############################################################################
 # main
 ###############################################################################
 def main():
     """ Точка входа """
     args = read_args()
-
-    user = Client("John Doe")
-    try:
-        user.connect(args.addr, args.port)
-    except ClientError:
-        print("Не удается подключится к серверу")
-        user.close()
-        sys.exit(0)
-
-    send_presence(user)
-
     if args.write:
-        while True:
-            input_and_send(user)
+        mode = "write"
     elif args.read:
-        while True:
-            get_and_print(user)
+        mode = "read"
+    else:
+        mode = None
 
-    user.close()
+    connection = ClientConnection(args.addr, args.port)
+    view = ConsoleClientView()
+
+    client = Client("Guest", connection, view)
+    try:
+        client.run(mode)
+    except KeyboardInterrupt:
+        pass
+
+    client.close("Good Bye!")
 
 
 
