@@ -4,11 +4,25 @@
 import time
 
 
+###############################################################################
+# ### JIMMessageError
+###############################################################################
 class JIMMessageError(Exception):
     """ класс исключений для JIMMessage """
     pass
 
 
+###############################################################################
+# ### JIMResponseError
+###############################################################################
+class JIMResponseError(Exception):
+    """ класс исключений для JIMResponse """
+    pass
+
+
+###############################################################################
+# ### JIMMessageAttr
+###############################################################################
 class JIMMessageAttr:
     """
     Класс-дескриптор, позволяющий обращаться к элементам JIMMessage как
@@ -25,6 +39,9 @@ class JIMMessageAttr:
         obj.__setitem__(self.key, value)
 
 
+###############################################################################
+# ### JIMMessage
+###############################################################################
 class JIMMessage(dict):
     """ класс, реализует сообщения по протоколу JIM """
     AUTHENTICATE = "authenticate"
@@ -98,3 +115,41 @@ class JIMMessage(dict):
         msg = JIMMessage(self.LEAVE)
         msg.room = chat_id
         return msg
+
+
+###############################################################################
+# ### JIMResponse
+###############################################################################
+class JIMResponse(dict):
+    """ Класс: ответ от сервера """
+    status = {
+        100: "базовое уведомление",
+        101: "важное уведомление",
+        200: "ОК",
+        201: "объект создан",
+        202: "подтверждение",
+        400: "неправильный запрос/JSON-объект",
+        401: "не авторизован",
+        402: "неправильный логин/пароль",
+        403: "пользователь заблокирован",
+        404: "пользователь/чат отсутствует на сервере",
+        409: "уже имеется подключение с указанным логином",
+        410: "адресат существует, но недоступен",
+        500: "ошибка сервера"
+    }
+
+    response = JIMMessageAttr("response")
+    time = JIMMessageAttr("time")
+    alert = JIMMessageAttr("alert")
+    error = JIMMessageAttr("error")
+
+    def __init__(self, code, message=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if code not in self.status:
+            raise JIMResponseError("Неверный код ответа")
+        self.code = code
+        self.time = time.time()
+        if code < 400:
+            self.alert = message if message else self.status[code]
+        else:
+            self.error = message if message else self.status[code]
