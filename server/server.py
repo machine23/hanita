@@ -6,8 +6,8 @@ import logging
 import select
 import socket
 
-import actions
-import log_config
+from utils import log_config
+from JIM import JIMMessage, JIMResponse
 
 RECV_BUFFER = 1024
 
@@ -96,26 +96,27 @@ class Server:
             except ServerError:
                 pass
             else:
-                if msg and msg["action"] == actions.MSG:
+                if msg and msg.action == msg.MSG:
                     self.send_from_to_all(client, w, msg)
 
     @staticmethod
     def parse_msg(message):
         """ Парсим сообщение от клиента """
-        return json.loads(message.decode("utf-8"))
+        json_msg = json.loads(message.decode("utf-8"))
+        return JIMMessage(json_msg)
 
     @staticmethod
     def check_msg(message):
         """ Проверяем соответствие сообщения протоколу """
-        if isinstance(message, dict):
-            return message["action"] in actions.actions_list
+        if isinstance(message, JIMMessage):
+            return message.action in JIMMessage.actions
         return False
 
     def create_response(self, message):
         """ Формируем ответ клиенту """
         if self.check_msg(message):
-            return {"response": 200, "alert": "ok"}
-        return {"response": 400, "error": "неправильный запрос/JSON-объект"}
+            return JIMResponse(200)
+        return JIMResponse(400)
 
     @log
     def send(self, client, message):

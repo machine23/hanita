@@ -57,6 +57,8 @@ class Client:
     def get_from(self):
         """ Получаем и обрабатываем сообщение, присланное от другого клиента """
         msg = self.conn.get()
+        if msg is None:
+            self.close("Потеряна связь с сервером")
         if msg.action == msg.MSG:
             self.view.render_message(msg)
 
