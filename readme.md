@@ -13,7 +13,7 @@
 
 Запуск сервера:
 
-    python3 -m server
+    python3 -m server [args]
     
 
 
