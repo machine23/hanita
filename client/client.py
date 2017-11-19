@@ -49,6 +49,7 @@ class Client:
         """
         self.conn.send(message)
         resp = self.conn.get()
+        # print("response:", resp)
         if resp is None:
             self.close("Потеряна связь с сервером")
         if resp.error:
@@ -57,9 +58,9 @@ class Client:
     def get_from(self):
         """ Получаем и обрабатываем сообщение, присланное от другого клиента """
         msg = self.conn.get()
-        if msg is None:
-            self.close("Потеряна связь с сервером")
-        if msg.action == msg.MSG:
+        # if msg is None:
+        #     self.close("Потеряна связь с сервером")
+        if msg and msg.action == msg.MSG:
             self.view.render_message(msg)
 
     def run(self, mode=None):
@@ -70,6 +71,7 @@ class Client:
                 self.get_from()
             elif mode == "write":
                 user_msg = input(">>> ")
+                self.conn.get() # отбрасываем нежданное сообщение перед отправкой
                 self.send_msg("#all", user_msg)
             else:
                 break
@@ -78,7 +80,9 @@ class Client:
 
     def close(self, info=""):
         """ Закрываем клиент """
+        msg = JIMClientMessage.quit()
         if self.conn:
+            self.send_to_server(msg)
             self.conn.close()
         if info:
             self.view.render_info(info)

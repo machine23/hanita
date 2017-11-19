@@ -1,32 +1,34 @@
 """ server.py """
 import argparse
-import functools
+# import functools
 import json
-import logging
+# import logging
 import select
 import socket
+import socketserver
+import sys
 
-from utils import log_config
+# from utils import log_config
 from JIM import JIMMessage, JIMResponse
 
 RECV_BUFFER = 1024
 
-logger = logging.getLogger("server.main")
+# logger = logging.getLogger("server.main")
 
 
-def log(func):
-    @functools.wraps(func)
-    def inner(*args, **kwargs):
-        msg = ", ".join(str(item) for item in args) if args else ""
-        if kwargs:
-            s_kwargs = ", ".join(
-                "{}={}".format(k, v) for k, v in kwargs.items()
-            )
-            msg += (", " if msg else "") + s_kwargs
-        name = func.__name__
-        logger.info("%s (%s)", name, msg)
-        return func(*args, **kwargs)
-    return inner
+# def log(func):
+#     @functools.wraps(func)
+#     def inner(*args, **kwargs):
+#         msg = ", ".join(str(item) for item in args) if args else ""
+#         if kwargs:
+#             s_kwargs = ", ".join(
+#                 "{}={}".format(k, v) for k, v in kwargs.items()
+#             )
+#             msg += (", " if msg else "") + s_kwargs
+#         name = func.__name__
+#         logger.info("%s (%s)", name, msg)
+#         return func(*args, **kwargs)
+#     return inner
 
 
 class ServerError(Exception):
@@ -37,123 +39,64 @@ class ServerError(Exception):
 ###############################################################################
 # Server
 ###############################################################################
-class Server:
+class Server(socketserver.ThreadingTCPServer):
     """ class Server """
+    clients = []
+    allow_reuse_address = True
 
-    def __init__(self, addr, port):
-        self.addr = addr
-        self.port = port
-        self.clients = []
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        try:
-            self.sock.bind((self.addr, self.port))
-            self.sock.listen(5)
-            self.sock.settimeout(0.2)
-            print("\nStarting server at http://{}:{}"
-                  .format(self.addr, self.port))
-        except Exception:
-            self.close()
-            raise
+    def get_request(self):
+        """ Получаем запрос """
+        request, client_address = self.socket.accept()
+        self.clients.append(request)
+        print("get_request")
+        return request, client_address
 
-    def accept(self):
-        """ Разрешаем подключиться клиенту """
-        try:
-            client, client_addr = self.sock.accept()
-        except OSError:
-            pass
-        else:
-            print("Запрос на соединение от", client_addr)
-            self.clients.append(client)
+    def verify_request(self, request, client_address):
+        """
+        Проверяем запрос
+        Return True if we should proceed with this request
+        """
+        print("verify_request", request, client_address)
+        return True
 
-    @log
-    def get(self, client):
-        """ Получаем сообщение от клиента """
-        if client not in self.clients:
-            raise ServerError("get: Неизвестный клиент")
-        try:
-            bmsg = client.recv(RECV_BUFFER)
-        except socket.error:
-            client.close()
-            self.clients.remove(client)
-        else:
-            if bmsg:
-                msg = self.parse_msg(bmsg)
-                self.send(client, self.create_response(msg))
-                return msg
+    def close_request(self, request):
+        print("close_request")
+        self.clients.remove(request)
+        request.close()
 
-    def run_chat(self):
-        """ Запускаем чат """
-        wait = 0
-        r = []
-        w = []
-        try:
-            r, w, _ = select.select(self.clients, self.clients, [], wait)
-        except InterruptedError:
-            pass
-        for client in r:
-            try:
-                msg = self.get(client)
-            except ServerError:
-                pass
-            else:
-                if msg and msg.action == msg.MSG:
-                    self.send_from_to_all(client, w, msg)
+    # def process_request(self, request, client_address):
+    #     print("process_request")
+    #     self.finish_request(request, client_address)
 
-    @staticmethod
-    def parse_msg(message):
-        """ Парсим сообщение от клиента """
-        json_msg = json.loads(message.decode("utf-8"))
-        return JIMMessage(json_msg)
 
-    @staticmethod
-    def check_msg(message):
-        """ Проверяем соответствие сообщения протоколу """
-        if isinstance(message, JIMMessage):
-            return message.action in JIMMessage.actions
-        return False
+###############################################################################
+# ### ClientRequestHandler
+###############################################################################
+class ClientRequestHandler(socketserver.BaseRequestHandler):
+    def handle(self):
+        while True:
+            msg = self.get_from(self.request)
+            if msg and msg.action:
+                if msg.action == msg.MSG:
+                    for client in self.server.clients:
+                        if client is not self.request:
+                            self.send_to(client, msg)
+                elif msg.action == msg.QUIT:
+                    break
+            
 
-    def create_response(self, message):
-        """ Формируем ответ клиенту """
-        if self.check_msg(message):
-            return JIMResponse(200)
-        return JIMResponse(400)
+    def get_from(self, from_):
+        bmsg = from_.recv(RECV_BUFFER)
+        if bmsg:
+            msg = JIMMessage(json.loads(bmsg))
+            print(msg)
+            self.send_to(from_, JIMResponse(200))
+            return msg
 
-    @log
-    def send(self, client, message):
-        """ Отправляем сообщение клиенту """
-        if client not in self.clients:
-            raise ServerError("send: Неизвестный клиент")
-        if isinstance(message, dict):
-            msg = json.dumps(message)
-            try:
-                client.sendall(msg.encode("utf-8"))
-            except socket.error:
-                client.close()
-                self.clients.remove(client)
-        else:
-            raise ServerError("неправильный формат ответа")
-
-    @log
-    def send_from_to_all(self, from_, to_whom, message):
-        """ Отправляем сообщение от клиента всем остальным """
-        if isinstance(to_whom, list):
-            for client in to_whom:
-                if client is not from_:
-                    self.send(client, message)
-
-    def clients_close(self):
-        """ Закрываем соединение с клиентом """
-        for client in self.clients:
-            client.close()
-        self.clients.clear()
-
-    @log
-    def close(self):
-        """ Закрываем сервер """
-        self.clients_close()
-        if self.sock:
-            self.sock.close()
-            self.sock = None
+    def send_to(self, client, message):
+        json_msg = json.dumps(message)
+        bmsg = json_msg.encode("utf_8")
+        client.sendall(bmsg)
 
 
 ###############################################################################
@@ -187,17 +130,16 @@ def main():
     """ mainloop """
     args = read_args()
 
-    server = Server(args.addr, args.port)
+    with Server((args.addr, args.port), ClientRequestHandler) as server:
+        server_addr = server.socket.getsockname()
+        serve_message = "Serving on {host} port {port} ..."
+        print(serve_message.format(host=server_addr[0], port=server_addr[1]))
 
-    try:
-        while True:
-            server.accept()
-            server.run_chat()
-
-    except KeyboardInterrupt:
-        print("\nServer close")
-
-    server.close()
+        try:
+            server.serve_forever()
+        except KeyboardInterrupt:
+            print("\nKeyboard interrupt received, exiting.")
+            sys.exit(0)
 
 
 ###############################################################################

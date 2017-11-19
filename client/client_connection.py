@@ -38,7 +38,7 @@ class ClientConnection:
         if self.connection:
             raise ClientConnectionError("Соединение уже установлено")
         try:
-            self.connection = socket.create_connection((self.host, self.port))
+            self.connection = socket.create_connection((self.host, self.port), timeout=0.1)
         except socket.error as err:
             raise ClientConnectionError(err)
 
@@ -46,16 +46,28 @@ class ClientConnection:
         """ Отправляет сообщение на сервер """
         if not isinstance(message, dict):
             raise ClientConnectionError("Неверный формат сообщения")
+
         json_msg = json.dumps(message)
         byte_msg = json_msg.encode()
         self.connection.sendall(byte_msg)
 
     def get(self):
         """ Получает сообщение от сервера """
-        byte_msg = self.connection.recv(BUFFERSIZE)
-        if byte_msg:
-            json_msg = json.loads(byte_msg)
-            return JIMMessage(json_msg)
+        byte_msg = None
+        try:
+            byte_msg = self.connection.recv(BUFFERSIZE)
+        except socket.timeout:
+            pass
+        else:
+            if byte_msg:
+                msg = byte_msg.decode()
+                try:
+                    json_msg = json.loads(msg)
+                except ValueError:
+                    # просто отбросить, если пришел не json
+                    pass
+                else:
+                    return JIMMessage(json_msg)
 
     def close(self):
         """ Закрывает соединение с сервером """
