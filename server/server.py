@@ -1,39 +1,9 @@
 """ server.py """
 import argparse
-# import functools
-import json
-# import logging
-import select
-import socket
 import socketserver
 import sys
 
-# from utils import log_config
-from JIM import JIMMessage, JIMResponse
-
-RECV_BUFFER = 1024
-
-# logger = logging.getLogger("server.main")
-
-
-# def log(func):
-#     @functools.wraps(func)
-#     def inner(*args, **kwargs):
-#         msg = ", ".join(str(item) for item in args) if args else ""
-#         if kwargs:
-#             s_kwargs = ", ".join(
-#                 "{}={}".format(k, v) for k, v in kwargs.items()
-#             )
-#             msg += (", " if msg else "") + s_kwargs
-#         name = func.__name__
-#         logger.info("%s (%s)", name, msg)
-#         return func(*args, **kwargs)
-#     return inner
-
-
-class ServerError(Exception):
-    """ класс для ошибок сервера """
-    pass
+from .request_handler import ClientRequestHandler
 
 
 ###############################################################################
@@ -63,40 +33,6 @@ class Server(socketserver.ThreadingTCPServer):
         print("close_request")
         self.clients.remove(request)
         request.close()
-
-    # def process_request(self, request, client_address):
-    #     print("process_request")
-    #     self.finish_request(request, client_address)
-
-
-###############################################################################
-# ### ClientRequestHandler
-###############################################################################
-class ClientRequestHandler(socketserver.BaseRequestHandler):
-    def handle(self):
-        while True:
-            msg = self.get_from(self.request)
-            if msg and msg.action:
-                if msg.action == msg.MSG:
-                    for client in self.server.clients:
-                        if client is not self.request:
-                            self.send_to(client, msg)
-                elif msg.action == msg.QUIT:
-                    break
-            
-
-    def get_from(self, from_):
-        bmsg = from_.recv(RECV_BUFFER)
-        if bmsg:
-            msg = JIMMessage(json.loads(bmsg))
-            print(msg)
-            self.send_to(from_, JIMResponse(200))
-            return msg
-
-    def send_to(self, client, message):
-        json_msg = json.dumps(message)
-        bmsg = json_msg.encode("utf_8")
-        client.sendall(bmsg)
 
 
 ###############################################################################
