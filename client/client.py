@@ -2,7 +2,7 @@
 import argparse
 import sys
 
-from JIM import JIMClientMessage
+from JIM import JIMClientMessage, JIMResponse
 
 from .client_connection import ClientConnection, ClientConnectionError
 from .client_view import BaseClientView, ConsoleClientView
@@ -36,6 +36,24 @@ class Client:
         msg = JIMClientMessage.presence(self.user)
         self.send_to_server(msg)
 
+    def authenticate(self):
+        """ Аутентификация пользователя """
+        # Пока все просто, без пароля
+        while True:
+            login = self.view.input("Login: ").strip()
+            if login:
+                break
+            self.view.render_info(
+                "Имя не может быть пустым или состоять из пробелов")
+        msg = JIMClientMessage.authenticate(login, "")
+        resp = self.send_to_server(msg)
+        if resp.response and resp.error:
+            self.view.render_info(resp.error)
+            return False
+        self.user = login
+        self.view.render_info("Привет, " + login + "!")
+        return True
+
     def send_msg(self, to_user, message):
         """
         Отправляем на сервер сообщение от пользователя.
@@ -52,8 +70,8 @@ class Client:
         # print("response:", resp)
         if resp is None:
             self.close("Потеряна связь с сервером")
-        if resp.error:
-            self.view.render_info(resp.error)
+        else:
+            return resp
 
     def get_from(self):
         """ Получаем и обрабатываем сообщение, присланное от другого клиента """
@@ -65,13 +83,15 @@ class Client:
 
     def run(self, mode=None):
         """ Главный цикл работы клиента """
+        while not self.authenticate():
+            pass
         self.send_presence()
         while True:
             if mode == "read":
                 self.get_from()
             elif mode == "write":
-                user_msg = input(">>> ")
-                self.conn.get() # отбрасываем нежданное сообщение перед отправкой
+                user_msg = self.view.input(">>> ")
+                self.conn.get()  # отбрасываем нежданное сообщение перед отправкой
                 self.send_msg("#all", user_msg)
             else:
                 break

@@ -27,7 +27,8 @@ class ServerDBError(Exception):
 ###############################################################################
 class ServerDB:
     def __init__(self, base):
-        self.engine = create_engine("sqlite:///users.db", echo=True)
+        self.engine = create_engine("sqlite:///users.db", echo=True,
+                                    connect_args={"check_same_thread":False})
         self.base = base
         self.session = None
         try:

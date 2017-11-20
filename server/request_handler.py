@@ -80,12 +80,15 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
             password = self.msg.user["password"]
             user = User(accaunt_name, password)
             # Проверка, имеется ли уже подключение с данным ID
+            print("Auth", user.user_id, self.server.clients.values())
             if user.user_id in self.server.clients.values():
+                print("="*40)
+                print("409")
                 return 409
             # Проверка пользователя в базе
             if not self.server.db.exists(user):
                 self.server.db.add_new_user(user)
-            self.server.db.save_hist(user, time, self.client_address)
+            self.server.db.save_hist(user, time.time(), str(self.client_address))
             self.server.clients[self.request] = user.user_id
             return 200
         return 400

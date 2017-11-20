@@ -38,6 +38,16 @@ class BaseClientView(metaclass=abc.ABCMeta):
         """ Информационное сообщение """
         pass
 
+    @abc.abstractmethod
+    def input(self, msg):
+        """ Получить ввод от пользователя """
+        pass
+
+    @abc.abstractmethod
+    def render_help():
+        """ Показать подсказку """
+        pass
+
 
 ###############################################################################
 # ### ConsoleClientView
@@ -75,3 +85,23 @@ class ConsoleClientView(BaseClientView):
     def render_info(info):
         """ отображение информационного сообщения """
         print("\n\t", info)
+
+    @staticmethod
+    def input(msg):
+        return input(msg)
+
+    @staticmethod
+    def render_help():
+        help_str = """
+        \tHanita
+        Справка по консольным командам.
+        >>> @                   - узнать, кто онлайн;
+        >>> @nickname [message] - отправить сообщение пользователю nickname;
+        >>> !contacts           - получить список контактов;
+        >>> !add nickname       - добавить nickname в контакты;
+        >>> !del nickname       - удалить nickname из контактов;
+        >>> !quit               - выйти из программы;
+        >>> !help               - вывести эту справку.
+
+        """
+        print(help_str)

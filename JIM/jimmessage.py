@@ -59,8 +59,16 @@ class JIMMessage(dict):
     MSG = "msg"
     JOIN = "join"
     LEAVE = "leave"
+    GET_CONTACTS = "get_contacts"
+    CONTACT_LIST = "contact_list"
+    ADD_CONTACT = "add_contact"
+    DEL_CONTACT = "del_contact"
+    WHO_ONLINE = "who_online"
+    ONLINE_LIST = "online_list"
 
-    actions = (AUTHENTICATE, QUIT, PRESENCE, PROBE, MSG, JOIN, LEAVE)
+    actions = (AUTHENTICATE, QUIT, PRESENCE, PROBE,
+               MSG, JOIN, LEAVE, GET_CONTACTS, CONTACT_LIST,
+               ADD_CONTACT, DEL_CONTACT, WHO_ONLINE, ONLINE_LIST)
 
     status = {
         100: "базовое уведомление",
@@ -89,6 +97,8 @@ class JIMMessage(dict):
     from_user = JIMMessageAttr("from")
     message = JIMMessageAttr("message")
     room = JIMMessageAttr("room")
+    user_id = JIMMessageAttr("user_id")
+    quantity = JIMMessageAttr("quantity")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -163,6 +173,46 @@ class JIMClientMessage(JIMMessage):
         msg.room = chat_id
         return msg
 
+    @staticmethod
+    def get_contacts():
+        """ Получить список контактов """
+        msg = JIMClientMessage(JIMMessage.GET_CONTACTS)
+        return msg
+
+    @staticmethod
+    def contact_list(user_id):
+        """ Контакт лист """
+        msg = JIMClientMessage(JIMMessage.CONTACT_LIST)
+        msg.user_id = user_id
+        return msg
+
+    @staticmethod
+    def add_contact(nickname):
+        """ Добавить контакт """
+        msg = JIMClientMessage(JIMMessage.ADD_CONTACT)
+        msg.user_id = nickname
+        return msg
+
+    @staticmethod
+    def del_contact(nickname):
+        """ Удалить контакт """
+        msg = JIMClientMessage(JIMMessage.DEL_CONTACT)
+        msg.user_id = nickname
+        return msg
+
+    @staticmethod
+    def who_online():
+        """ Узнать, кто онлайн """
+        msg = JIMClientMessage(JIMMessage.WHO_ONLINE)
+        return msg
+
+    @staticmethod
+    def online_list(user_id):
+        """ Онлайн лист """
+        msg = JIMClientMessage(JIMMessage.ONLINE_LIST)
+        msg.user_id = user_id
+        return msg
+
 
 ###############################################################################
 # ### JIMResponse
@@ -174,7 +224,7 @@ class JIMResponse(JIMMessage):
         super().__init__(*args, **kwargs)
         if code not in self.status:
             raise JIMResponseError("Неверный код ответа")
-        self.code = code
+        self.response = code
         self.time = time.time()
         if code < 400:
             self.alert = message if message else self.status[code]
