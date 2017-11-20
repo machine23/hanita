@@ -34,6 +34,8 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
                 resp = action_handler()
                 self.response(resp)
                 self.msg = None
+            else:
+                self.response(400)
 
     def response(self, resp_code=None):
         """ Ответить на сообщение """
@@ -43,7 +45,6 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
 
     def send_to_all(self):
         """ Отправить сообщение всем авторизованным пользователям """
-        print("send_to_all", self.server.clients)
         for client in self.server.clients:
             if self.server.clients[client] and client is not self.request:
                 print("send_to", self.msg)

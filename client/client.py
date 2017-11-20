@@ -2,7 +2,7 @@
 import argparse
 import sys
 
-from JIM import JIMClientMessage, JIMResponse
+from JIM import JIMClientMessage, JIMResponse, JIMMessage
 
 from .client_connection import ClientConnection, ClientConnectionError
 from .client_view import BaseClientView, ConsoleClientView
@@ -17,13 +17,23 @@ class ClientError(Exception):
 
 
 ###############################################################################
+# ### class ClientUser
+###############################################################################
+class ClientUser:
+    def __init__(self, name="", status=""):
+        self.name = name
+        self.status = status
+        self.contacts = []
+
+
+###############################################################################
 # class Client
 ###############################################################################
 class Client:
     """ класс Client """
 
-    def __init__(self, user: str, conn: ClientConnection, view: BaseClientView):
-        self.user = user
+    def __init__(self, conn: ClientConnection, view: BaseClientView):
+        self.user = ClientUser()
         self.conn = conn
         self.view = view
         try:
@@ -33,7 +43,7 @@ class Client:
 
     def send_presence(self):
         """ Сообщаем серверу о присутствии """
-        msg = JIMClientMessage.presence(self.user)
+        msg = JIMClientMessage.presence(self.user.name)
         self.send_to_server(msg)
 
     def authenticate(self):
@@ -50,21 +60,22 @@ class Client:
         if resp.response and resp.error:
             self.view.render_info(resp.error)
             return False
-        self.user = login
+        self.user.name = login
         self.view.render_info("Привет, " + login + "!")
         return True
 
-    def send_msg(self, to_user, message):
+    def send_msg_to(self, to_user, message):
         """
         Отправляем на сервер сообщение от пользователя.
         """
-        msg = JIMClientMessage.msg(self.user, to_user, message)
+        msg = JIMClientMessage.msg(self.user.name, to_user, message)
         self.send_to_server(msg)
 
     def send_to_server(self, message):
         """
         Отправляем на сервер и обрабатываем ответ от сервера.
         """
+        self.conn.get()  # отбрасываем нежданное сообщение перед отправкой
         self.conn.send(message)
         resp = self.conn.get()
         # print("response:", resp)
@@ -85,18 +96,93 @@ class Client:
         """ Главный цикл работы клиента """
         while not self.authenticate():
             pass
-        self.send_presence()
+        self.view.render_help()
         while True:
             if mode == "read":
                 self.get_from()
             elif mode == "write":
                 user_msg = self.view.input(">>> ")
-                self.conn.get()  # отбрасываем нежданное сообщение перед отправкой
-                self.send_msg("#all", user_msg)
+                if not self.parse_cmd(user_msg):
+                    self.send_msg_to("#all", user_msg)
             else:
                 break
         self.view.render_info("Good bye!")
         self.close()
+
+    def parse_cmd(self, user_msg: str):
+        """ Разбираем команды пользователя """
+        user_msg = user_msg.strip()
+        if user_msg.startswith("!") or user_msg.startswith("@"):
+            if len(user_msg.split(" ")) > 1:
+                cmd, msg = user_msg.split(" ", 1)
+            else:
+                cmd, msg = user_msg, ""
+            #
+            if cmd == "!quit":
+                self.close("Good bye")
+            elif cmd == "!contacts":
+                self.get_contacts()
+            elif cmd == "!add":
+                self.add_contact(msg)
+            elif cmd == "!del":
+                self.del_contact(msg)
+            elif cmd == "!help":
+                self.view.render_help()
+            elif cmd == "@":
+                self.who_online()
+            elif cmd.startswith("@") and len(cmd) > 1:
+                self.send_msg_to(cmd[1:], msg)
+            else:
+                self.view.render_info("Неизвестная команда!")
+            return True
+        return False
+
+    def get_contacts(self):
+        """ Получить контакты """
+        msg = JIMClientMessage.get_contacts()
+        resp = self.send_to_server(msg)
+        if resp.response == 202 and resp.quantity:
+            while len(self.user.contacts) < resp.quantity:
+                contact = self.conn.get()
+                if contact.action == JIMMessage.CONTACT_LIST:
+                    self.user.contacts.append(contact.user_id)
+        else:
+            self.view.render_info(resp)
+
+    def add_contact(self, nickname):
+        """ Добавить контакт """
+        msg = JIMClientMessage.add_contact(nickname)
+        resp = self.send_to_server(msg)
+        if resp.error:
+            self.view.render_info("Не удалось добавить контакт")
+            self.view.render_info(resp.error)
+        else:
+            self.user.contacts.append(nickname)
+
+    def del_contact(self, nickname):
+        """ Удалить контакт """
+        msg = JIMClientMessage.del_contact(nickname)
+        resp = self.send_to_server(msg)
+        if resp.error:
+            self.view.render_info("Не удалось удалить контакт")
+            self.view.render_info(resp.error)
+        else:
+            if nickname in self.user.contacts:
+                self.user.contacts.remove(nickname)
+
+    def who_online(self):
+        """ Узнать, кто онлайн """
+        online_users = []
+        msg = JIMClientMessage.who_online()
+        resp = self.send_to_server(msg)
+        if resp.response == 202 and resp.quantity:
+            while len(self.user.contacts) < resp.quantity:
+                contact = self.conn.get()
+                if contact.action == JIMMessage.ONLINE_LIST:
+                    online_users.append(contact.user_id)
+            self.view.render_contacts(online_users)
+        else:
+            self.view.render_info(resp)
 
     def close(self, info=""):
         """ Закрываем клиент """
@@ -171,7 +257,7 @@ def main():
     connection = ClientConnection(args.addr, args.port)
     view = ConsoleClientView()
 
-    client = Client("Guest", connection, view)
+    client = Client(connection, view)
     try:
         client.run(mode)
     except KeyboardInterrupt:

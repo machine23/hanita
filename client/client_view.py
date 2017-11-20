@@ -84,7 +84,7 @@ class ConsoleClientView(BaseClientView):
     @staticmethod
     def render_info(info):
         """ отображение информационного сообщения """
-        print("\n\t", info)
+        print("\n", info)
 
     @staticmethod
     def input(msg):
@@ -93,7 +93,8 @@ class ConsoleClientView(BaseClientView):
     @staticmethod
     def render_help():
         help_str = """
-        \tHanita
+                                Hanita
+        ====================================================================
         Справка по консольным командам.
         >>> @                   - узнать, кто онлайн;
         >>> @nickname [message] - отправить сообщение пользователю nickname;
