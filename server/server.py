@@ -2,6 +2,8 @@
 import argparse
 import socketserver
 import sys
+from .server_db import ServerDB
+from .models import Base
 
 from .request_handler import ClientRequestHandler
 
@@ -11,13 +13,24 @@ from .request_handler import ClientRequestHandler
 ###############################################################################
 class Server(socketserver.ThreadingTCPServer):
     """ class Server """
-    clients = []
+    clients = {}
     allow_reuse_address = True
+
+    def __init__(
+        self,
+        server_address,
+        RequestHandlerClass,
+        database: ServerDB,
+        bind_and_activate=True
+    ):
+        socketserver.ThreadingTCPServer.__init__(
+            self, server_address, RequestHandlerClass, bind_and_activate)
+        self.db = database
 
     def get_request(self):
         """ Получаем запрос """
         request, client_address = self.socket.accept()
-        self.clients.append(request)
+        self.clients[request] = None
         print("get_request")
         return request, client_address
 
@@ -31,7 +44,7 @@ class Server(socketserver.ThreadingTCPServer):
 
     def close_request(self, request):
         print("close_request")
-        self.clients.remove(request)
+        self.clients.pop(request, None)
         request.close()
 
 
@@ -66,7 +79,9 @@ def main():
     """ mainloop """
     args = read_args()
 
-    with Server((args.addr, args.port), ClientRequestHandler) as server:
+    sdb = ServerDB(Base)
+
+    with Server((args.addr, args.port), ClientRequestHandler, sdb) as server:
         server_addr = server.socket.getsockname()
         serve_message = "Serving on {host} port {port} ..."
         print(serve_message.format(host=server_addr[0], port=server_addr[1]))
@@ -74,8 +89,11 @@ def main():
         try:
             server.serve_forever()
         except KeyboardInterrupt:
-            print("\nKeyboard interrupt received, exiting.")
-            sys.exit(0)
+            pass
+
+    print("\nKeyboard interrupt received, exiting.")
+    sdb.close()
+    sys.exit(0)
 
 
 ###############################################################################

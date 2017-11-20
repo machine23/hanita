@@ -29,13 +29,21 @@ class JIMMessageAttr:
     к атрибутам. Т.е. вместо message['action'] можно писать message.action
     """
 
-    def __init__(self, key):
+    def __init__(self, key, max_len=None):
         self.key = key
+        self.max_len = max_len
 
     def __get__(self, obj, obj_type):
         return obj.get(self.key, None)
 
     def __set__(self, obj, value):
+        if obj.__contains__("action") and self.key == "response":
+            raise
+        if obj.__contains__("response") and self.key == "action":
+            raise
+        if isinstance(value, str) and self.max_len:
+            if len(value) > self.max_len:
+                raise JIMMessageError("Слишком длинное значение")
         obj.__setitem__(self.key, value)
 
 
@@ -81,6 +89,11 @@ class JIMMessage(dict):
     from_user = JIMMessageAttr("from")
     message = JIMMessageAttr("message")
     room = JIMMessageAttr("room")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.action and self.response:
+            raise JIMMessageError("Неправильный формат сообщения")
 
 
 ###############################################################################
