@@ -39,7 +39,9 @@ class Client:
         try:
             self.conn.connect()
         except ClientConnectionError as err:
-            self.close(err)
+            self.view.render_info(err)
+            self.conn = None            
+            self.close()
 
     def send_presence(self):
         """ Сообщаем серверу о присутствии """
@@ -69,7 +71,9 @@ class Client:
         Отправляем на сервер сообщение от пользователя.
         """
         msg = JIMClientMessage.msg(self.user.name, to_user, message)
-        self.send_to_server(msg)
+        resp = self.send_to_server(msg)
+        if resp.error:
+            self.view.render_info(resp.error)
 
     def send_to_server(self, message):
         """
@@ -141,13 +145,17 @@ class Client:
         """ Получить контакты """
         msg = JIMClientMessage.get_contacts()
         resp = self.send_to_server(msg)
-        if resp.response == 202 and resp.quantity:
-            while len(self.user.contacts) < resp.quantity:
-                contact = self.conn.get()
-                if contact.action == JIMMessage.CONTACT_LIST:
-                    self.user.contacts.append(contact.user_id)
+        if resp.response == 202:
+            if resp.quantity:
+                while len(self.user.contacts) < resp.quantity:
+                    contact = self.conn.get()
+                    if contact.action == JIMMessage.CONTACT_LIST:
+                        self.user.contacts.append(contact.user_id)
+                self.view.render_contacts(self.user.contacts, "Ваши контакты:")
+            else:
+                self.view.render_info("У вас нет контактов")
         else:
-            self.view.render_info(resp)
+            self.view.render_info("get_contacts" + str(resp))
 
     def add_contact(self, nickname):
         """ Добавить контакт """
@@ -176,11 +184,11 @@ class Client:
         msg = JIMClientMessage.who_online()
         resp = self.send_to_server(msg)
         if resp.response == 202 and resp.quantity:
-            while len(self.user.contacts) < resp.quantity:
+            while len(online_users) < resp.quantity:
                 contact = self.conn.get()
                 if contact.action == JIMMessage.ONLINE_LIST:
                     online_users.append(contact.user_id)
-            self.view.render_contacts(online_users)
+            self.view.render_contacts(online_users, "Онлайн:")
         else:
             self.view.render_info(resp)
 

@@ -49,9 +49,9 @@ class ServerDB:
         """ Добавить нового пользователя в БД """
         self._add(user, "ServerDB.add_new_user error")
 
-    def exists(self, user):
+    def exists(self, user_id):
         """ Проверить наличие пользователя в БД """
-        q = self.session.query(User).filter(User.user_id == user.user_id)
+        q = self.session.query(User).filter(User.user_id == user_id)
         return self.session.query(q.exists()).scalar()
 
     def save_hist(self, user, time, ip):
@@ -64,10 +64,10 @@ class ServerDB:
         s = UserContact(user, contact)
         self._add(s, "ServerDB.add_contact error")
 
-    def get_contacts(self, user):
+    def get_contacts(self, user_id):
         """ Получить контакты """
         out = self.session.query(UserContact).filter(
-            UserContact.user_id == user.user_id).all()
+            UserContact.user_id == user_id).all()
         return out
 
     def setup(self):

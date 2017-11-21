@@ -24,7 +24,7 @@ class BaseClientView(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def render_contacts(self, user_list):
+    def render_contacts(self, user_list, info):
         """ Отображение списка контактов """
         pass
 
@@ -44,7 +44,7 @@ class BaseClientView(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def render_help():
+    def render_help(self):
         """ Показать подсказку """
         pass
 
@@ -67,10 +67,11 @@ class ConsoleClientView(BaseClientView):
         print("\tПривет,", user_name)
 
     @staticmethod
-    def render_contacts(user_list: list):
+    def render_contacts(user_list: list, info=""):
         """ Отображение списка контактов """
         if isinstance(user_list, list):
-            print("Контакты онлайн:")
+            if info:
+                print(info, end=" ")
             print("\t", ", ".join(user_list), end="\n\n")
         else:
             raise ClientViewError("неверный формат для user_list")
@@ -100,7 +101,7 @@ class ConsoleClientView(BaseClientView):
         >>> @nickname [message] - отправить сообщение пользователю nickname;
         >>> !contacts           - получить список контактов;
         >>> !add nickname       - добавить nickname в контакты;
-        >>> !del nickname       - удалить nickname из контактов;
+        >>> !del nickname       - удалить nickname из контактов (в разработке);
         >>> !quit               - выйти из программы;
         >>> !help               - вывести эту справку.
 

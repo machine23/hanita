@@ -45,11 +45,9 @@ class UserContact(Base):
     user_id = Column("user_id", String, ForeignKey("users.user_id"))
     contact_id = Column("contact_id", String, ForeignKey("users.user_id"))
 
-    def __init__(self, user, contact):
-        if not (isinstance(user, User) and isinstance(contact, User)):
-            raise
-        self.user_id = user.user_id
-        self.contact_id = contact.user_id
+    def __init__(self, user_id, contact_id):
+        self.user_id = user_id
+        self.contact_id = contact_id
 
     def __repr__(self):
         return "UserContact {} : {}".format(self.user_id, self.contact_id)
