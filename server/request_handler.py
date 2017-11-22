@@ -158,7 +158,7 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
         return 200
 
     def handler_get_contacts(self):
-        """ Обработчик события Who online """
+        """ Обработчик события Who online  """
         users_list = self.server.db.get_contacts(self.user_id)
         contacts = [obj.contact_id for obj in users_list]
         num = len(contacts)
