@@ -30,9 +30,9 @@ def test_get_user(db):
     user1 = db.get_user("1")
     user2 = db.get_user("2")
     assert isinstance(user1, User)
-    assert user1.user_id == "1"
+    assert user1.user_name == "1"
     assert isinstance(user2, User)
-    assert user2.user_id == "2"
+    assert user2.user_name == "2"
     user_none = db.get_user("None")
     assert user_none is None
 

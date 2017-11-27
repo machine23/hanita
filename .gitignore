@@ -108,4 +108,4 @@ ENV/
 # mypy
 .mypy_cache/
 run_2_clients.py
-users.db
+*.db

@@ -105,6 +105,9 @@ class JIMMessage(dict):
         if self.action and self.response:
             raise JIMMessageError("Неправильный формат сообщения")
 
+    # def __eq__(self, other):
+    #     return self. == other
+
 
 ###############################################################################
 # ### JIMClientMessage
