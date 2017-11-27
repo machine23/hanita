@@ -15,18 +15,20 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
     """ Класс-обработчик запросов клиента """
 
     def setup(self):
+        # yapf: disable
         self.action_handlers = {
-            JIMMessage.MSG: self.handler_msg,
-            JIMMessage.QUIT: self.handler_quit,
-            JIMMessage.AUTHENTICATE: self.handler_authenticate,
-            JIMMessage.PRESENCE: self.handler_presence,
-            JIMMessage.WHO_ONLINE: self.handler_who_online,
-            JIMMessage.GET_CONTACTS: self.handler_get_contacts,
-            JIMMessage.ADD_CONTACT: self.handler_add_contact
+            JIMMessage.MSG          : self.handler_msg,
+            JIMMessage.QUIT         : self.handler_quit,
+            JIMMessage.AUTHENTICATE : self.handler_authenticate,
+            JIMMessage.PRESENCE     : self.handler_presence,
+            JIMMessage.WHO_ONLINE   : self.handler_who_online,
+            JIMMessage.GET_CONTACTS : self.handler_get_contacts,
+            JIMMessage.ADD_CONTACT  : self.handler_add_contact
         }
+        # yapf: enable
         self.__quit = False
         self.msg = None
-        self.user_id = None
+        self.user_name = None
 
     def handle(self):
         """ Основной обработчик """
@@ -83,23 +85,24 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
         """
         if self.msg.action != JIMMessage.AUTHENTICATE:
             raise
-        if self.msg.user and set(self.msg.user) == {"accaunt_name", "password"}:
+        if self.msg.user and set(
+                self.msg.user) == {"accaunt_name", "password"}:
             accaunt_name = self.msg.user["accaunt_name"]
             password = self.msg.user["password"]
             user = User(accaunt_name, password)
             # Если пользователя нет в базе
-            if not self.server.db.exists(user.user_id):
+            if not self.server.db.exists(user.user_name):
                 self.server.db.add_new_user(user)
             # Проверка, имеется ли уже подключение с данным ID
-            elif self.user_online(user.user_id):
+            elif self.user_online(user.user_name):
                 # Добавить проверку, если уже имеется подключение с данным ID,
                 # то это подключение еще актуально (отправить PROBE)
                 return 409
             # Прошли все проверки, добавляем юсера в онлайн
-            self.server.db.save_hist(
-                user, time.time(), str(self.client_address))
-            self.server.clients[self.request] = user.user_id
-            self.user_id = user.user_id
+            self.server.db.save_hist(user, time.time(), str(
+                self.client_address))
+            self.server.clients[self.request] = user.user_name
+            self.user_name = user.user_name
             return 200
         return 400
 
@@ -154,19 +157,22 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
         self.send(resp)
         for _id in clients:
             msg = JIMClientMessage.online_list(self.server.clients[_id])
+            print("="*40)
+            print(msg)
             self.send(msg)
         return 200
 
     def handler_get_contacts(self):
         """ Обработчик события Who online  """
-        users_list = self.server.db.get_contacts(self.user_id)
+        users_list = self.server.db.get_contacts(self.user_name)
         contacts = [obj.contact_id for obj in users_list]
         num = len(contacts)
         resp = JIMResponse(202)
         resp.quantity = num
         self.send(resp)
-        for user_id in contacts:
-            msg = JIMClientMessage.contact_list(user_id)
+        for contact in contacts:
+            contact_name = self.server.db.get_user_name(contact)
+            msg = JIMClientMessage.contact_list(contact_name)
             self.send(msg)
         return 200
 
@@ -174,6 +180,6 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
         """ Обработчик события ADD_CONTACT """
         contact = self.msg.user_id
         if self.server.db.exists(contact):
-            self.server.db.add_contact(self.user_id, contact)
+            self.server.db.add_contact(self.user_name, contact)
             return 202
         return 404

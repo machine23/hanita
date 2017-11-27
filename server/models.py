@@ -7,12 +7,12 @@ Base = declarative_base()
 
 class User(Base):
     __tablename__ = "users"
-    # id = Column(Integer, primary_key=True)
-    user_id = Column(String(25), primary_key=True)
+    user_id = Column(Integer, primary_key=True)
+    user_name = Column(String(25), unique=True)
     password = Column(String(25))
 
     def __init__(self, name, password=""):
-        self.user_id = name
+        self.user_name = name
         self.password = password
 
     def __repr__(self):

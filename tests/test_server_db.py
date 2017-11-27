@@ -60,11 +60,13 @@ def test_get_contacts(db):
     with pytest.raises(ServerDBUnknownID):
         db.get_contacts("4")
 
+
 def test_add_contact(db):
     before = len(db.get_contacts("3"))
     db.add_contact("3", "1")
     after = len(db.get_contacts("3"))
     assert after - before == 1
+
 
 def test_del_contact(db):
     before = len(db.get_contacts("1"))
