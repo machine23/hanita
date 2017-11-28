@@ -7,7 +7,10 @@ from client import ClientConnection, ClientConnectionError
 class MySocket:
     """ заглушка для socket.socket """
 
-    def __init__(self, sock_type=socket.AF_INET, sock_family=socket.SOCK_STREAM):
+    def __init__(self,
+                 sock_type=socket.AF_INET,
+                 sock_family=socket.SOCK_STREAM,
+                 timeout=None):
         self.data = None
         self.addr = None
 
@@ -17,7 +20,7 @@ class MySocket:
     def recv(self, buffersize):
         return b'{"action": "test"}'
 
-    def create_connection(self, address):
+    def create_connection(self, address, timeout=None):
         if isinstance(address, tuple) \
                 and len(address) == 2 \
                 and isinstance(address[0], str) \

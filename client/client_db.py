@@ -111,7 +111,7 @@ class ClientDB:
         return chats
 
     def add_chat(self, chat_name):
-        if not chat_exists(chat_name):
+        if not self.chat_exists(chat_name):
             cmd = "INSERT INTO chats(chat_name) VALUES (?)"
             self.cursor.execute(cmd, (chat_name, ))
             self.conn.commit()
@@ -174,7 +174,7 @@ class ClientDB:
         ####################################################
         chat_id = self.get_chat_id(message.to_user)
         creator_id = self.get_user_id(message.from_user)
-        print(chat_id, creator_id)
+        # print(chat_id, creator_id)
         cmd = """INSERT INTO messages(creator_id, chat_id, time, message)
                  VALUES (?, ?, ?, ?)"""
         if chat_id and creator_id:
@@ -210,6 +210,7 @@ class ClientDB:
         self._observers.remove(observer)
 
     def _notify(self):
+        # print("notified")
         for observer in self._observers:
             observer.model_is_changed()
 

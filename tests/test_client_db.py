@@ -52,8 +52,6 @@ def test_get_users(db):
 def test_add_user(db):
     db.add_user("4")
     assert "4" in db.get_users()
-    with pytest.raises(sqlite3.IntegrityError):
-        db.add_user("4")
 
 
 def test_get_user_id(db):

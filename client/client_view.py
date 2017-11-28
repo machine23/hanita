@@ -59,6 +59,9 @@ class BaseClientView(metaclass=abc.ABCMeta):
 ###############################################################################
 class ConsoleClientView(BaseClientView):
     """ Класс для консольного отображения """
+    def __init__(self, client=None, model=None):
+        pass
+
     @staticmethod
     def _clear():
         """ Очистить консоль """
@@ -114,4 +117,7 @@ class ConsoleClientView(BaseClientView):
         print(help_str)
 
     def model_is_changed(self):
+        pass
+
+    def run(self):
         pass

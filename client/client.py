@@ -1,12 +1,11 @@
 """ Hanita client class and client mainloop """
-import argparse
 import sys
 
 from JIM import JIMClientMessage, JIMResponse, JIMMessage
 
 from .client_connection import ClientConnection, ClientConnectionError
-from .client_view import BaseClientView, ConsoleClientView
 from .client_db import ClientDB, ClientDBError
+from .client_qtview import QtClientView
 
 
 ###############################################################################
@@ -33,16 +32,15 @@ class ClientUser:
 class Client:
     """ класс Client """
 
-    def __init__(self, conn: ClientConnection, view: BaseClientView,
-                 model: ClientDB):
+    def __init__(self, conn: ClientConnection, model: ClientDB, ViewClass):
         self.user = ClientUser()
         self.model = model
         self.conn = conn
-        self.view = view
+        self.view = ViewClass(self, self.model)
         try:
             self.conn.connect()
         except ClientConnectionError as err:
-            self.view.render_info(err)
+            self.view.render_info("Не могу соединиться с сервером")
             self.conn = None
             self.close()
 
@@ -54,12 +52,11 @@ class Client:
     def authenticate(self):
         """ Аутентификация пользователя """
         # Пока все просто, без пароля
-        while True:
-            login = self.view.input("Login: ").strip()
-            if login:
-                break
+        login = self.view.input("Login: ").strip()
+        if not login:
             self.view.render_info(
                 "Имя не может быть пустым или состоять из пробелов")
+            sys.exit()
         msg = JIMClientMessage.authenticate(login, "")
         resp = self.send_to_server(msg)
         if resp.response and resp.error:
@@ -68,7 +65,8 @@ class Client:
         self.user.name = login
         self.view.render_info("Привет, " + login + "!")
         ###
-        self.model.add_user(login)
+        self.model.active_user = login
+        self.model.active_chat = "#all"
         ###
         return True
 
@@ -83,6 +81,7 @@ class Client:
         resp = self.send_to_server(msg)
         if resp.error:
             self.view.render_info(resp.error)
+            pass
 
     def send_to_server(self, message):
         """
@@ -112,16 +111,13 @@ class Client:
         """ Главный цикл работы клиента """
         while not self.authenticate():
             pass
-        self.view.render_help()
-        while True:
-            if mode == "read":
+        if mode == "read":
+            self.view.render_help()
+            while True:
                 self.get_from()
-            elif mode == "write":
-                user_msg = self.view.input(">>> ")
-                if not self.parse_cmd(user_msg):
-                    self.send_msg_to("#all", user_msg)
-            else:
-                break
+        elif mode == "write":
+            print("*** run ***")
+            self.view.run()
         self.view.render_info("Good bye!")
         self.close()
 
@@ -144,12 +140,14 @@ class Client:
                 self.del_contact(msg)
             elif cmd == "!help":
                 self.view.render_help()
+                pass
             elif cmd == "@":
                 self.who_online()
             elif cmd.startswith("@") and len(cmd) > 1:
                 self.send_msg_to(cmd[1:], msg)
             else:
                 self.view.render_info("Неизвестная команда!")
+                pass
             return True
         return False
 
@@ -178,7 +176,8 @@ class Client:
         resp = self.send_to_server(msg)
         if resp.error:
             self.view.render_info("Не удалось добавить контакт")
-            self.view.render_info(resp.error)
+            # self.view.render_info(resp.error)
+            pass
         else:
             self.user.contacts.append(nickname)
             ###
@@ -191,7 +190,8 @@ class Client:
         resp = self.send_to_server(msg)
         if resp.error:
             self.view.render_info("Не удалось удалить контакт")
-            self.view.render_info(resp.error)
+            # self.view.render_info(resp.error)
+            pass
         else:
             if nickname in self.user.contacts:
                 self.user.contacts.remove(nickname)
@@ -209,6 +209,7 @@ class Client:
             self.view.render_contacts(online_users, "Онлайн:")
         else:
             self.view.render_info(resp)
+            pass
 
     def close(self, info=""):
         """ Закрываем клиент """
@@ -219,74 +220,3 @@ class Client:
         if info:
             self.view.render_info(info)
         sys.exit()
-
-
-###############################################################################
-# read_args
-###############################################################################
-def read_args():
-    """
-    Получаем аргументы командной строки.
-
-    """
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "addr",
-        default="127.0.0.1",
-        nargs="?",
-        help="IP сервера (по умолчанию 127.0.0.1)")
-    parser.add_argument(
-        "port",
-        type=int,
-        default=7777,
-        nargs="?",
-        help="TCP-порт сервера (по умолчанию 7777)")
-    parser.add_argument(
-        "-r",
-        dest="read",
-        action="store_true",
-        help="определяет режим работы на получение сообщений")
-    parser.add_argument(
-        "-w",
-        dest="write",
-        action="store_true",
-        help="включает режим отправки сообщений")
-
-    args = parser.parse_args()
-    if args.read and args.write:
-        print("Пожалуйста, определите режим работы:",
-              "\n\t-w на отправку сообщений", "\n\t-r на получение сообщений")
-        sys.exit(0)
-    return args
-
-
-###############################################################################
-# main
-###############################################################################
-def main():
-    """ Точка входа """
-    args = read_args()
-    if args.write:
-        mode = "write"
-    elif args.read:
-        mode = "read"
-    else:
-        mode = None
-
-    connection = ClientConnection(args.addr, args.port)
-    view = ConsoleClientView()
-
-    model = ClientDB("client.db")
-
-    client = Client(connection, view, model)
-    try:
-        client.run(mode)
-    except KeyboardInterrupt:
-        pass
-
-    client.close("Good Bye!")
-
-
-###############################################################################
-if __name__ == "__main__":
-    main()
