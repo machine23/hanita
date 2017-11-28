@@ -6,6 +6,7 @@ from JIM import JIMClientMessage, JIMResponse, JIMMessage
 
 from .client_connection import ClientConnection, ClientConnectionError
 from .client_view import BaseClientView, ConsoleClientView
+from .client_db import ClientDB, ClientDBError
 
 
 ###############################################################################
@@ -32,15 +33,17 @@ class ClientUser:
 class Client:
     """ класс Client """
 
-    def __init__(self, conn: ClientConnection, view: BaseClientView):
+    def __init__(self, conn: ClientConnection, view: BaseClientView,
+                 model: ClientDB):
         self.user = ClientUser()
+        self.model = model
         self.conn = conn
         self.view = view
         try:
             self.conn.connect()
         except ClientConnectionError as err:
             self.view.render_info(err)
-            self.conn = None            
+            self.conn = None
             self.close()
 
     def send_presence(self):
@@ -64,6 +67,9 @@ class Client:
             return False
         self.user.name = login
         self.view.render_info("Привет, " + login + "!")
+        ###
+        self.model.add_user(login)
+        ###
         return True
 
     def send_msg_to(self, to_user, message):
@@ -71,6 +77,9 @@ class Client:
         Отправляем на сервер сообщение от пользователя.
         """
         msg = JIMClientMessage.msg(self.user.name, to_user, message)
+        ###
+        self.model.add_message(msg)
+        ###
         resp = self.send_to_server(msg)
         if resp.error:
             self.view.render_info(resp.error)
@@ -95,6 +104,9 @@ class Client:
         #     self.close("Потеряна связь с сервером")
         if msg and msg.action == msg.MSG:
             self.view.render_message(msg)
+            ###
+            self.model.add_message(msg)
+            ###
 
     def run(self, mode=None):
         """ Главный цикл работы клиента """
@@ -151,6 +163,9 @@ class Client:
                     contact = self.conn.get()
                     if contact.action == JIMMessage.CONTACT_LIST:
                         self.user.contacts.append(contact.user_id)
+                        ###
+                        self.model.add_user(contact.user_id)
+                        ###
                 self.view.render_contacts(self.user.contacts, "Ваши контакты:")
             else:
                 self.view.render_info("У вас нет контактов")
@@ -166,6 +181,9 @@ class Client:
             self.view.render_info(resp.error)
         else:
             self.user.contacts.append(nickname)
+            ###
+            self.model.add_user(nickname)
+            ###
 
     def del_contact(self, nickname):
         """ Удалить контакт """
@@ -216,35 +234,28 @@ def read_args():
         "addr",
         default="127.0.0.1",
         nargs="?",
-        help="IP сервера (по умолчанию 127.0.0.1)"
-    )
+        help="IP сервера (по умолчанию 127.0.0.1)")
     parser.add_argument(
         "port",
         type=int,
         default=7777,
         nargs="?",
-        help="TCP-порт сервера (по умолчанию 7777)"
-    )
+        help="TCP-порт сервера (по умолчанию 7777)")
     parser.add_argument(
         "-r",
         dest="read",
         action="store_true",
-        help="определяет режим работы на получение сообщений"
-    )
+        help="определяет режим работы на получение сообщений")
     parser.add_argument(
         "-w",
         dest="write",
         action="store_true",
-        help="включает режим отправки сообщений"
-    )
+        help="включает режим отправки сообщений")
 
     args = parser.parse_args()
     if args.read and args.write:
-        print(
-            "Пожалуйста, определите режим работы:",
-            "\n\t-w на отправку сообщений",
-            "\n\t-r на получение сообщений"
-        )
+        print("Пожалуйста, определите режим работы:",
+              "\n\t-w на отправку сообщений", "\n\t-r на получение сообщений")
         sys.exit(0)
     return args
 
@@ -265,14 +276,15 @@ def main():
     connection = ClientConnection(args.addr, args.port)
     view = ConsoleClientView()
 
-    client = Client(connection, view)
+    model = ClientDB("client.db")
+
+    client = Client(connection, view, model)
     try:
         client.run(mode)
     except KeyboardInterrupt:
         pass
 
     client.close("Good Bye!")
-
 
 
 ###############################################################################

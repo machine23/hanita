@@ -48,6 +48,11 @@ class BaseClientView(metaclass=abc.ABCMeta):
         """ Показать подсказку """
         pass
 
+    @abc.abstractmethod
+    def model_is_changed(self):
+        """ Действия при изменении модели """
+        pass
+
 
 ###############################################################################
 # ### ConsoleClientView
@@ -107,3 +112,6 @@ class ConsoleClientView(BaseClientView):
 
         """
         print(help_str)
+
+    def model_is_changed(self):
+        pass

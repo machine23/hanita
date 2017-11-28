@@ -51,10 +51,11 @@ class ClientDB:
 
     def add_user(self, user_name):
         """ Добавить пользователя """
-        cmd = "INSERT INTO users(user_name) VALUES (?)"
-        self.cursor.execute(cmd, (user_name, ))
-        self.conn.commit()
-        self._notify()
+        if not self.user_exists(user_name):
+            cmd = "INSERT INTO users(user_name) VALUES (?)"
+            self.cursor.execute(cmd, (user_name, ))
+            self.conn.commit()
+            self._notify()
 
     def get_users(self):
         """ Получить список пользователей """
@@ -137,6 +138,19 @@ class ClientDB:
     def add_message(self, message: JIMClientMessage):
         if not (isinstance(message, JIMMessage) and message.action == "msg"):
             raise ClientDBError("message must be JIMClientMessage.msg")
+        ### Временное упрощение ############################
+        # Добавляем чат и пользователя из сообщения без проверки на сервере
+        chat_name = message.to_user
+        if not self.chat_exists(chat_name):
+            self.add_chat(chat_name)
+        user_name = message.from_user
+        if not self.user_exists(user_name):
+            self.add_user(user_name)
+        try:
+            self.add_chat_user(user_name, chat_name)
+        except ClientDBError:
+            pass
+        ####################################################
         chat_id = self.get_chat_id(message.to_user)
         creator_id = self.get_user_id(message.from_user)
         print(chat_id, creator_id)
