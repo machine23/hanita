@@ -11,12 +11,32 @@ class ClientDBError(Exception):
 class ClientDB:
     def __init__(self, path_to_db=None):
         self._observers = []
+        self._active_chat = None
+        self._active_user = None
         if not path_to_db:
             path_to_db = ":memory:"
         self.conn = sqlite3.connect(path_to_db)
         self.conn.execute("PRAGMA foreign_keys = ON")
         self.cursor = self.conn.cursor()
         self.setup()
+
+    @property
+    def active_user(self):
+        return self._active_user
+
+    @active_user.setter
+    def active_user(self, user_name):
+        self._active_user = user_name
+        self.add_user(user_name)
+
+    @property
+    def active_chat(self):
+        return self._active_chat
+
+    @active_chat.setter
+    def active_chat(self, chat_name):
+        self._active_chat = chat_name
+        self.add_chat(chat_name)
 
     def setup(self):
         """ Создаем таблицы """
@@ -55,7 +75,7 @@ class ClientDB:
             cmd = "INSERT INTO users(user_name) VALUES (?)"
             self.cursor.execute(cmd, (user_name, ))
             self.conn.commit()
-            self._notify()
+        self._notify()
 
     def get_users(self):
         """ Получить список пользователей """
@@ -91,9 +111,10 @@ class ClientDB:
         return chats
 
     def add_chat(self, chat_name):
-        cmd = "INSERT INTO chats(chat_name) VALUES (?)"
-        self.cursor.execute(cmd, (chat_name, ))
-        self.conn.commit()
+        if not chat_exists(chat_name):
+            cmd = "INSERT INTO chats(chat_name) VALUES (?)"
+            self.cursor.execute(cmd, (chat_name, ))
+            self.conn.commit()
         self._notify()
 
     def chat_exists(self, chat_name):
@@ -125,7 +146,7 @@ class ClientDB:
             raise ClientDBError(err)
         else:
             self.conn.commit()
-            self._notify()
+        self._notify()
 
     def get_chat_users(self, chat_name):
         chat_id = self.get_chat_id(chat_name)
@@ -160,9 +181,9 @@ class ClientDB:
             self.cursor.execute(
                 cmd, (creator_id, chat_id, message.time, message.message))
             self.conn.commit()
-            self._notify()
         else:
             raise ClientDBError("unknown creator or chat")
+        self._notify()
 
     def get_messages(self, chat_name):
         cmd = """SELECT creator_id, chat_id, time, message

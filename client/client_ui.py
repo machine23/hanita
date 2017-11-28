@@ -99,7 +99,7 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "Hanita"))
         self.label.setText(_translate("MainWindow", "Chats:"))
         self.pushButton.setText(_translate("MainWindow", "New Chat"))
         self.pushButton_2.setText(_translate("MainWindow", "Contacts"))
