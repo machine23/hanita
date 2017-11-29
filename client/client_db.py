@@ -92,6 +92,7 @@ class ClientDB:
         return _id[0][0] if _id else None
 
     def get_user_name(self, user_id):
+        """ Получить имя пользователя по id """
         cmd = "SELECT user_name FROM users WHERE users.id = ?"
         self.cursor.execute(cmd, (user_id, ))
         res = self.cursor.fetchall()
@@ -104,6 +105,7 @@ class ClientDB:
         return bool(self.cursor.fetchall())
 
     def get_chats(self):
+        """ получить список имеющихся чатов """
         cmd = "SELECT chats.chat_name FROM chats"
         self.cursor.execute(cmd)
         arr = self.cursor.fetchall()
@@ -111,6 +113,7 @@ class ClientDB:
         return chats
 
     def add_chat(self, chat_name):
+        """ Добавить чат в бд """
         if not self.chat_exists(chat_name):
             cmd = "INSERT INTO chats(chat_name) VALUES (?)"
             self.cursor.execute(cmd, (chat_name, ))
@@ -118,23 +121,27 @@ class ClientDB:
         self._notify()
 
     def chat_exists(self, chat_name):
+        """ проверить наличие чата в бд """
         cmd = "SELECT 1 FROM chats WHERE chats.chat_name = ?"
         self.cursor.execute(cmd, (chat_name, ))
         return bool(self.cursor.fetchall())
 
     def get_chat_id(self, chat_name):
+        """ получить id по имени чата """
         cmd = "SELECT id FROM chats WHERE chats.chat_name = ?"
         self.cursor.execute(cmd, (chat_name, ))
         _id = self.cursor.fetchall()
         return _id[0][0] if _id else None
 
     def get_chat_name(self, chat_id):
+        """ получить имя чата по id """
         cmd = "SELECT chat_name FROM chats WHERE chats.id = ?"
         self.cursor.execute(cmd, (chat_id, ))
         res = self.cursor.fetchall()
         return res[0][0] if res else None
 
     def add_chat_user(self, user_name, chat_name):
+        """ добавить пользователя в чат """
         if not (self.user_exists(user_name) and self.chat_exists(chat_name)):
             raise ClientDBError("add_chat_user error")
         cmd = "INSERT INTO chat_users(user_id, chat_id) VALUES (?, ?)"
@@ -149,6 +156,7 @@ class ClientDB:
         self._notify()
 
     def get_chat_users(self, chat_name):
+        """ получить список пользователей чата """
         chat_id = self.get_chat_id(chat_name)
         cmd = "SELECT user_id FROM chat_users WHERE chat_users.chat_id = ?"
         self.cursor.execute(cmd, (chat_id, ))
@@ -157,6 +165,7 @@ class ClientDB:
         return users
 
     def add_message(self, message: JIMClientMessage):
+        """ добавить сообщение в бд """
         if not (isinstance(message, JIMMessage) and message.action == "msg"):
             raise ClientDBError("message must be JIMClientMessage.msg")
         ### Временное упрощение ############################
