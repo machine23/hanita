@@ -47,6 +47,7 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
     def response(self, resp_code=None):
         """ Ответить на сообщение """
         if resp_code:
+            print("resp_code:", resp_code)
             self.send(JIMResponse(resp_code))
 
     def send_to_all(self):
@@ -76,6 +77,7 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
 
     def send(self, message):
         """ Ответить отправителю """
+        print("send message:", message)
         self.request.sendall(json.dumps(message).encode())
 
     def handler_authenticate(self):

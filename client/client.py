@@ -1,11 +1,15 @@
 """ Hanita client class and client mainloop """
 import sys
+import time
 
 from JIM import JIMClientMessage, JIMResponse, JIMMessage
 
 from .client_connection import ClientConnection, ClientConnectionError
 from .client_db import ClientDB, ClientDBError
 from .client_qtview import QtClientView
+
+
+WAITING_TIME = 1.0
 
 
 ###############################################################################
@@ -89,12 +93,13 @@ class Client:
         """
         self.conn.get()  # отбрасываем нежданное сообщение перед отправкой
         self.conn.send(message)
-        resp = self.conn.get()
-        # print("response:", resp)
-        if resp is None:
-            self.close("Потеряна связь с сервером")
-        else:
-            return resp
+        resp = None
+        start = time.time()
+        while resp is None:
+            resp = self.conn.get()
+            if time.time() - start > WAITING_TIME:
+                self.close("Потеряна связь с сервером")
+        return resp
 
     def get_from(self):
         """ Получаем и обрабатываем сообщение, присланное от другого клиента """
