@@ -1,53 +1,101 @@
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, String, Integer, ForeignKey, Float
-
+from sqlalchemy import Column, String, Integer, ForeignKey, Float, Text, UniqueConstraint
 
 Base = declarative_base()
 
 
 class User(Base):
     __tablename__ = "users"
-    user_id = Column(Integer, primary_key=True)
-    user_name = Column(String(25), unique=True)
+    _id = Column("id", Integer, primary_key=True)
+    name = Column(String(25))
     password = Column(String(25))
 
+    @property
+    def id(self):
+        return self._id
+
     def __init__(self, name, password=""):
-        self.user_name = name
+        self.name = name
         self.password = password
 
     def __repr__(self):
-        return "User (userid = {}, password = {})".format(self.user_id,
-                                                          self.password)
+        return "User (userid = {}, password = {})".format(
+            self.id_user, self.password)
 
 
-class UserHistory(Base):
-    __tablename__ = "user_hist"
-    id = Column(Integer, primary_key=True)
-    user_id = Column(String, ForeignKey("users.user_id"))
-    login_time = Column(Float)
-    login_ip = Column(String(15))
+class Chat(Base):
+    __tablename__ = "chats"
+    _id = Column("id", Integer, primary_key=True)
+    name = Column(String)
 
-    def __init__(self, user, login_time, login_ip):
-        if not isinstance(user, User):
-            raise
-        self.user_id = user.user_id
-        self.login_time = login_time
-        self.login_ip = login_ip
+    @property
+    def id(self):
+        return self._id
+
+    def __init__(self, name):
+        self.name = name
 
     def __repr__(self):
-        return "UserHistory {} ({}, {})".format(self.user_id, self.login_time,
-                                                self.login_ip)
+        return "Chat <{}, {}>".format(self.id, self.name)
 
 
-class UserContact(Base):
-    __tablename__ = "user_cont"
-    id = Column(Integer, primary_key=True)
-    user_id = Column("user_id", String, ForeignKey("users.user_id"))
-    contact_id = Column("contact_id", String, ForeignKey("users.user_id"))
+class ChatUser(Base):
+    __tablename__ = "chat_users"
+    _id = Column("id", Integer, primary_key=True)
+    id_chat = Column(Integer, ForeignKey("chats.id"))
+    id_user = Column(Integer, ForeignKey("users.id"))
+    __uix = UniqueConstraint(id_chat, id_user)
 
-    def __init__(self, user_id, contact_id):
-        self.user_id = user_id
-        self.contact_id = contact_id
+    @property
+    def id(self):
+        return self._id
+
+    def __init__(self, id_chat, id_user):
+        self.id_chat = id_chat
+        self.id_user = id_user
 
     def __repr__(self):
-        return "UserContact {} : {}".format(self.user_id, self.contact_id)
+        return "ChatUser {}".format(self._id)
+
+
+class ChatMsg(Base):
+    __tablename__ = "chat_msgs"
+    _id = Column("id", Integer, primary_key=True)
+    id_user = Column(Integer, ForeignKey("users.id"))
+    id_chat = Column(Integer, ForeignKey("chats.id"))
+    time = Column(Float)
+    message = Column(Text)
+
+    @property
+    def id(self):
+        return self._id
+
+    def __init__(self, id_user, id_chat, timestamp, message):
+        self.id_user = id_user
+        self.id_chat = id_chat
+        self.time = timestamp
+        self.message = message
+
+    def __repr__(self):
+        return "ChatMsg {} <{} to {}: {}>".format(
+            self._id, self.id_user, self.id_chat,
+            self.message[:10] + ("..." if len(message) > 10 else ""))
+
+
+class Contact(Base):
+    __tablename__ = "contacts"
+    _id = Column("id", Integer, primary_key=True)
+    id_user = Column("id_user", String, ForeignKey("users.id"))
+    id_contact = Column("id_contact", String, ForeignKey("users.id"))
+    __uix = UniqueConstraint("id_user", "id_contact")
+
+    @property
+    def id(self):
+        return self._id
+
+    def __init__(self, id_user, id_contact):
+        self.id_user = id_user
+        self.id_contact = id_contact
+
+    def __repr__(self):
+        return "UserContact {} : {}".format(self.id_user, self.id_contact)

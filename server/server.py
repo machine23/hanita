@@ -79,7 +79,7 @@ def main():
     """ mainloop """
     args = read_args()
 
-    sdb = ServerDB(Base, "sqlite:///users.db")
+    sdb = ServerDB(Base, "sqlite:///server.db")
 
     with Server((args.addr, args.port), ClientRequestHandler, sdb) as server:
         server_addr = server.socket.getsockname()

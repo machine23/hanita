@@ -94,7 +94,7 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
             user = User(accaunt_name, password)
             # Если пользователя нет в базе
             if not self.server.db.exists(user.user_name):
-                self.server.db.add_new_user(user)
+                self.server.db.add_user(user)
             # Проверка, имеется ли уже подключение с данным ID
             elif self.user_online(user.user_name):
                 # Добавить проверку, если уже имеется подключение с данным ID,
