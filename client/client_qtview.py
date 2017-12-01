@@ -74,17 +74,20 @@ class QtClientView(
         """
         chat_name = self.model.active_chat
         messages = self.model.get_messages(chat_name)
-        template = '''<div style="margin-bottom:50px;">
-        <h4 style="color:blue;margin:0px;padding:0px;">{}: </h4>
-        <p style="margin:0px;padding:0px;margin-left:10px;margin-bottom:20px;">{}</p>
-        </div>'''
+        template = '''
+        <table bgcolor="#fff" width="500" align="center" style="margin:5px;padding:10px;">
+            <tr><td maxwidth="500" style="padding:5px;"><b style="color:blue;">{}</b></td></tr>
+            <tr><td style="padding:5px;padding-left:20px;">{}</td></tr>
+        </table>
+        '''
 
         arr = [
             template.format(i.from_user, i.message.replace("\n", "<br>"))
             for i in messages
         ]
-        msg_string = "".join(arr)
+        msg_string = '<body bgcolor="#ccc">'+"".join(arr)+'<a name="end" style="color:#ccc">a</a>'+'</html>'
         self.ui.te_list_msg.setHtml(msg_string)
+        self.ui.te_list_msg.scrollToAnchor("end")
 
     def render_chats_list(self):
         """
