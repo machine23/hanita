@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.engine import Engine
 from sqlalchemy import event
 
-from .models import User, Contact, Base
+from .models import User, Chat, ChatUser, ChatMsg, Contact, Base
 
 
 @event.listens_for(Engine, "connect")
@@ -52,10 +52,8 @@ class ServerDB:
             print(str(err))
             self.close()
 
-    def add_obj(self, obj, error_msg=""):
+    def add_obj(self, obj, error_msg="add_obj error"):
         """ Добавить в базу """
-        if not error_msg:
-            error_msg = "add_obj error"
         try:
             self.session.add(obj)
             self.session.commit()
@@ -68,12 +66,12 @@ class ServerDB:
         obj = self.session.query(cls).filter(cls.id == _id).first()
         return obj
 
-    def del_obj(self, obj, error_msg=""):
-        """ Удалить из базы """
-        if not error_msg:
-            error_msg = "del_obj error"
+    def del_obj(self, obj, error_msg="del_obj error"):
+        """ Удалить из базы.
+        Ничего из базы не удаляется. Меняется только статус с active на deleted
+        """
         try:
-            self.session.delete(obj)
+            obj.status = "deleted"
             self.session.commit()
         except:
             self.session.rollback()
@@ -83,6 +81,21 @@ class ServerDB:
         """ Проверить наличие в базе """
         q = self.session.query(cls).filter(cls.id == _id)
         return self.session.query(q.exists()).scalar()
+
+    def get_active_chatusers(self, chat_id):
+        """ Получить список всех активных пользователей чата """
+        user_list = self.session.query(User) \
+            .join(ChatUser) \
+            .filter(ChatUser.chat_id == chat_id) \
+            .filter(ChatUser.status == "active").all()
+        return user_list
+
+    def get_active_chats_for(self, user_id):
+        """ Получить список всех активных чатов для данного пользователя """
+        chat_list = self.session.query(Chat) \
+            .join(ChatUser) \
+            .filter(ChatUser.user_id == user_id).all()
+        return chat_list
 
     def setup(self):
         """ Загрузка БД """

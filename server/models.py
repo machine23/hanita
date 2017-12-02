@@ -1,5 +1,5 @@
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, String, Integer, ForeignKey, Float, Text, UniqueConstraint
+from sqlalchemy import Column, String, Integer, ForeignKey, Float, Text, UniqueConstraint, CheckConstraint
 
 Base = declarative_base()
 
@@ -8,10 +8,12 @@ class User(Base):
     __tablename__ = "users"
     id = Column("id", Integer, primary_key=True)
     name = Column(String(25))
+    status = Column(String(8), nullable=False)
+    CheckConstraint("status in ('active', 'deleted')")
 
-    def __init__(self, name, password=""):
+    def __init__(self, name):
         self.name = name
-        # self.password = password
+        self.status = "active"
 
     def __repr__(self):
         return "User (userid = {}, name = {})".format(
@@ -21,11 +23,13 @@ class User(Base):
 class Chat(Base):
     __tablename__ = "chats"
     id = Column("id", Integer, primary_key=True)
-    name = Column(String)
-
+    name = Column(String(25))
+    status = Column(String(8), nullable=False)
+    CheckConstraint("status in ('active', 'deleted')")
 
     def __init__(self, name):
         self.name = name
+        self.status = "active"
 
     def __repr__(self):
         return "Chat <{}, {}>".format(self.id, self.name)
@@ -34,14 +38,16 @@ class Chat(Base):
 class ChatUser(Base):
     __tablename__ = "chat_users"
     id = Column("id", Integer, primary_key=True)
-    id_chat = Column(Integer, ForeignKey("chats.id"))
-    id_user = Column(Integer, ForeignKey("users.id"))
-    __uix = UniqueConstraint(id_chat, id_user)
+    chat_id = Column(Integer, ForeignKey("chats.id"))
+    user_id = Column(Integer, ForeignKey("users.id"))
+    status = Column(String(8), nullable=False)
+    CheckConstraint("status in ('active', 'deleted')")
+    __uix = UniqueConstraint(chat_id, user_id)
 
-
-    def __init__(self, id_chat, id_user):
-        self.id_chat = id_chat
-        self.id_user = id_user
+    def __init__(self, chat_id, user_id):
+        self.chat_id = chat_id
+        self.user_id = user_id
+        self.status = "active"
 
     def __repr__(self):
         return "ChatUser {}".format(self.id)
@@ -50,35 +56,39 @@ class ChatUser(Base):
 class ChatMsg(Base):
     __tablename__ = "chat_msgs"
     id = Column("id", Integer, primary_key=True)
-    id_user = Column(Integer, ForeignKey("users.id"))
-    id_chat = Column(Integer, ForeignKey("chats.id"))
+    user_id = Column(Integer, ForeignKey("users.id"))
+    chat_id = Column(Integer, ForeignKey("chats.id"))
     time = Column(Float)
     message = Column(Text)
+    status = Column(String(8))
+    CheckConstraint("status in ('active', 'deleted')")
 
-
-    def __init__(self, id_user, id_chat, timestamp, message):
-        self.id_user = id_user
-        self.id_chat = id_chat
+    def __init__(self, user_id, chat_id, timestamp, message):
+        self.user_id = user_id
+        self.chat_id = chat_id
         self.time = timestamp
         self.message = message
+        self.status = "active"
 
     def __repr__(self):
         return "ChatMsg {} <{} to {}: {}>".format(
-            self.id, self.id_user, self.id_chat,
-            self.message[:10] + ("..." if len(message) > 10 else ""))
+            self.id, self.user_id, self.chat_id,
+            self.message[:10] + ("..." if len(self.message) > 10 else ""))
 
 
 class Contact(Base):
     __tablename__ = "contacts"
     id = Column("id", Integer, primary_key=True)
-    id_user = Column("id_user", String, ForeignKey("users.id"))
-    id_contact = Column("id_contact", String, ForeignKey("users.id"))
-    __uix = UniqueConstraint("id_user", "id_contact")
+    user_id = Column("user_id", String, ForeignKey("users.id"))
+    contact_id = Column("contact_id", String, ForeignKey("users.id"))
+    status = Column(String(8), nullable=False)
+    CheckConstraint("status in ('active', 'deleted')")
+    __uix = UniqueConstraint("user_id", "contact_id")
 
-
-    def __init__(self, id_user, id_contact):
-        self.id_user = id_user
-        self.id_contact = id_contact
+    def __init__(self, user_id, contact_id):
+        self.user_id = user_id
+        self.contact_id = contact_id
+        self.status = "active"
 
     def __repr__(self):
-        return "UserContact {} : {}".format(self.id_user, self.id_contact)
+        return "UserContact {} : {}".format(self.user_id, self.contact_id)
