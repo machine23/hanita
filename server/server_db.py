@@ -22,7 +22,7 @@ class ServerDBError(Exception):
     pass
 
 
-class ServerDBUnknownID(Exception):
+class SDBChatEmptyError(ServerDBError):
     """ Исключение при неверном ID """
     pass
 
@@ -70,6 +70,10 @@ class ServerDB:
         """ Удалить из базы.
         Ничего из базы не удаляется. Меняется только статус с active на deleted
         """
+        if isinstance(obj,
+                      Chat) and len(self.get_active_chatusers(obj.id)) > 0:
+            raise SDBChatEmptyError(
+                "Попытка удалить чат с активными пользователями")
         try:
             obj.status = "deleted"
             self.session.commit()
@@ -87,15 +91,37 @@ class ServerDB:
         user_list = self.session.query(User) \
             .join(ChatUser) \
             .filter(ChatUser.chat_id == chat_id) \
-            .filter(ChatUser.status == "active").all()
+            .filter(ChatUser.status == "active") \
+            .filter(User.status == "active").all()
         return user_list
 
     def get_active_chats_for(self, user_id):
         """ Получить список всех активных чатов для данного пользователя """
         chat_list = self.session.query(Chat) \
             .join(ChatUser) \
-            .filter(ChatUser.user_id == user_id).all()
+            .filter(ChatUser.user_id == user_id) \
+            .filter(ChatUser.status == "active").all()
         return chat_list
+
+    def add_user_to_chat(self, chat_id, user_id):
+        """ Добавить пользователя в чат """
+        chatuser = ChatUser(chat_id, user_id)
+        self.add_obj(chatuser)
+
+    def del_user_from_chat(self, chat_id, user_id):
+        """ Удалить пользователя из чата """
+        chatuser = self.session.query(ChatUser) \
+            .filter(ChatUser.chat_id == chat_id) \
+            .filter(ChatUser.user_id == user_id) \
+            .first()
+        self.del_obj(chatuser)
+
+    def find_users(self, substr):
+        """ Найти всех пользователей по строке поиска"""
+        users = self.session.query(User) \
+            .filter(User.name.like('%{}%'.format(substr))) \
+            .all()
+        return users
 
     def setup(self):
         """ Загрузка БД """
