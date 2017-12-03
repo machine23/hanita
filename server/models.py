@@ -1,5 +1,7 @@
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, String, Integer, ForeignKey, Float, Text, UniqueConstraint, CheckConstraint
+from sqlalchemy import Column, String, Integer, ForeignKey, Float, Text
+from sqlalchemy import UniqueConstraint, CheckConstraint
+from JIM import JIMMessage
 
 Base = declarative_base()
 
@@ -18,6 +20,7 @@ class User(Base):
     def __repr__(self):
         return "User (userid = {}, name = {})".format(
             self.id, self.name)
+
 
 
 class Chat(Base):
@@ -63,11 +66,13 @@ class ChatMsg(Base):
     status = Column(String(8))
     CheckConstraint("status in ('active', 'deleted')")
 
-    def __init__(self, user_id, chat_id, timestamp, message):
-        self.user_id = user_id
-        self.chat_id = chat_id
-        self.time = timestamp
-        self.message = message
+    def __init__(self, msg: JIMMessage):
+        if not msg.action == JIMMessage.MSG:
+            raise 
+        self.user_id = msg.from_user
+        self.chat_id = msg.to_user
+        self.time = msg.time
+        self.message = msg.message
         self.status = "active"
 
     def __repr__(self):

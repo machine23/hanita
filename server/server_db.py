@@ -5,6 +5,7 @@ from sqlalchemy.engine import Engine
 from sqlalchemy import event
 
 from .models import User, Chat, ChatUser, ChatMsg, Contact, Base
+from JIM import JIMClientMessage
 
 
 @event.listens_for(Engine, "connect")
@@ -61,17 +62,19 @@ class ServerDB:
             self.session.rollback()
             raise ServerDBError(error_msg)
 
-    def get_obj(self, cls, _id):
+    def get_obj(self, cls, obj_id):
         """ Получить из базы """
-        obj = self.session.query(cls).filter(cls.id == _id).first()
+        obj = self.session.query(cls).filter(cls.id == obj_id).first()
         return obj
 
-    def del_obj(self, obj, error_msg="del_obj error"):
+    def del_obj(self, cls, obj_id, error_msg="del_obj error"):
         """ Удалить из базы.
         Ничего из базы не удаляется. Меняется только статус с active на deleted
         """
-        if isinstance(obj,
-                      Chat) and len(self.get_chat_users(obj.id)) > 0:
+        obj = self.session.query(cls) \
+            .filter(cls.id == obj_id) \
+            .first()
+        if cls == Chat and self.get_chat_users(obj.id):
             raise SDBChatEmptyError(
                 "Попытка удалить чат с активными пользователями")
         try:
@@ -81,9 +84,9 @@ class ServerDB:
             self.session.rollback()
             raise ServerDBError(error_msg)
 
-    def obj_exists(self, cls, _id):
+    def obj_exists(self, cls, obj_id):
         """ Проверить наличие в базе """
-        q = self.session.query(cls).filter(cls.id == _id)
+        q = self.session.query(cls).filter(cls.id == obj_id)
         return self.session.query(q.exists()).scalar()
 
     def get_chat_users(self, chat_id):
@@ -114,7 +117,8 @@ class ServerDB:
             .filter(ChatUser.chat_id == chat_id) \
             .filter(ChatUser.user_id == user_id) \
             .first()
-        self.del_obj(chatuser)
+        if chatuser:
+            self.del_obj(ChatUser, chatuser.id)
 
     def find_users(self, substr):
         """ Найти всех пользователей по строке поиска"""
@@ -126,18 +130,30 @@ class ServerDB:
     def get_user_contacts(self, user_id):
         """ Получить список контактов пользователя """
         contacts = self.session.query(User) \
-            .join(Contact) \
+            .join(Contact, User.id == Contact.contact_id) \
             .filter(Contact.user_id == user_id) \
             .filter(Contact.status == "active") \
             .all()
         return contacts
+
+    def del_contact(self, user_id, contact_id):
+        contact = self.session.query(Contact) \
+            .filter(Contact.user_id == user_id) \
+            .filter(Contact.contact_id == contact_id) \
+            .first()
+        self.del_obj(Contact, contact.id)
 
     def get_chat_msgs(self, chat_id):
         """ Получить сообщения для чата """
         msgs = self.session.query(ChatMsg) \
             .filter(ChatMsg.chat_id == chat_id) \
             .all()
-        return msgs
+        jim_msgs = [
+            JIMClientMessage.msg(m.user_id, m.chat_id, m.message, m.time)
+            for m in msgs
+        ]
+        return jim_msgs
+
 
     def setup(self):
         """ Загрузка БД """

@@ -154,12 +154,14 @@ class JIMClientMessage(JIMMessage):
         return msg
 
     @staticmethod
-    def msg(user_name, to_user, message):
+    def msg(user_name, to_user, message, timestamp=None):
         """ Сообщение пользователю или в чат """
         msg = JIMClientMessage(JIMMessage.MSG)
         msg.to_user = to_user
         msg.from_user = user_name
         msg.message = message
+        if timestamp:
+            msg.time = timestamp
         return msg
 
     @staticmethod
