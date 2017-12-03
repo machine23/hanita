@@ -74,51 +74,51 @@ def test_del_obj(db):
         db.del_obj(chat1)
 
 
-def test_get_active_chatusers(db):
-    assert len(db.get_active_chatusers(1)) == 2
-    assert len(db.get_active_chatusers(2)) == 1
-    assert len(db.get_active_chatusers(3)) == 0
-    assert len(db.get_active_chatusers(4)) == 0
+def test_get_chat_users(db):
+    assert len(db.get_chat_users(1)) == 2
+    assert len(db.get_chat_users(2)) == 1
+    assert len(db.get_chat_users(3)) == 0
+    assert len(db.get_chat_users(4)) == 0
     # Проверка, что выдает список только User-ов
-    users = db.get_active_chatusers(1)
+    users = db.get_chat_users(1)
     assert all(isinstance(i, User) for i in users)
     assert users[0].name == "user1"
     assert users[1].name == "user2"
     # Проверка, что выдает список только активных User-ов
     db.del_obj(users[0])
-    users = db.get_active_chatusers(1)
+    users = db.get_chat_users(1)
     assert len(users) == 1
     assert users[0].name == "user2"
     # Проверка, что выдает список User-ов, если они активные ChatUser-ы
     db.del_obj(db.get_obj(ChatUser, 2))
-    users = db.get_active_chatusers(1)
+    users = db.get_chat_users(1)
     assert len(users) == 0
 
 
-def test_get_active_chats_for(db: ServerDB):
-    assert len(db.get_active_chats_for(1)) == 2
-    assert len(db.get_active_chats_for(2)) == 1
-    assert len(db.get_active_chats_for(3)) == 0
-    assert len(db.get_active_chats_for(4)) == 0
+def test_get_chats_for(db: ServerDB):
+    assert len(db.get_chats_for(1)) == 2
+    assert len(db.get_chats_for(2)) == 1
+    assert len(db.get_chats_for(3)) == 0
+    assert len(db.get_chats_for(4)) == 0
     # Проверка, что выдает список только Chat-ов
-    chats = db.get_active_chats_for(1)
+    chats = db.get_chats_for(1)
     assert all(isinstance(c, Chat) for c in chats)
     assert chats[0].name == "chat1"
     assert chats[1].name == "chat2"
 
 
-def test_get_active_chats_for_active_chatuser_only(db):
+def test_get_chats_for_active_chatuser_only(db):
     # Проверка, что выдает список Chat-ов, если user активный ChatUser
     chatuser3 = db.get_obj(ChatUser, 3)
     db.del_obj(chatuser3)
-    chats = db.get_active_chats_for(1)
+    chats = db.get_chats_for(1)
     assert len(chats) == 1
     assert chats[0].name == "chat1"
 
 
 def test_add_user_to_chat(db: ServerDB):
     db.add_user_to_chat(1, 3)
-    users = db.get_active_chatusers(1)
+    users = db.get_chat_users(1)
     assert len(users) == 3
     assert users[2].name == "user3"
     with pytest.raises(ServerDBError):
@@ -131,7 +131,7 @@ def test_add_user_to_chat(db: ServerDB):
 
 def test_del_user_from_chat(db: ServerDB):
     db.del_user_from_chat(1, 2)
-    users = db.get_active_chatusers(1)
+    users = db.get_chat_users(1)
     assert len(users) == 1
     assert users[0].name == "user1"
     with pytest.raises(ServerDBError):

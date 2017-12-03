@@ -71,7 +71,7 @@ class ServerDB:
         Ничего из базы не удаляется. Меняется только статус с active на deleted
         """
         if isinstance(obj,
-                      Chat) and len(self.get_active_chatusers(obj.id)) > 0:
+                      Chat) and len(self.get_chat_users(obj.id)) > 0:
             raise SDBChatEmptyError(
                 "Попытка удалить чат с активными пользователями")
         try:
@@ -86,7 +86,7 @@ class ServerDB:
         q = self.session.query(cls).filter(cls.id == _id)
         return self.session.query(q.exists()).scalar()
 
-    def get_active_chatusers(self, chat_id):
+    def get_chat_users(self, chat_id):
         """ Получить список всех активных пользователей чата """
         user_list = self.session.query(User) \
             .join(ChatUser) \
@@ -95,7 +95,7 @@ class ServerDB:
             .filter(User.status == "active").all()
         return user_list
 
-    def get_active_chats_for(self, user_id):
+    def get_chats_for(self, user_id):
         """ Получить список всех активных чатов для данного пользователя """
         chat_list = self.session.query(Chat) \
             .join(ChatUser) \
@@ -122,6 +122,22 @@ class ServerDB:
             .filter(User.name.like('%{}%'.format(substr))) \
             .all()
         return users
+
+    def get_user_contacts(self, user_id):
+        """ Получить список контактов пользователя """
+        contacts = self.session.query(User) \
+            .join(Contact) \
+            .filter(Contact.user_id == user_id) \
+            .filter(Contact.status == "active") \
+            .all()
+        return contacts
+
+    def get_chat_msgs(self, chat_id):
+        """ Получить сообщения для чата """
+        msgs = self.session.query(ChatMsg) \
+            .filter(ChatMsg.chat_id == chat_id) \
+            .all()
+        return msgs
 
     def setup(self):
         """ Загрузка БД """
