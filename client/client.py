@@ -1,6 +1,7 @@
 """ Hanita client class and client mainloop """
 import sys
 import time
+import threading
 
 from JIM import JIMClientMessage, JIMResponse, JIMMessage
 
