@@ -43,13 +43,13 @@ class Client:
     def __init__(self, conn: ClientConnection, ViewClass):
         super().__init__()
         self.user = ClientUser()
-        db_name = "client" + str(random.randint(1, 100000)) + ".db"
-        self.model = ClientDB(db_name)
+        # db_name = "client" + str(random.randint(1, 100000)) + ".db"
+        self.model = None
         self.conn = conn
-        self.view = ViewClass(self, self.model)
+        self.view = ViewClass(self)
         try:
             self.conn.connect()
-        except ClientConnectionError as err:
+        except ClientConnectionError:
             self.view.render_info("Не могу соединиться с сервером")
             self.conn = None
             self.close()
@@ -73,6 +73,9 @@ class Client:
             self.view.render_info(resp.error)
             return False
         self.user.name = login
+        db_name = login + ".db"
+        self.model = ClientDB(db_name)
+        self.view.set_model(self.model)
         # self.view.render_info("Привет, " + login + "!")
         ###
         self.model.active_user = login
@@ -104,7 +107,8 @@ class Client:
         while resp is None:
             resp = self.conn.get()
             if time.time() - start > WAITING_TIME:
-                self.close("Потеряна связь с сервером")
+                # self.close("Потеряна связь с сервером")
+                break
         return resp
 
     def get_from(self):
@@ -231,9 +235,11 @@ class Client:
     def close(self, info=""):
         """ Закрываем клиент """
         msg = JIMClientMessage.quit()
+        print("close client")
         if self.conn:
             self.send_to_server(msg)
             self.conn.close()
+            self.conn = None
         if info:
             self.view.render_info(info)
         sys.exit()
