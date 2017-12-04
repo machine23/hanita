@@ -2,6 +2,9 @@
 import sys
 import time
 import threading
+import random
+
+from PyQt5.QtCore import QObject
 
 from JIM import JIMClientMessage, JIMResponse, JIMMessage
 
@@ -37,9 +40,11 @@ class ClientUser:
 class Client:
     """ класс Client """
 
-    def __init__(self, conn: ClientConnection, model: ClientDB, ViewClass):
+    def __init__(self, conn: ClientConnection, ViewClass):
+        super().__init__()
         self.user = ClientUser()
-        self.model = model
+        db_name = "client" + str(random.randint(1, 100000)) + ".db"
+        self.model = ClientDB(db_name)
         self.conn = conn
         self.view = ViewClass(self, self.model)
         try:
@@ -68,7 +73,7 @@ class Client:
             self.view.render_info(resp.error)
             return False
         self.user.name = login
-        self.view.render_info("Привет, " + login + "!")
+        # self.view.render_info("Привет, " + login + "!")
         ###
         self.model.active_user = login
         self.model.active_chat = "#all"
@@ -83,16 +88,16 @@ class Client:
         ###
         self.model.add_message(msg)
         ###
-        resp = self.send_to_server(msg)
-        if resp.error:
-            self.view.render_info(resp.error)
-            pass
+        resp = self.conn.send(msg)
+        # if resp.error:
+        #     self.view.render_info(resp.error)
+        #     pass
 
     def send_to_server(self, message):
         """
         Отправляем на сервер и обрабатываем ответ от сервера.
         """
-        self.conn.get()  # отбрасываем нежданное сообщение перед отправкой
+        # self.conn.get()  # отбрасываем нежданное сообщение перед отправкой
         self.conn.send(message)
         resp = None
         start = time.time()
@@ -108,6 +113,7 @@ class Client:
         # if msg is None:
         #     self.close("Потеряна связь с сервером")
         if msg and msg.action == msg.MSG:
+            print("get_from:", msg)
             self.view.render_message(msg)
             ###
             self.model.add_message(msg)
@@ -117,15 +123,20 @@ class Client:
         """ Главный цикл работы клиента """
         while not self.authenticate():
             pass
-        if mode == "read":
-            self.view.render_help()
-            while True:
-                self.get_from()
-        elif mode == "write":
-            print("*** run ***")
-            self.view.run()
+        # if mode == "read":
+        #     # self.view.render_help()
+        #     while True:
+        #         self.get_from()
+        # elif mode == "write":
+        print("*** run ***")
+        self.view.run()
         self.view.render_info("Good bye!")
         self.close()
+
+    def receive(self):
+        print("receive")
+        while True:
+            self.get_from()
 
     def parse_cmd(self, user_msg: str):
         """ Разбираем команды пользователя """
@@ -226,3 +237,7 @@ class Client:
         if info:
             self.view.render_info(info)
         sys.exit()
+
+
+class QtClient(Client, QObject):
+    pass

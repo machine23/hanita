@@ -1,6 +1,7 @@
 import sys
 import abc
 from PyQt5 import QtWidgets
+from PyQt5.QtCore import QThread, pyqtSignal
 from sip import wrappertype
 from .client_ui import Ui_MainWindow
 # from .client import Client
@@ -20,12 +21,14 @@ class BaseClientObserver(metaclass=abc.ABCMeta):
 class QtClientView(
         QtWidgets.QMainWindow, BaseClientObserver, metaclass=ClientMeta):
     app = QtWidgets.QApplication([])
+    model_changed = pyqtSignal()
 
     def __init__(self, client, client_model: ClientDB, parent=None):
         QtWidgets.QMainWindow.__init__(self, parent)
 
         self.controller = client
         self.model = client_model
+        self.thread = None
 
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
@@ -41,11 +44,24 @@ class QtClientView(
             self.ui.te_input_msg.setText("")
 
     def model_is_changed(self):
+        print("model_is_changed")
+        self.model_changed.emit()
+
+    def render_view(self):
+        print("render_view")
         self.render_messages()
         self.render_chats_list()
-        pass
+    #     pass
 
     def run(self):
+        ################
+        self.model_changed.connect(self.render_view)
+        self.thread = QThread()
+        self.controller.moveToThread(self.thread)
+        self.thread.started.connect(self.controller.receive)
+        self.thread.start()
+        print(self.thread.isRunning())
+        ################
         self.show()
         self.app.exec_()
         self.controller.close()

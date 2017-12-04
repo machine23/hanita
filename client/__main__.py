@@ -3,7 +3,7 @@ import sys
 from .client_connection import ClientConnection
 from .client_qtview import QtClientView
 from .client_db import ClientDB
-from .client import Client
+from .client import Client, QtClient
 from .client_view import ConsoleClientView
 
 
@@ -61,14 +61,14 @@ def main():
 
     connection = ClientConnection(args.addr, args.port)
 
-    model = ClientDB("client.db")
+    # model = ClientDB("client.db")
 
-    if mode == "read":
-        client = Client(connection, model, ConsoleClientView)
-    elif mode == "write":
-        client = Client(connection, model, QtClientView)
-    else:
-        sys.exit()
+    # if mode == "read":
+    #     client = Client(connection, model, ConsoleClientView)
+    # elif mode == "write":
+    client = QtClient(connection, QtClientView)
+    # else:
+    #     sys.exit()
     client.run(mode)
 
     client.close("Good Bye!")

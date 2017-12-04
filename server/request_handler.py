@@ -52,6 +52,8 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
 
     def send_to_all(self):
         """ Отправить сообщение всем авторизованным пользователям """
+        print("send_to_all")
+        print("*"*10, *self.server.clients.values(), "#"*10, sep="\n")
         for client in self.server.clients:
             if self.server.clients[client] and client is not self.request:
                 self.send_to(client, self.msg)
@@ -67,6 +69,7 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
 
     def send_to(self, client, message):
         """ Отправить сообщение другому клиенту """
+        print("send_to:", client, message)
         json_msg = json.dumps(message)
         bmsg = json_msg.encode("utf_8")
         try:

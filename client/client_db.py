@@ -1,5 +1,6 @@
 """ Модель данных для клиента """
 import sqlite3
+import threading
 
 from JIM import JIMMessage, JIMClientMessage
 
@@ -13,9 +14,10 @@ class ClientDB:
         self._observers = []
         self._active_chat = None
         self._active_user = None
+        self.lock = threading.Lock()
         if not path_to_db:
             path_to_db = ":memory:"
-        self.conn = sqlite3.connect(path_to_db)
+        self.conn = sqlite3.connect(path_to_db, check_same_thread=False)
         self.conn.execute("PRAGMA foreign_keys = ON")
         self.cursor = self.conn.cursor()
         self.setup()
@@ -73,42 +75,55 @@ class ClientDB:
         """ Добавить пользователя """
         if not self.user_exists(user_name):
             cmd = "INSERT INTO users(user_name) VALUES (?)"
+            self.lock.acquire()
             self.cursor.execute(cmd, (user_name, ))
             self.conn.commit()
+            self.lock.release()
         self._notify()
 
     def get_users(self):
         """ Получить список пользователей """
+        self.lock.acquire()
         self.cursor.execute("SELECT * FROM users;")
         arr = self.cursor.fetchall()
+        self.lock.release()
         users = [i[1] for i in arr]
         return users
 
     def get_user_id(self, user_name):
         """ Получить id пользователя """
         cmd = "SELECT users.id FROM users WHERE users.user_name = ?"
+        self.lock.acquire()
         self.cursor.execute(cmd, (user_name, ))
         _id = self.cursor.fetchall()
+        self.lock.release()
         return _id[0][0] if _id else None
 
     def get_user_name(self, user_id):
         """ Получить имя пользователя по id """
         cmd = "SELECT user_name FROM users WHERE users.id = ?"
+        self.lock.acquire()
         self.cursor.execute(cmd, (user_id, ))
         res = self.cursor.fetchall()
+        self.lock.release()
         return res[0][0] if res else None
 
     def user_exists(self, user_name):
         """ Проверить наличие пользователя """
         cmd = "SELECT 1 FROM users WHERE users.user_name = ?"
+        self.lock.acquire()
         self.cursor.execute(cmd, (user_name, ))
-        return bool(self.cursor.fetchall())
+        answer = bool(self.cursor.fetchall())
+        self.lock.release()
+        return answer
 
     def get_chats(self):
         """ получить список имеющихся чатов """
         cmd = "SELECT chats.chat_name FROM chats"
+        self.lock.acquire()
         self.cursor.execute(cmd)
         arr = self.cursor.fetchall()
+        self.lock.release()
         chats = [i[0] for i in arr]
         return chats
 
@@ -116,28 +131,37 @@ class ClientDB:
         """ Добавить чат в бд """
         if not self.chat_exists(chat_name):
             cmd = "INSERT INTO chats(chat_name) VALUES (?)"
+            self.lock.acquire()
             self.cursor.execute(cmd, (chat_name, ))
             self.conn.commit()
+            self.lock.release()
         self._notify()
 
     def chat_exists(self, chat_name):
         """ проверить наличие чата в бд """
         cmd = "SELECT 1 FROM chats WHERE chats.chat_name = ?"
+        self.lock.acquire()
         self.cursor.execute(cmd, (chat_name, ))
-        return bool(self.cursor.fetchall())
+        answer = bool(self.cursor.fetchall())
+        self.lock.release()
+        return answer
 
     def get_chat_id(self, chat_name):
         """ получить id по имени чата """
         cmd = "SELECT id FROM chats WHERE chats.chat_name = ?"
+        self.lock.acquire()
         self.cursor.execute(cmd, (chat_name, ))
         _id = self.cursor.fetchall()
+        self.lock.release()
         return _id[0][0] if _id else None
 
     def get_chat_name(self, chat_id):
         """ получить имя чата по id """
         cmd = "SELECT chat_name FROM chats WHERE chats.id = ?"
+        self.lock.acquire()
         self.cursor.execute(cmd, (chat_id, ))
         res = self.cursor.fetchall()
+        self.lock.release()
         return res[0][0] if res else None
 
     def add_chat_user(self, user_name, chat_name):
@@ -148,19 +172,24 @@ class ClientDB:
         user_id = self.get_user_id(user_name)
         chat_id = self.get_chat_id(chat_name)
         try:
+            self.lock.acquire()
             self.cursor.execute(cmd, (user_id, chat_id))
         except sqlite3.Error as err:
             raise ClientDBError(err)
         else:
             self.conn.commit()
+        finally:
+            self.lock.release()
         self._notify()
 
     def get_chat_users(self, chat_name):
         """ получить список пользователей чата """
         chat_id = self.get_chat_id(chat_name)
         cmd = "SELECT user_id FROM chat_users WHERE chat_users.chat_id = ?"
+        self.lock.acquire()
         self.cursor.execute(cmd, (chat_id, ))
         res = self.cursor.fetchall()
+        self.lock.release()
         users = [self.get_user_name(i[0]) for i in res if i]
         return users
 
@@ -187,9 +216,11 @@ class ClientDB:
         cmd = """INSERT INTO messages(creator_id, chat_id, time, message)
                  VALUES (?, ?, ?, ?)"""
         if chat_id and creator_id:
+            self.lock.acquire()
             self.cursor.execute(
                 cmd, (creator_id, chat_id, message.time, message.message))
             self.conn.commit()
+            self.lock.release()
         else:
             raise ClientDBError("unknown creator or chat")
         self._notify()
@@ -199,8 +230,10 @@ class ClientDB:
                  FROM messages
                  WHERE messages.chat_id = ?"""
         chat_id = self.get_chat_id(chat_name)
+        self.lock.acquire()
         self.cursor.execute(cmd, (chat_id, ))
         data = self.cursor.fetchall()
+        self.lock.release()
         messages = []
         for item in data:
             msg = JIMMessage()
