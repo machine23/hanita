@@ -107,7 +107,7 @@ class Client:
         while resp is None:
             resp = self.conn.get()
             if time.time() - start > WAITING_TIME:
-                # self.close("Потеряна связь с сервером")
+                self.view.render_info("Потеряна связь с сервером")
                 break
         return resp
 
@@ -237,7 +237,7 @@ class Client:
         msg = JIMClientMessage.quit()
         print("close client")
         if self.conn:
-            self.send_to_server(msg)
+            self.conn.send(msg)
             self.conn.close()
             self.conn = None
         if info:

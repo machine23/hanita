@@ -48,6 +48,7 @@ class QtClientView(
         if data.strip():
             self.controller.send_msg_to(self.model.active_chat, data)
             self.ui.te_input_msg.setText("")
+            self.ui.te_input_msg.setFocus()
 
     def model_is_changed(self):
         print("model_is_changed")
