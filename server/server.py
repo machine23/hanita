@@ -20,12 +20,12 @@ class Server(socketserver.ThreadingTCPServer):
         self,
         server_address,
         RequestHandlerClass,
-        database: ServerDB,
+        base,
         bind_and_activate=True
     ):
         socketserver.ThreadingTCPServer.__init__(
             self, server_address, RequestHandlerClass, bind_and_activate)
-        self.db = database
+        self.base = base
 
     def get_request(self):
         """ Получаем запрос """
@@ -81,7 +81,7 @@ def main():
 
     sdb = ServerDB(Base, "sqlite:///users.db")
 
-    with Server((args.addr, args.port), ClientRequestHandler, sdb) as server:
+    with Server((args.addr, args.port), ClientRequestHandler, Base) as server:
         server_addr = server.socket.getsockname()
         serve_message = "Serving on {host} port {port} ..."
         print(serve_message.format(host=server_addr[0], port=server_addr[1]))

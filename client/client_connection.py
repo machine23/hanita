@@ -26,19 +26,21 @@ class ClientConnection:
     получает ответ от сервера.
     """
 
-    def __init__(self, host=None, port=7777):
+    def __init__(self, host=None, port=7777, timeout=0.1):
         if host is None:
             host = "127.0.0.1"
         self.host = host
         self.port = port
         self.connection = None
+        self.timeout = timeout
 
     def connect(self):
         """ Устанавливаем соединение с сервером """
         if self.connection:
             raise ClientConnectionError("Соединение уже установлено")
         try:
-            self.connection = socket.create_connection((self.host, self.port), timeout=0.1)
+            self.connection = socket.create_connection((self.host, self.port),
+                                                       timeout=self.timeout)
         except socket.error as err:
             raise ClientConnectionError(err)
 

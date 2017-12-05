@@ -1,17 +1,16 @@
 """ Hanita client class and client mainloop """
-import sys
-import time
-import threading
 import random
+import sys
+import threading
+import time
 
 from PyQt5.QtCore import QObject
 
-from JIM import JIMClientMessage, JIMResponse, JIMMessage
+from JIM import JIMClientMessage, JIMMessage, JIMResponse
 
 from .client_connection import ClientConnection, ClientConnectionError
 from .client_db import ClientDB, ClientDBError
 from .client_qtview import QtClientView
-
 
 WAITING_TIME = 1.0
 
@@ -43,7 +42,6 @@ class Client:
     def __init__(self, conn: ClientConnection, ViewClass):
         super().__init__()
         self.user = ClientUser()
-        # db_name = "client" + str(random.randint(1, 100000)) + ".db"
         self.model = None
         self.conn = conn
         self.view = ViewClass(self)
@@ -76,7 +74,6 @@ class Client:
         db_name = login + ".db"
         self.model = ClientDB(db_name)
         self.view.set_model(self.model)
-        # self.view.render_info("Привет, " + login + "!")
         ###
         self.model.active_user = login
         self.model.active_chat = "#all"
@@ -88,19 +85,13 @@ class Client:
         Отправляем на сервер сообщение от пользователя.
         """
         msg = JIMClientMessage.msg(self.user.name, to_user, message)
-        ###
         self.model.add_message(msg)
-        ###
-        resp = self.conn.send(msg)
-        # if resp.error:
-        #     self.view.render_info(resp.error)
-        #     pass
+        self.conn.send(msg)
 
     def send_to_server(self, message):
         """
         Отправляем на сервер и обрабатываем ответ от сервера.
         """
-        # self.conn.get()  # отбрасываем нежданное сообщение перед отправкой
         self.conn.send(message)
         resp = None
         start = time.time()
@@ -109,36 +100,29 @@ class Client:
             if time.time() - start > WAITING_TIME:
                 self.view.render_info("Потеряна связь с сервером")
                 break
+        print("response:", resp)
         return resp
 
     def get_from(self):
         """ Получаем и обрабатываем сообщение, присланное от другого клиента """
         msg = self.conn.get()
-        # if msg is None:
-        #     self.close("Потеряна связь с сервером")
+        if msg:
+            print("msg:", msg)
         if msg and msg.action == msg.MSG:
             print("get_from:", msg)
-            self.view.render_message(msg)
-            ###
             self.model.add_message(msg)
-            ###
 
-    def run(self, mode=None):
+    def run(self):
         """ Главный цикл работы клиента """
         while not self.authenticate():
             pass
-        # if mode == "read":
-        #     # self.view.render_help()
-        #     while True:
-        #         self.get_from()
-        # elif mode == "write":
         print("*** run ***")
         self.view.run()
         self.view.render_info("Good bye!")
         self.close()
 
     def receive(self):
-        print("receive")
+        """ Получаем сообщения от сервера """
         while True:
             self.get_from()
 
@@ -161,14 +145,12 @@ class Client:
                 self.del_contact(msg)
             elif cmd == "!help":
                 self.view.render_help()
-                pass
             elif cmd == "@":
                 self.who_online()
             elif cmd.startswith("@") and len(cmd) > 1:
                 self.send_msg_to(cmd[1:], msg)
             else:
                 self.view.render_info("Неизвестная команда!")
-                pass
             return True
         return False
 
@@ -197,7 +179,6 @@ class Client:
         resp = self.send_to_server(msg)
         if resp.error:
             self.view.render_info("Не удалось добавить контакт")
-            # self.view.render_info(resp.error)
             pass
         else:
             self.user.contacts.append(nickname)

@@ -61,15 +61,8 @@ def main():
 
     connection = ClientConnection(args.addr, args.port)
 
-    # model = ClientDB("client.db")
-
-    # if mode == "read":
-    #     client = Client(connection, model, ConsoleClientView)
-    # elif mode == "write":
     client = QtClient(connection, QtClientView)
-    # else:
-    #     sys.exit()
-    client.run(mode)
+    client.run()
 
     client.close("Good Bye!")
 

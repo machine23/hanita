@@ -2,7 +2,9 @@ import socketserver
 import socket
 import json
 import time
+import threading
 from .models import User
+from .server_db import ServerDB
 from JIM import JIMMessage, JIMResponse, JIMClientMessage
 
 RECV_BUFFER = 1024
@@ -17,59 +19,75 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
     def setup(self):
         # yapf: disable
         self.action_handlers = {
-            JIMMessage.MSG          : self.handler_msg,
-            JIMMessage.QUIT         : self.handler_quit,
-            JIMMessage.AUTHENTICATE : self.handler_authenticate,
-            JIMMessage.PRESENCE     : self.handler_presence,
-            JIMMessage.WHO_ONLINE   : self.handler_who_online,
-            JIMMessage.GET_CONTACTS : self.handler_get_contacts,
-            JIMMessage.ADD_CONTACT  : self.handler_add_contact
+            JIMMessage.MSG: self.handler_msg,
+            JIMMessage.QUIT: self.handler_quit,
+            JIMMessage.AUTHENTICATE: self.handler_authenticate,
+            JIMMessage.PRESENCE: self.handler_presence,
+            JIMMessage.WHO_ONLINE: self.handler_who_online,
+            JIMMessage.GET_CONTACTS: self.handler_get_contacts,
+            JIMMessage.ADD_CONTACT: self.handler_add_contact
         }
         # yapf: enable
         self.__quit = False
         self.msg = None
         self.user_name = None
+        self.db = ServerDB(self.server.base, "sqlite:///users.db")
+        self.lock = threading.Lock()
 
     def handle(self):
         """ Основной обработчик """
         while not self.__quit:
-            msg = self.get()
-            if msg and msg.action and msg.action in self.action_handlers:
-                self.msg = msg
-                action_handler = self.action_handlers[msg.action]
-                resp = action_handler()
-                print(resp)
-                self.response(resp)
-                self.msg = None
-            else:
-                self.response(400)
+            msgs = self.get()
+            if msgs:
+                for msg in msgs:
+                    if self.__quit:
+                        break
+                    if msg.action and msg.action in self.action_handlers:
+                        self.msg = msg
+                        action_handler = self.action_handlers[msg.action]
+                        resp = action_handler()
+                        self.response(resp)
+                        self.msg = None
+                    else:
+                        self.response(400)
+    
+    def finish(self):
+        self.db.close()
 
     def response(self, resp_code=None):
         """ Ответить на сообщение """
         if resp_code:
-            print("resp_code:", resp_code)
             self.send(JIMResponse(resp_code))
 
     def send_to_all(self):
         """ Отправить сообщение всем авторизованным пользователям """
-        print("send_to_all")
-        print("*"*10, *self.server.clients.values(), "#"*10, sep="\n")
-        for client in self.server.clients:
+        clients = [n for n in self.server.clients]
+        for client in clients:
             if self.server.clients[client] and client is not self.request:
                 self.send_to(client, self.msg)
         return 200
 
     def get(self):
         """ Получить сообщение от ... """
-        bmsg = self.request.recv(RECV_BUFFER)
+        _get_data = True
+        bmsg = b""
+        while _get_data:
+            try:
+                data = self.request.recv(RECV_BUFFER)
+            except ConnectionError:
+                self.__quit = True
+                break
+            if data == b"" or data.decode().endswith("}"):
+                _get_data = False
+            bmsg += data
         if bmsg:
-            msg = JIMMessage(json.loads(bmsg))
-            print(msg)
-            return msg
+            messages_str = bmsg.decode().replace("}{", "}<split>{")
+            arr_msgstr = messages_str.split("<split>")
+            msgs = [JIMMessage(json.loads(msg)) for msg in arr_msgstr]
+            return msgs
 
     def send_to(self, client, message):
         """ Отправить сообщение другому клиенту """
-        print("send_to:", client, message)
         json_msg = json.dumps(message)
         bmsg = json_msg.encode("utf_8")
         try:
@@ -80,8 +98,11 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
 
     def send(self, message):
         """ Ответить отправителю """
-        print("send message:", message)
-        self.request.sendall(json.dumps(message).encode())
+        msg = json.dumps(message).encode()
+        try:
+            self.request.sendall(msg)
+        except ConnectionError:
+            self.__quit = True
 
     def handler_authenticate(self):
         """
@@ -96,15 +117,15 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
             password = self.msg.user["password"]
             user = User(accaunt_name, password)
             # Если пользователя нет в базе
-            if not self.server.db.exists(user.user_name):
-                self.server.db.add_new_user(user)
+            if not self.db.exists(user.user_name):
+                self.db.add_new_user(user)
             # Проверка, имеется ли уже подключение с данным ID
             elif self.user_online(user.user_name):
                 # Добавить проверку, если уже имеется подключение с данным ID,
                 # то это подключение еще актуально (отправить PROBE)
                 return 409
             # Прошли все проверки, добавляем юсера в онлайн
-            self.server.db.save_hist(user, time.time(), str(
+            self.db.save_hist(user, time.time(), str(
                 self.client_address))
             self.server.clients[self.request] = user.user_name
             self.user_name = user.user_name
@@ -133,7 +154,7 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
                 user_sock = self.get_client_by_id(username)
                 resp = self.send_to(user_sock, self.msg)
                 return resp
-            if self.server.db.exists(username):
+            if self.db.exists(username):
                 return 410
             return 404
 
@@ -162,21 +183,19 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
         self.send(resp)
         for _id in clients:
             msg = JIMClientMessage.online_list(self.server.clients[_id])
-            print("="*40)
-            print(msg)
             self.send(msg)
         return 200
 
     def handler_get_contacts(self):
         """ Обработчик события Who online  """
-        users_list = self.server.db.get_contacts(self.user_name)
+        users_list = self.db.get_contacts(self.user_name)
         contacts = [obj.contact_id for obj in users_list]
         num = len(contacts)
         resp = JIMResponse(202)
         resp.quantity = num
         self.send(resp)
         for contact in contacts:
-            contact_name = self.server.db.get_user_name(contact)
+            contact_name = self.db.get_user_name(contact)
             msg = JIMClientMessage.contact_list(contact_name)
             self.send(msg)
         return 200
@@ -184,7 +203,7 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
     def handler_add_contact(self):
         """ Обработчик события ADD_CONTACT """
         contact = self.msg.user_id
-        if self.server.db.exists(contact):
-            self.server.db.add_contact(self.user_name, contact)
+        if self.db.exists(contact):
+            self.db.add_contact(self.user_name, contact)
             return 202
         return 404

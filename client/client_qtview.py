@@ -1,5 +1,6 @@
 import sys
 import abc
+import time
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QThread, pyqtSignal
 from sip import wrappertype
@@ -51,14 +52,11 @@ class QtClientView(
             self.ui.te_input_msg.setFocus()
 
     def model_is_changed(self):
-        print("model_is_changed")
         self.model_changed.emit()
 
     def render_view(self):
-        print("render_view")
         self.render_messages()
         self.render_chats_list()
-    #     pass
 
     def run(self):
         ################
@@ -68,7 +66,6 @@ class QtClientView(
         self.thread.started.connect(self.render_view)
         self.thread.started.connect(self.controller.receive)
         self.thread.start()
-        print(self.thread.isRunning())
         ################
         self.show()
         self.app.exec_()
@@ -89,11 +86,8 @@ class QtClientView(
                                                   "Enter your name")
         return text
 
-    def render_message(self, message):
-        pass
-
     def render_messages(self):
-        """ 
+        """
         Отобразить все сообщения для чата
         """
         chat_name = self.model.active_chat
@@ -109,6 +103,9 @@ class QtClientView(
                     <b style="color:{color};">
                         {name}
                     </b>
+                    <i style="color:lightgrey;font-size:small;">
+                        {timestamp}
+                    </i>
                 </td>
             </tr>
             <tr>
@@ -125,10 +122,12 @@ class QtClientView(
                 right="25px" if i.from_user == user else "5px",
                 color="orange" if i.from_user == user else "blue",
                 name=i.from_user,
+                timestamp=time.ctime(i.time),
                 text=i.message.replace("\n", "<br>"))
             for i in messages
         ]
-        msg_string = '<body bgcolor="#F4F5F6">'+"".join(arr)+'<a name="end" style="color:#F4F5F6">a</a>'+'</html>'
+        msg_string = '<body bgcolor="#F4F5F6">' + \
+            "".join(arr) + '<a name="end" style="color:#F4F5F6">a</a>' + '</html>'
         self.ui.te_list_msg.setHtml(msg_string)
         self.ui.te_list_msg.scrollToAnchor("end")
 
