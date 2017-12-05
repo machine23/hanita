@@ -100,23 +100,18 @@ class Client:
             if time.time() - start > WAITING_TIME:
                 self.view.render_info("Потеряна связь с сервером")
                 break
-        print("response:", resp)
         return resp
 
     def get_from(self):
         """ Получаем и обрабатываем сообщение, присланное от другого клиента """
         msg = self.conn.get()
-        if msg:
-            print("msg:", msg)
         if msg and msg.action == msg.MSG:
-            print("get_from:", msg)
             self.model.add_message(msg)
 
     def run(self):
         """ Главный цикл работы клиента """
         while not self.authenticate():
             pass
-        print("*** run ***")
         self.view.run()
         self.view.render_info("Good bye!")
         self.close()

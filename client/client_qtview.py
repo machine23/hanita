@@ -1,12 +1,14 @@
-import sys
 import abc
+import sys
 import time
+
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QThread, pyqtSignal
 from sip import wrappertype
-from .client_ui import Ui_MainWindow
+
 # from .client import Client
 from .client_db import ClientDB
+from .client_ui import Ui_MainWindow
 
 
 class ClientMeta(wrappertype, abc.ABCMeta):
