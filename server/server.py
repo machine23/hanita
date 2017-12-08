@@ -16,13 +16,8 @@ class Server(socketserver.ThreadingTCPServer):
     clients = {}
     allow_reuse_address = True
 
-    def __init__(
-        self,
-        server_address,
-        RequestHandlerClass,
-        database: ServerDB,
-        bind_and_activate=True
-    ):
+    def __init__(self, server_address, RequestHandlerClass, database: ServerDB,
+                 bind_and_activate=True):
         socketserver.ThreadingTCPServer.__init__(
             self, server_address, RequestHandlerClass, bind_and_activate)
         self.db = database

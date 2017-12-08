@@ -1,11 +1,10 @@
-from sqlalchemy import create_engine
-from sqlalchemy import MetaData, Integer, String, Table, Column
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy import create_engine, event
 from sqlalchemy.engine import Engine
-from sqlalchemy import event
+from sqlalchemy.orm import sessionmaker
 
-from .models import User, Chat, ChatUser, ChatMsg, Contact, Base
 from JIM import JIMClientMessage
+
+from .models import Chat, ChatMsg, ChatUser, Contact, User
 
 
 @event.listens_for(Engine, "connect")
@@ -23,16 +22,9 @@ class ServerDBError(Exception):
     pass
 
 
-class SDBChatEmptyError(ServerDBError):
-    """ Исключение при неверном ID """
-    pass
-
-
 ###############################################################################
 # ### class ServerDB
 ###############################################################################
-
-
 class ServerDB:
     """ Класс для управления БД сервера
 
@@ -63,7 +55,9 @@ class ServerDB:
             raise ServerDBError(error_msg)
 
     def get_obj(self, cls, obj_id):
-        """ Получить из базы """
+        """ Получить объект класса cls из базы.
+        Если объекта с obj_id в базе не существует, возвращается None.
+        """
         obj = self.session.query(cls).filter(cls.id == obj_id).first()
         return obj
 
@@ -74,8 +68,8 @@ class ServerDB:
         obj = self.session.query(cls) \
             .filter(cls.id == obj_id) \
             .first()
-        if cls == Chat and self.get_chat_users(obj.id):
-            raise SDBChatEmptyError(
+        if cls == Chat and self.get_users_for(obj.id):
+            raise ServerDBError(
                 "Попытка удалить чат с активными пользователями")
         try:
             obj.status = "deleted"
@@ -89,8 +83,12 @@ class ServerDB:
         q = self.session.query(cls).filter(cls.id == obj_id)
         return self.session.query(q.exists()).scalar()
 
-    def get_chat_users(self, chat_id):
-        """ Получить список всех активных пользователей чата """
+    def get_users_for(self, chat_id):
+        """
+        Получить список всех активных пользователей чата.
+        Возвращает список объектов класса User. Если chat_id не существует,
+        возвращается пустой список.
+         """
         user_list = self.session.query(User) \
             .join(ChatUser) \
             .filter(ChatUser.chat_id == chat_id) \
@@ -99,7 +97,11 @@ class ServerDB:
         return user_list
 
     def get_chats_for(self, user_id):
-        """ Получить список всех активных чатов для данного пользователя """
+        """
+        Получить список всех активных чатов для данного пользователя.
+        Возвращает список объектов класса Chat. Если user_id не существует,
+        возвращается пустой список.
+        """
         chat_list = self.session.query(Chat) \
             .join(ChatUser) \
             .filter(ChatUser.user_id == user_id) \
@@ -121,14 +123,29 @@ class ServerDB:
             self.del_obj(ChatUser, chatuser.id)
 
     def find_users(self, substr):
-        """ Найти всех пользователей по строке поиска"""
+        """
+        Найти всех пользователей по строке поиска.
+        Возвращает список объектов класса User.
+        """
         users = self.session.query(User) \
             .filter(User.name.like('%{}%'.format(substr))) \
             .all()
         return users
 
-    def get_user_contacts(self, user_id):
-        """ Получить список контактов пользователя """
+    def get_contacts_for(self, user_id):
+        """
+        Получить список контактов пользователя
+        Возвращает список объектов класса User. Если user_id не существует,
+        или имеет статус 'deleted', генерируется исключение ServerDBError
+        """
+        user = self.get_obj(User, user_id)
+        if user is None:
+            raise ServerDBError(
+                "попытка получить контакты для несуществующего пользователя")
+        if user.status == "deleted":
+            raise ServerDBError(
+                "нельзя получить контакты для удаленного пользователя")
+
         contacts = self.session.query(User) \
             .join(Contact, User.id == Contact.contact_id) \
             .filter(Contact.user_id == user_id) \
@@ -137,6 +154,9 @@ class ServerDB:
         return contacts
 
     def del_contact(self, user_id, contact_id):
+        """
+        Удалить пользователя с contact_id из списка контактов для user_id.
+        """
         contact = self.session.query(Contact) \
             .filter(Contact.user_id == user_id) \
             .filter(Contact.contact_id == contact_id) \
@@ -144,7 +164,17 @@ class ServerDB:
         self.del_obj(Contact, contact.id)
 
     def get_chat_msgs(self, chat_id):
-        """ Получить сообщения для чата """
+        """
+        Получить сообщения для чата.
+        Возвращает список объектов типа JIMClientMessage, где action = 'msg'.
+        Если чата с chat_id не существует или он имеет статус 'deleted',
+        генерируется исключение ServerDBError.
+        """
+        chat = self.get_obj(Chat, chat_id)
+        if chat is None or chat.status == "deleted":
+            raise ServerDBError(
+                "Нельзя получить сообщения для несуществующего/удаленного чата"
+            )
         msgs = self.session.query(ChatMsg) \
             .filter(ChatMsg.chat_id == chat_id) \
             .all()
@@ -153,7 +183,6 @@ class ServerDB:
             for m in msgs
         ]
         return jim_msgs
-
 
     def setup(self):
         """ Загрузка БД """

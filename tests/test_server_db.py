@@ -2,7 +2,7 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from server import ServerDB, ServerDBError, SDBChatEmptyError, Base
+from server import ServerDB, ServerDBError, Base
 from server import User, Chat, ChatUser, ChatMsg, Contact
 from JIM import JIMClientMessage
 
@@ -72,28 +72,28 @@ def test_del_obj(db):
     db.del_obj(User, user_before.id)
     user_after = db.get_obj(User, 1)
     assert user_after.status == "deleted"
-    with pytest.raises(SDBChatEmptyError):
+    with pytest.raises(ServerDBError):
         db.del_obj(Chat, 1)
 
 
-def test_get_chat_users(db):
-    assert len(db.get_chat_users(1)) == 2
-    assert len(db.get_chat_users(2)) == 1
-    assert not db.get_chat_users(3)
-    assert not db.get_chat_users(4)
+def test_get_users_for(db):
+    assert len(db.get_users_for(1)) == 2
+    assert len(db.get_users_for(2)) == 1
+    assert not db.get_users_for(3)
+    assert not db.get_users_for(4)
     # Проверка, что выдает список только User-ов
-    users = db.get_chat_users(1)
+    users = db.get_users_for(1)
     assert all(isinstance(i, User) for i in users)
     assert users[0].name == "user1"
     assert users[1].name == "user2"
     # Проверка, что выдает список только активных User-ов
     db.del_obj(User, users[0].id)
-    users = db.get_chat_users(1)
+    users = db.get_users_for(1)
     assert len(users) == 1
     assert users[0].name == "user2"
     # Проверка, что выдает список User-ов, если они активные ChatUser-ы
     db.del_obj(ChatUser, 2)
-    users = db.get_chat_users(1)
+    users = db.get_users_for(1)
     assert len(users) == 0
 
 
@@ -119,7 +119,7 @@ def test_get_chats_for_active_chatuser_only(db):
 
 def test_add_user_to_chat(db: ServerDB):
     db.add_user_to_chat(1, 3)
-    users = db.get_chat_users(1)
+    users = db.get_users_for(1)
     assert len(users) == 3
     assert users[2].name == "user3"
     with pytest.raises(ServerDBError):
@@ -132,7 +132,7 @@ def test_add_user_to_chat(db: ServerDB):
 
 def test_del_user_from_chat(db: ServerDB):
     db.del_user_from_chat(1, 2)
-    users = db.get_chat_users(1)
+    users = db.get_users_for(1)
     assert len(users) == 1
     assert users[0].name == "user1"
 
@@ -143,21 +143,25 @@ def test_find_users(db):
     assert len(db.find_users("4")) == 0
 
 
-def test_get_user_contacts(db):
-    assert len(db.get_user_contacts(1)) == 2
-    assert len(db.get_user_contacts(2)) == 1
-    assert not db.get_user_contacts(3)
-    assert not db.get_user_contacts(4)
-    contacts = db.get_user_contacts(1)
+def test_get_contacts_for(db):
+    assert len(db.get_contacts_for(1)) == 2
+    assert len(db.get_contacts_for(2)) == 1
+    assert not db.get_contacts_for(3)
+    with pytest.raises(ServerDBError):
+        db.get_contacts_for(4)
+    contacts = db.get_contacts_for(1)
     assert all(isinstance(c, User) for c in contacts)
     assert contacts[0].name == "user2"
     assert contacts[1].name == "user3"
     db.del_contact(1, 3)
-    assert len(db.get_user_contacts(1)) == 1
+    assert len(db.get_contacts_for(1)) == 1
+    db.del_obj(User, 1)
+    with pytest.raises(ServerDBError):
+        db.get_contacts_for(1)
 
 
 def test_del_contact(db):
     db.del_contact(1, 2)
-    assert len(db.get_user_contacts(1)) == 1
+    assert len(db.get_contacts_for(1)) == 1
     db.del_contact(1, 3)
-    assert not db.get_user_contacts(1)
+    assert not db.get_contacts_for(1)
