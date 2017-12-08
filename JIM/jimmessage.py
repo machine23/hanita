@@ -38,9 +38,9 @@ class JIMMessageAttr:
 
     def __set__(self, obj, value):
         if obj.__contains__("action") and self.key == "response":
-            raise
+            raise JIMMessageError("action and response in one message")
         if obj.__contains__("response") and self.key == "action":
-            raise
+            raise JIMMessageError("action and response in one message")
         if isinstance(value, str) and self.max_len:
             if len(value) > self.max_len:
                 raise JIMMessageError("Слишком длинное значение")
@@ -93,12 +93,12 @@ class JIMMessage(dict):
     action = JIMMessageAttr("action")
     time = JIMMessageAttr("time")
     user = JIMMessageAttr("user")
-    to_user = JIMMessageAttr("to")
-    from_user = JIMMessageAttr("from")
-    message = JIMMessageAttr("message")
-    room = JIMMessageAttr("room")
+    chat_id = JIMMessageAttr("chat_id")
     user_id = JIMMessageAttr("user_id")
-    quantity = JIMMessageAttr("quantity")
+    message = JIMMessageAttr("message")
+    user_status = JIMMessageAttr("user_status")
+    password = JIMMessageAttr("password")
+    contacts = JIMMessageAttr("contacts")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -121,13 +121,11 @@ class JIMClientMessage(JIMMessage):
         self.time = time.time()
 
     @staticmethod
-    def authenticate(user_name, password):
+    def authenticate(user_id, password):
         """ Посылается при аутентификации клиента """
         msg = JIMClientMessage(JIMMessage.AUTHENTICATE)
-        msg.user = {
-            "accaunt_name": user_name,
-            "password": password
-        }
+        msg.user_id = user_id
+        msg.password = password
         return msg
 
     @staticmethod
@@ -137,14 +135,9 @@ class JIMClientMessage(JIMMessage):
         return msg
 
     @staticmethod
-    def presence(user_name, status=None):
+    def presence():
         """ Сообщение присутствия """
         msg = JIMClientMessage(JIMMessage.PRESENCE)
-        msg.user = {
-            "accaunt_name": user_name,
-        }
-        if status:
-            msg.user["status"] = status
         return msg
 
     @staticmethod
@@ -154,11 +147,11 @@ class JIMClientMessage(JIMMessage):
         return msg
 
     @staticmethod
-    def msg(user_name, to_user, message, timestamp=None):
+    def msg(user_id, chat_id, message, timestamp=None):
         """ Сообщение пользователю или в чат """
         msg = JIMClientMessage(JIMMessage.MSG)
-        msg.to_user = to_user
-        msg.from_user = user_name
+        msg.user_id = user_id
+        msg.chat_id = chat_id
         msg.message = message
         if timestamp:
             msg.time = timestamp
@@ -168,14 +161,14 @@ class JIMClientMessage(JIMMessage):
     def join(chat_id):
         """ Присоединиться к чату """
         msg = JIMClientMessage(JIMMessage.JOIN)
-        msg.room = chat_id
+        msg.chat_id = chat_id
         return msg
 
     @staticmethod
     def leave(chat_id):
         """ Покинуть чат """
         msg = JIMClientMessage(JIMMessage.LEAVE)
-        msg.room = chat_id
+        msg.chat_id = chat_id
         return msg
 
     @staticmethod
@@ -185,24 +178,32 @@ class JIMClientMessage(JIMMessage):
         return msg
 
     @staticmethod
-    def contact_list(user_id):
-        """ Контакт лист """
+    def contact_list(contacts=None):
+        """
+        Контакт лист.
+        В этом сообщении передается с сервера список контактов пользователя.
+        """
+        if contacts is not None and not isinstance(contacts, list):
+            raise TypeError("contacts must be list instance")
         msg = JIMClientMessage(JIMMessage.CONTACT_LIST)
+        msg.contacts = contacts or []
+        return msg
+
+    @staticmethod
+    def add_contact(user_id):
+        """
+        Сообщение на сервер с заданием добавить пользователя с user_id в
+        список контактов.
+        """
+        msg = JIMClientMessage(JIMMessage.ADD_CONTACT)
         msg.user_id = user_id
         return msg
 
     @staticmethod
-    def add_contact(nickname):
-        """ Добавить контакт """
-        msg = JIMClientMessage(JIMMessage.ADD_CONTACT)
-        msg.user_id = nickname
-        return msg
-
-    @staticmethod
-    def del_contact(nickname):
+    def del_contact(contact_id):
         """ Удалить контакт """
         msg = JIMClientMessage(JIMMessage.DEL_CONTACT)
-        msg.user_id = nickname
+        msg.user_id = contact_id
         return msg
 
     @staticmethod
@@ -211,12 +212,12 @@ class JIMClientMessage(JIMMessage):
         msg = JIMClientMessage(JIMMessage.WHO_ONLINE)
         return msg
 
-    @staticmethod
-    def online_list(user_id):
-        """ Онлайн лист """
-        msg = JIMClientMessage(JIMMessage.ONLINE_LIST)
-        msg.user_id = user_id
-        return msg
+    # @staticmethod
+    # def online_list(user_id):
+    #     """ Онлайн лист """
+    #     msg = JIMClientMessage(JIMMessage.ONLINE_LIST)
+    #     msg.user_id = user_id
+    #     return msg
 
 
 ###############################################################################

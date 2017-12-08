@@ -2,101 +2,148 @@
 import pytest
 import time
 
-from JIM import JIMMessage, JIMClientMessage, JIMMessageError
+from JIM import JIMMessage, JIMClientMessage, JIMMessageError, JIMMessageAttr
 
 
-@pytest.fixture
-def message():
-    return JIMClientMessage()
+def check_message(expect, result):
+    assert isinstance(expect, dict)
+    assert isinstance(result, JIMMessage)
+    assert result.keys() == expect.keys()
+    for key in expect:
+        if key == "time":
+            assert abs(result.time - expect["time"]) < 0.1
+        else:
+            assert expect[key] == result[key]
+
+
+def test_JIMMessageAttr():
+    class Msg(dict):
+        attr = JIMMessageAttr("attr", 8)
+        action = JIMMessageAttr("action")
+        response = JIMMessageAttr("response")
+
+    msg = Msg()
+    msg.attr = "12345678"
+    assert msg.attr == "12345678"
+    assert msg["attr"] == "12345678"
+    msg.attr = 123
+    assert msg.attr == 123
+    with pytest.raises(JIMMessageError):
+        msg.attr = "123456789"
+    with pytest.raises(JIMMessageError):
+        msg.action = "a"
+        msg.response = 200
+    with pytest.raises(JIMMessageError):
+        msg = Msg()
+        msg.response = 200
+        msg.action = "a"
 
 
 class TestJIMMessage:
-    def test_authenticate(self, message):
+    def test_authenticate(self):
         expect = {
             "action": "authenticate",
             "time": time.time(),
-            "user": {
-                "accaunt_name": "John",
-                "password": "abc"
-            }
+            "user_id": 123,
+            "password": "abc"
         }
-        result = message.authenticate("John", "abc")
-        assert expect.keys() == result.keys()
-        assert expect["action"] == result["action"]
-        assert expect["user"] == result["user"]
-        assert abs(expect["time"] - result["time"]) < 0.1
+        result = JIMClientMessage.authenticate(123, "abc")
+        check_message(expect, result)
 
-    def test_quit(self, message):
+    def test_quit(self):
         expect = {
             "action": "quit",
             "time": time.time()
         }
-        result = message.quit()
-        assert expect.keys() == result.keys()
-        assert expect["action"] == result["action"]
-        assert abs(expect["time"] - result["time"]) < 0.1
+        result = JIMClientMessage.quit()
+        check_message(expect, result)
 
-    def test_presence(self, message):
+    def test_presence(self):
         expect = {
             "action": "presence",
             "time": time.time(),
-            "user": {
-                "accaunt_name": "John",
-                "status": "busy"
-            }
         }
-        result = message.presence("John", "busy")
-        assert expect.keys() == result.keys()
-        assert expect["action"] == result["action"]
-        assert expect["user"] == result["user"]
-        assert abs(expect["time"] - result["time"]) < 0.1
+        result = JIMClientMessage.presence()
+        check_message(expect, result)
 
-    def test_probe(self, message):
+    def test_probe(self):
         expect = {
             "action": "probe",
             "time": time.time()
         }
-        result = message.probe()
-        assert expect.keys() == result.keys()
-        assert expect["action"] == result["action"]
-        assert abs(expect["time"] - result["time"]) < 0.1
+        result = JIMClientMessage.probe()
+        check_message(expect, result)
 
-    def test_msg(self, message):
+    def test_msg(self):
         expect = {
             "action": "msg",
             "time": time.time(),
-            "to": "Maria",
-            "from": "John",
+            "user_id": "John",
+            "chat_id": "#all",
             "message": "Hello"
         }
-        result = message.msg("John", "Maria", "Hello")
-        assert expect.keys() == result.keys()
-        assert expect["action"] == result["action"]
-        assert abs(expect["time"] - result["time"]) < 0.1
-        assert expect["to"] == result["to"]
-        assert expect["from"] == result["from"]
-        assert expect["message"] == result["message"]
+        result = JIMClientMessage.msg("John", "#all", "Hello")
+        check_message(expect, result)
 
-    def test_join(self, message):
+    def test_join(self):
         expect = {
             "action": "join",
             "time": time.time(),
-            "room": "#all"
+            "chat_id": "#all"
         }
-        result = message.join("#all")
-        assert expect.keys() == result.keys()
-        assert expect["action"] == result["action"]
-        assert abs(expect["time"] - result["time"]) < 0.1
-        assert expect["room"] == result["room"]
+        result = JIMClientMessage.join("#all")
+        check_message(expect, result)
 
-    def test_leave(self, message):
+    def test_leave(self):
         expect = {
             "action": "leave",
             "time": time.time(),
-            "room": "#all"
+            "chat_id": "#all"
         }
-        result = message.leave("#all")
-        assert expect.keys() == result.keys()
-        assert expect["action"] == result["action"]
-        assert abs(expect["time"] - result["time"]) < 0.1
-        assert expect["room"] == result["room"]
+        result = JIMClientMessage.leave("#all")
+        check_message(expect, result)
+
+    def test_get_contacts(self):
+        expect = {
+            "action": "get_contacts",
+            "time": time.time()
+        }
+        result = JIMClientMessage.get_contacts()
+        check_message(expect, result)
+
+    def test_contact_list(self):
+        expect = {
+            "action": "contact_list",
+            "time": time.time(),
+            "contacts": []
+        }
+        result = JIMClientMessage.contact_list()
+        check_message(expect, result)
+        with pytest.raises(TypeError):
+            JIMClientMessage.contact_list("")
+
+    def test_add_contact(self):
+        expect = {
+            "action": "add_contact",
+            "time": time.time(),
+            "user_id": 123
+        }
+        result = JIMClientMessage.add_contact(123)
+        check_message(expect, result)
+
+    def test_del_contact(self):
+        expect = {
+            "action": "del_contact",
+            "time": time.time(),
+            "user_id": 123
+        }
+        result = JIMClientMessage.del_contact(123)
+        check_message(expect, result)
+
+    def test_who_online(self):
+        expect = {
+            "action": "who_online",
+            "time": time.time(),
+        }
+        result = JIMClientMessage.who_online()
+        check_message(expect, result)
