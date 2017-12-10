@@ -90,7 +90,9 @@ class ClientDB:
     def user_exists(self, user_id):
         """ Проверить наличие пользователя """
         cmd = "SELECT 1 FROM users WHERE users.user_id = ?"
+        self.lock.acquire()
         self.cursor.execute(cmd, (user_id, ))
+        self.lock.release()
         return bool(self.cursor.fetchone())
 
     def add_user(self, user_id, user_name):
@@ -101,8 +103,10 @@ class ClientDB:
         if self.user_exists(user_id):
             raise ClientDBError("user_id уже имеется в базе")
         cmd = "INSERT INTO users(user_id, user_name) VALUES (?, ?)"
+        self.lock.acquire()
         self.cursor.execute(cmd, (user_id, user_name))
         self.conn.commit()
+        self.lock.release()
         self._notify()
 
     def get_user(self, user_id):
@@ -115,8 +119,10 @@ class ClientDB:
         user_keys = ("user_id", "user_name")
         if self.user_exists(user_id):
             cmd = "SELECT * FROM users WHERE users.user_id = ?"
+            self.lock.acquire()
             self.cursor.execute(cmd, (user_id, ))
             user_val = self.cursor.fetchone()[1:]
+            self.lock.release()
             user = dict(zip(user_keys, user_val))
 
         return user
@@ -128,8 +134,10 @@ class ClientDB:
         """
         if self.user_exists(user_id):
             cmd = "UPDATE users SET user_name = ? WHERE user_id = ?"
+            self.lock.acquire()
             self.cursor.execute(cmd, (user_name, user_id))
             self.conn.commit()
+            self.lock.release()
             self._notify()
         else:
             self.add_user(user_id, user_name)
@@ -140,8 +148,11 @@ class ClientDB:
         Проверить наличие чата с chat_id в БД
         """
         cmd = "SELECT 1 FROM chats WHERE chats.chat_id = ?"
+        self.lock.acquire()
         self.cursor.execute(cmd, (chat_id, ))
-        return bool(self.cursor.fetchone())
+        result = self.cursor.fetchone()
+        self.lock.release()
+        return bool(result)
 
     def add_chat(self, chat_id, chat_name):
         """ Добавить чат в БД. Если chat_id уже есть в базе,
@@ -150,8 +161,10 @@ class ClientDB:
         if self.chat_exists(chat_id):
             raise ClientDBError("chat_id уже имеется в базе")
         cmd = "INSERT INTO chats(chat_id, chat_name) VALUES (?, ?)"
+        self.lock.acquire()
         self.cursor.execute(cmd, (chat_id, chat_name))
         self.conn.commit()
+        self.lock.release()
         self._notify()
 
     def get_chat(self, chat_id):
@@ -164,8 +177,10 @@ class ClientDB:
         chat_keys = ("chat_id", "chat_name", "read_time")
         if self.chat_exists(chat_id):
             cmd = "SELECT * FROM chats WHERE chat_id = ?"
+            self.lock.acquire()
             self.cursor.execute(cmd, (chat_id,))
             chat_data = self.cursor.fetchone()[1:]
+            self.lock.release()
             chat = dict(zip(chat_keys, chat_data))
         return chat
 
@@ -177,8 +192,10 @@ class ClientDB:
         if not self.chat_exists(chat_id):
             raise ClientDBError("нельзя обновить время для неизвестного чата")
         cmd = "UPDATE chats SET read_time = ? WHERE chat_id = ?"
+        self.lock.acquire()
         self.cursor.execute(cmd, (time.time(), chat_id))
         self.conn.commit()
+        self.lock.release()
         self._notify()
 
     def del_chat(self, chat_id):
@@ -186,8 +203,10 @@ class ClientDB:
         Удаляет чат с chat_id из БД.
         """
         cmd = "DELETE FROM chats WHERE chat_id = ?"
+        self.lock.acquire()
         self.cursor.execute(cmd, (chat_id,))
         self.conn.commit()
+        self.lock.release()
         self._notify()
 
     def get_chats(self):
@@ -195,8 +214,10 @@ class ClientDB:
         Возвращает список chat_id чатов.
         """
         cmd = "SELECT chat_id FROM chats"
+        self.lock.acquire()
         self.cursor.execute(cmd)
         chats = [i[0] for i in self.cursor.fetchall()]
+        self.lock.release()
         return chats
 
     ############################################################################
@@ -205,8 +226,11 @@ class ClientDB:
         Проверяет наличие сообщения в БД.
         """
         cmd = "SELECT 1 FROM messages WHERE msg_id = ?"
+        self.lock.acquire()
         self.cursor.execute(cmd, (msg_id,))
-        return bool(self.cursor.fetchone())
+        result = self.cursor.fetchone()
+        self.lock.release()
+        return bool(result)
 
     def add_msg(self, msg_id, user_id, chat_id, timestamp, message, action=None):
         """
@@ -216,8 +240,10 @@ class ClientDB:
             raise ClientDBError
         cmd = "INSERT INTO messages(msg_id, user_id, chat_id, time, message)" \
             "VALUES (?, ?, ?, ?, ?)"
+        self.lock.acquire()
         self.cursor.execute(cmd, (msg_id, user_id, chat_id, timestamp, message))
         self.conn.commit()
+        self.lock.release()
         self._notify()
 
     def get_msg(self, msg_id):
@@ -228,8 +254,10 @@ class ClientDB:
         msg_keys = ("msg_id", "user_id", "chat_id", "timestamp", "message", "readed")
         if self.msg_exists(msg_id):
             cmd = "SELECT * FROM messages WHERE msg_id = ?"
+            self.lock.acquire()
             self.cursor.execute(cmd, (msg_id,))
             msg_data = self.cursor.fetchone()[1:]
+            self.lock.release()
             msg = dict(zip(msg_keys, msg_data))
         return msg
 
@@ -239,8 +267,10 @@ class ClientDB:
         """
         if self.msg_exists(msg_id):
             cmd = "UPDATE messages SET readed = ?"
+            self.lock.acquire()
             self.cursor.execute(cmd, (1,))
             self.conn.commit()
+            self.lock.release()
             self._notify()
 
     def get_msgs(self, chat_id):
@@ -248,8 +278,10 @@ class ClientDB:
         Получить список id сообщений для чата.
         """
         cmd = "SELECT msg_id FROM messages WHERE chat_id = ?"
+        self.lock.acquire()
         self.cursor.execute(cmd, (chat_id,))
         msgs = [i[0] for i in self.cursor.fetchall()]
+        self.lock.release()
         return msgs
 
     ############################################################################
