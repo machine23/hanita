@@ -10,8 +10,8 @@ def check_message(expect, result):
     assert isinstance(result, JIMMessage)
     assert result.keys() == expect.keys()
     for key in expect:
-        if key == "time":
-            assert abs(result.time - expect["time"]) < 0.1
+        if key == "timestamp":
+            assert abs(result.timestamp - expect["timestamp"]) < 0.1
         else:
             assert expect[key] == result[key]
 
@@ -43,7 +43,7 @@ class TestJIMMessage:
     def test_authenticate(self):
         expect = {
             "action": "authenticate",
-            "time": time.time(),
+            "timestamp": time.time(),
             "user_id": 123,
             "password": "abc"
         }
@@ -53,7 +53,7 @@ class TestJIMMessage:
     def test_quit(self):
         expect = {
             "action": "quit",
-            "time": time.time()
+            "timestamp": time.time()
         }
         result = JIMClientMessage.quit()
         check_message(expect, result)
@@ -61,7 +61,7 @@ class TestJIMMessage:
     def test_presence(self):
         expect = {
             "action": "presence",
-            "time": time.time(),
+            "timestamp": time.time(),
         }
         result = JIMClientMessage.presence()
         check_message(expect, result)
@@ -69,7 +69,7 @@ class TestJIMMessage:
     def test_probe(self):
         expect = {
             "action": "probe",
-            "time": time.time()
+            "timestamp": time.time()
         }
         result = JIMClientMessage.probe()
         check_message(expect, result)
@@ -77,7 +77,7 @@ class TestJIMMessage:
     def test_msg(self):
         expect = {
             "action": "msg",
-            "time": time.time(),
+            "timestamp": time.time(),
             "user_id": "John",
             "chat_id": "#all",
             "message": "Hello"
@@ -88,7 +88,7 @@ class TestJIMMessage:
     def test_join(self):
         expect = {
             "action": "join",
-            "time": time.time(),
+            "timestamp": time.time(),
             "chat_id": "#all"
         }
         result = JIMClientMessage.join("#all")
@@ -97,7 +97,7 @@ class TestJIMMessage:
     def test_leave(self):
         expect = {
             "action": "leave",
-            "time": time.time(),
+            "timestamp": time.time(),
             "chat_id": "#all"
         }
         result = JIMClientMessage.leave("#all")
@@ -106,7 +106,7 @@ class TestJIMMessage:
     def test_get_contacts(self):
         expect = {
             "action": "get_contacts",
-            "time": time.time()
+            "timestamp": time.time()
         }
         result = JIMClientMessage.get_contacts()
         check_message(expect, result)
@@ -114,7 +114,7 @@ class TestJIMMessage:
     def test_contact_list(self):
         expect = {
             "action": "contact_list",
-            "time": time.time(),
+            "timestamp": time.time(),
             "contacts": []
         }
         result = JIMClientMessage.contact_list()
@@ -125,7 +125,7 @@ class TestJIMMessage:
     def test_add_contact(self):
         expect = {
             "action": "add_contact",
-            "time": time.time(),
+            "timestamp": time.time(),
             "user_id": 123
         }
         result = JIMClientMessage.add_contact(123)
@@ -134,7 +134,7 @@ class TestJIMMessage:
     def test_del_contact(self):
         expect = {
             "action": "del_contact",
-            "time": time.time(),
+            "timestamp": time.time(),
             "user_id": 123
         }
         result = JIMClientMessage.del_contact(123)
@@ -143,7 +143,7 @@ class TestJIMMessage:
     def test_who_online(self):
         expect = {
             "action": "who_online",
-            "time": time.time(),
+            "timestamp": time.time(),
         }
         result = JIMClientMessage.who_online()
         check_message(expect, result)

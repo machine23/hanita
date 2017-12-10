@@ -1,5 +1,6 @@
 """ Модель данных для клиента """
 import sqlite3
+import time
 
 from JIM import JIMMessage, JIMClientMessage
 
@@ -43,12 +44,23 @@ class ClientDB:
         self.cursor.executescript("""
             CREATE TABLE IF NOT EXISTS users(
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_name TEXT UNIQUE
+                user_id INTEGER UNIQUE NOT NULL,
+                user_name TEXT
             );
+
+            CREATE TABLE IF NOT EXISTS contacts(
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER UNIQUE,
+                FOREIGN KEY (user_id) REFERENCES users(user_id)
+            );
+
             CREATE TABLE IF NOT EXISTS chats(
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                chat_name TEXT UNIQUE
+                chat_id INTEGER UNIQUE,
+                chat_name TEXT UNIQUE,
+                read_time REAL 
             );
+
             CREATE TABLE IF NOT EXISTS chat_users(
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id INTEGER,
@@ -57,160 +69,188 @@ class ClientDB:
                 FOREIGN KEY (chat_id) REFERENCES chats(id),
                 CONSTRAINT  unique_user_for_chat UNIQUE (user_id, chat_id)
             );
+
             CREATE TABLE IF NOT EXISTS messages(
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                creator_id INTEGER,
+                msg_id INTEGER UNIQUE NOT NULL,
+                user_id INTEGER,
                 chat_id INTEGER,
                 time REAL,
                 message TEXT,
-                FOREIGN KEY (creator_id) REFERENCES users(id),
-                FOREIGN KEY (chat_id) REFERENCES chats(id)
+                readed INTEGER CHECK(readed IN (0, 1)) DEFAULT 0,
+                FOREIGN KEY (user_id) REFERENCES users(user_id),
+                FOREIGN KEY (chat_id) REFERENCES chats(chat_id) ON DELETE CASCADE
             );
             """)
         self.conn.commit()
 
-    def add_user(self, user_name):
-        """ Добавить пользователя """
-        if not self.user_exists(user_name):
-            cmd = "INSERT INTO users(user_name) VALUES (?)"
-            self.cursor.execute(cmd, (user_name, ))
-            self.conn.commit()
+    ############################################################################
+    def user_exists(self, user_id):
+        """ Проверить наличие пользователя """
+        cmd = "SELECT 1 FROM users WHERE users.user_id = ?"
+        self.cursor.execute(cmd, (user_id, ))
+        return bool(self.cursor.fetchone())
+
+    def add_user(self, user_id, user_name):
+        """ Добавить пользователя в БД.
+        Если пользователь с user_id уже имеется в базе,
+        генерируется исключение ClientDBError
+        """
+        if self.user_exists(user_id):
+            raise ClientDBError("user_id уже имеется в базе")
+        cmd = "INSERT INTO users(user_id, user_name) VALUES (?, ?)"
+        self.cursor.execute(cmd, (user_id, user_name))
+        self.conn.commit()
         self._notify()
 
-    def get_users(self):
-        """ Получить список пользователей """
-        self.cursor.execute("SELECT * FROM users;")
-        arr = self.cursor.fetchall()
-        users = [i[1] for i in arr]
-        return users
+    def get_user(self, user_id):
+        """
+        Получить данные о пользователе из БД.
+        Возвращает словарь {'user_id': ..., 'user_name': ...}.
+        Если пользователя с user_id в БД не существует, возвращается {}
+        """
+        user = {}
+        user_keys = ("user_id", "user_name")
+        if self.user_exists(user_id):
+            cmd = "SELECT * FROM users WHERE users.user_id = ?"
+            self.cursor.execute(cmd, (user_id, ))
+            user_val = self.cursor.fetchone()[1:]
+            user = dict(zip(user_keys, user_val))
 
-    def get_user_id(self, user_name):
-        """ Получить id пользователя """
-        cmd = "SELECT users.id FROM users WHERE users.user_name = ?"
-        self.cursor.execute(cmd, (user_name, ))
-        _id = self.cursor.fetchall()
-        return _id[0][0] if _id else None
+        return user
 
-    def get_user_name(self, user_id):
-        """ Получить имя пользователя по id """
-        cmd = "SELECT user_name FROM users WHERE users.id = ?"
-        self.cursor.execute(cmd, (user_id, ))
-        res = self.cursor.fetchall()
-        return res[0][0] if res else None
+    def update_user(self, user_id, user_name):
+        """
+        Обновить данные о пользователе.
+        Если пользователя нет в базе, то он будет добавлен.
+        """
+        if self.user_exists(user_id):
+            cmd = "UPDATE users SET user_name = ? WHERE user_id = ?"
+            self.cursor.execute(cmd, (user_name, user_id))
+            self.conn.commit()
+            self._notify()
+        else:
+            self.add_user(user_id, user_name)
 
-    def user_exists(self, user_name):
-        """ Проверить наличие пользователя """
-        cmd = "SELECT 1 FROM users WHERE users.user_name = ?"
-        self.cursor.execute(cmd, (user_name, ))
-        return bool(self.cursor.fetchall())
+    ############################################################################
+    def chat_exists(self, chat_id):
+        """
+        Проверить наличие чата с chat_id в БД
+        """
+        cmd = "SELECT 1 FROM chats WHERE chats.chat_id = ?"
+        self.cursor.execute(cmd, (chat_id, ))
+        return bool(self.cursor.fetchone())
+
+    def add_chat(self, chat_id, chat_name):
+        """ Добавить чат в БД. Если chat_id уже есть в базе,
+        генерируется исключение ClientDBError.
+        """
+        if self.chat_exists(chat_id):
+            raise ClientDBError("chat_id уже имеется в базе")
+        cmd = "INSERT INTO chats(chat_id, chat_name) VALUES (?, ?)"
+        self.cursor.execute(cmd, (chat_id, chat_name))
+        self.conn.commit()
+        self._notify()
+
+    def get_chat(self, chat_id):
+        """
+        Получить данные о чате с chat_id.
+        Возвращает словарь с свойствами чата.
+        Если чата с chat_id в базе нет, то возвращается пустой словарь {}
+        """
+        chat = {}
+        chat_keys = ("chat_id", "chat_name", "read_time")
+        if self.chat_exists(chat_id):
+            cmd = "SELECT * FROM chats WHERE chat_id = ?"
+            self.cursor.execute(cmd, (chat_id,))
+            chat_data = self.cursor.fetchone()[1:]
+            chat = dict(zip(chat_keys, chat_data))
+        return chat
+
+    def set_chat_readed(self, chat_id):
+        """
+        Обновляет время прочтения чата.
+        Если чата с chat_id нет в БД, генерируется исключение ClientDBError
+        """
+        if not self.chat_exists(chat_id):
+            raise ClientDBError("нельзя обновить время для неизвестного чата")
+        cmd = "UPDATE chats SET read_time = ? WHERE chat_id = ?"
+        self.cursor.execute(cmd, (time.time(), chat_id))
+        self.conn.commit()
+        self._notify()
+
+    def del_chat(self, chat_id):
+        """
+        Удаляет чат с chat_id из БД.
+        """
+        cmd = "DELETE FROM chats WHERE chat_id = ?"
+        self.cursor.execute(cmd, (chat_id,))
+        self.conn.commit()
+        self._notify()
 
     def get_chats(self):
-        """ получить список имеющихся чатов """
-        cmd = "SELECT chats.chat_name FROM chats"
+        """
+        Возвращает список chat_id чатов.
+        """
+        cmd = "SELECT chat_id FROM chats"
         self.cursor.execute(cmd)
-        arr = self.cursor.fetchall()
-        chats = [i[0] for i in arr]
+        chats = [i[0] for i in self.cursor.fetchall()]
         return chats
 
-    def add_chat(self, chat_name):
-        """ Добавить чат в бд """
-        if not self.chat_exists(chat_name):
-            cmd = "INSERT INTO chats(chat_name) VALUES (?)"
-            self.cursor.execute(cmd, (chat_name, ))
-            self.conn.commit()
+    ############################################################################
+    def msg_exists(self, msg_id):
+        """
+        Проверяет наличие сообщения в БД.
+        """
+        cmd = "SELECT 1 FROM messages WHERE msg_id = ?"
+        self.cursor.execute(cmd, (msg_id,))
+        return bool(self.cursor.fetchone())
+
+    def add_msg(self, msg_id, user_id, chat_id, timestamp, message, action=None):
+        """
+        Добавить сообщение в БД.
+        """
+        if action and action != "msg":
+            raise ClientDBError
+        cmd = "INSERT INTO messages(msg_id, user_id, chat_id, time, message)" \
+            "VALUES (?, ?, ?, ?, ?)"
+        self.cursor.execute(cmd, (msg_id, user_id, chat_id, timestamp, message))
+        self.conn.commit()
         self._notify()
 
-    def chat_exists(self, chat_name):
-        """ проверить наличие чата в бд """
-        cmd = "SELECT 1 FROM chats WHERE chats.chat_name = ?"
-        self.cursor.execute(cmd, (chat_name, ))
-        return bool(self.cursor.fetchall())
+    def get_msg(self, msg_id):
+        """
+        Получить сообщение из БД.
+        """
+        msg = {}
+        msg_keys = ("msg_id", "user_id", "chat_id", "timestamp", "message", "readed")
+        if self.msg_exists(msg_id):
+            cmd = "SELECT * FROM messages WHERE msg_id = ?"
+            self.cursor.execute(cmd, (msg_id,))
+            msg_data = self.cursor.fetchone()[1:]
+            msg = dict(zip(msg_keys, msg_data))
+        return msg
 
-    def get_chat_id(self, chat_name):
-        """ получить id по имени чата """
-        cmd = "SELECT id FROM chats WHERE chats.chat_name = ?"
-        self.cursor.execute(cmd, (chat_name, ))
-        _id = self.cursor.fetchall()
-        return _id[0][0] if _id else None
-
-    def get_chat_name(self, chat_id):
-        """ получить имя чата по id """
-        cmd = "SELECT chat_name FROM chats WHERE chats.id = ?"
-        self.cursor.execute(cmd, (chat_id, ))
-        res = self.cursor.fetchall()
-        return res[0][0] if res else None
-
-    def add_chat_user(self, user_name, chat_name):
-        """ добавить пользователя в чат """
-        if not (self.user_exists(user_name) and self.chat_exists(chat_name)):
-            raise ClientDBError("add_chat_user error")
-        cmd = "INSERT INTO chat_users(user_id, chat_id) VALUES (?, ?)"
-        user_id = self.get_user_id(user_name)
-        chat_id = self.get_chat_id(chat_name)
-        try:
-            self.cursor.execute(cmd, (user_id, chat_id))
-        except sqlite3.Error as err:
-            raise ClientDBError(err)
-        else:
+    def set_msg_readed(self, msg_id):
+        """
+        Пометить сообщение как прочтенное.
+        """
+        if self.msg_exists(msg_id):
+            cmd = "UPDATE messages SET readed = ?"
+            self.cursor.execute(cmd, (1,))
             self.conn.commit()
-        self._notify()
+            self._notify()
 
-    def get_chat_users(self, chat_name):
-        """ получить список пользователей чата """
-        chat_id = self.get_chat_id(chat_name)
-        cmd = "SELECT user_id FROM chat_users WHERE chat_users.chat_id = ?"
-        self.cursor.execute(cmd, (chat_id, ))
-        res = self.cursor.fetchall()
-        users = [self.get_user_name(i[0]) for i in res if i]
-        return users
+    def get_msgs(self, chat_id):
+        """
+        Получить список id сообщений для чата.
+        """
+        cmd = "SELECT msg_id FROM messages WHERE chat_id = ?"
+        self.cursor.execute(cmd, (chat_id,))
+        msgs = [i[0] for i in self.cursor.fetchall()]
+        return msgs
 
-    def add_message(self, message: JIMClientMessage):
-        """ добавить сообщение в бд """
-        if not (isinstance(message, JIMMessage) and message.action == "msg"):
-            raise ClientDBError("message must be JIMClientMessage.msg")
-        ### Временное упрощение ############################
-        # Добавляем чат и пользователя из сообщения без проверки на сервере
-        chat_name = message.to_user
-        if not self.chat_exists(chat_name):
-            self.add_chat(chat_name)
-        user_name = message.from_user
-        if not self.user_exists(user_name):
-            self.add_user(user_name)
-        try:
-            self.add_chat_user(user_name, chat_name)
-        except ClientDBError:
-            pass
-        ####################################################
-        chat_id = self.get_chat_id(message.to_user)
-        creator_id = self.get_user_id(message.from_user)
-        # print(chat_id, creator_id)
-        cmd = """INSERT INTO messages(creator_id, chat_id, time, message)
-                 VALUES (?, ?, ?, ?)"""
-        if chat_id and creator_id:
-            self.cursor.execute(
-                cmd, (creator_id, chat_id, message.time, message.message))
-            self.conn.commit()
-        else:
-            raise ClientDBError("unknown creator or chat")
-        self._notify()
-
-    def get_messages(self, chat_name):
-        cmd = """SELECT creator_id, chat_id, time, message
-                 FROM messages
-                 WHERE messages.chat_id = ?"""
-        chat_id = self.get_chat_id(chat_name)
-        self.cursor.execute(cmd, (chat_id, ))
-        data = self.cursor.fetchall()
-        messages = []
-        for item in data:
-            msg = JIMMessage()
-            msg.from_user = self.get_user_name(item[0])
-            msg.to_user = self.get_chat_name(item[1])
-            msg.time = item[2]
-            msg.message = item[3]
-            msg.action = "msg"
-            messages.append(msg)
-        return messages
+    ############################################################################
 
     def add_observer(self, observer):
         self._observers.append(observer)

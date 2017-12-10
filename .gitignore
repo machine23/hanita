@@ -108,4 +108,6 @@ ENV/
 # mypy
 .mypy_cache/
 run_2_clients.py
+*.db
+*.html
 

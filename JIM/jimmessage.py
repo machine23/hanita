@@ -91,8 +91,9 @@ class JIMMessage(dict):
     error = JIMMessageAttr("error")
 
     action = JIMMessageAttr("action")
-    time = JIMMessageAttr("time")
+    timestamp = JIMMessageAttr("timestamp")
     user = JIMMessageAttr("user")
+    msg_id = JIMMessageAttr("msg_id")
     chat_id = JIMMessageAttr("chat_id")
     user_id = JIMMessageAttr("user_id")
     message = JIMMessageAttr("message")
@@ -118,7 +119,7 @@ class JIMClientMessage(JIMMessage):
     def __init__(self, action=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.action = action
-        self.time = time.time()
+        self.timestamp = time.time()
 
     @staticmethod
     def authenticate(user_id, password):
@@ -154,7 +155,7 @@ class JIMClientMessage(JIMMessage):
         msg.chat_id = chat_id
         msg.message = message
         if timestamp:
-            msg.time = timestamp
+            msg.timestamp = timestamp
         return msg
 
     @staticmethod
@@ -231,7 +232,7 @@ class JIMResponse(JIMMessage):
         if code not in self.status:
             raise JIMResponseError("Неверный код ответа")
         self.response = code
-        self.time = time.time()
+        self.timestamp = time.time()
         if code < 400:
             self.alert = message if message else self.status[code]
         else:
