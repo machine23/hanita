@@ -1,13 +1,16 @@
 """ Hanita client class and client mainloop """
+import random
 import sys
+import threading
 import time
 
-from JIM import JIMClientMessage, JIMResponse, JIMMessage
+from PyQt5.QtCore import QObject
+
+from JIM import JIMClientMessage, JIMMessage, JIMResponse
 
 from .client_connection import ClientConnection, ClientConnectionError
 from .client_db import ClientDB, ClientDBError
 from .client_qtview import QtClientView
-
 
 WAITING_TIME = 1.0
 
@@ -35,14 +38,15 @@ class ClientUser:
 class Client:
     """ класс Client """
 
-    def __init__(self, conn: ClientConnection, model: ClientDB, ViewClass):
+    def __init__(self, conn: ClientConnection, ViewClass):
+        super().__init__()
         self.user = ClientUser()
-        self.model = model
+        self.model = None
         self.conn = conn
-        self.view = ViewClass(self, self.model)
+        self.view = ViewClass(self)
         try:
             self.conn.connect()
-        except ClientConnectionError as err:
+        except ClientConnectionError:
             self.view.render_info("Не могу соединиться с сервером")
             self.conn = None
             self.close()
@@ -66,7 +70,9 @@ class Client:
             self.view.render_info(resp.error)
             return False
         self.user.name = login
-        self.view.render_info("Привет, " + login + "!")
+        db_name = login + ".db"
+        self.model = ClientDB(db_name)
+        self.view.set_model(self.model)
         ###
         self.model.active_user = login
         self.model.active_chat = "#all"
@@ -78,52 +84,41 @@ class Client:
         Отправляем на сервер сообщение от пользователя.
         """
         msg = JIMClientMessage.msg(self.user.name, to_user, message)
-        ###
         self.model.add_message(msg)
-        ###
-        resp = self.send_to_server(msg)
-        if resp.error:
-            self.view.render_info(resp.error)
-            pass
+        self.conn.send(msg)
 
     def send_to_server(self, message):
         """
         Отправляем на сервер и обрабатываем ответ от сервера.
         """
-        self.conn.get()  # отбрасываем нежданное сообщение перед отправкой
         self.conn.send(message)
         resp = None
         start = time.time()
         while resp is None:
             resp = self.conn.get()
             if time.time() - start > WAITING_TIME:
-                self.close("Потеряна связь с сервером")
+                self.view.render_info("Потеряна связь с сервером")
+                break
         return resp
 
     def get_from(self):
         """ Получаем и обрабатываем сообщение, присланное от другого клиента """
         msg = self.conn.get()
-        # if msg is None:
-        #     self.close("Потеряна связь с сервером")
         if msg and msg.action == msg.MSG:
-            self.view.render_message(msg)
-            ###
             self.model.add_message(msg)
-            ###
 
-    def run(self, mode=None):
+    def run(self):
         """ Главный цикл работы клиента """
         while not self.authenticate():
             pass
-        if mode == "read":
-            self.view.render_help()
-            while True:
-                self.get_from()
-        elif mode == "write":
-            print("*** run ***")
-            self.view.run()
+        self.view.run()
         self.view.render_info("Good bye!")
         self.close()
+
+    def receive(self):
+        """ Получаем сообщения от сервера """
+        while True:
+            self.get_from()
 
     def parse_cmd(self, user_msg: str):
         """ Разбираем команды пользователя """
@@ -144,14 +139,12 @@ class Client:
                 self.del_contact(msg)
             elif cmd == "!help":
                 self.view.render_help()
-                pass
             elif cmd == "@":
                 self.who_online()
             elif cmd.startswith("@") and len(cmd) > 1:
                 self.send_msg_to(cmd[1:], msg)
             else:
                 self.view.render_info("Неизвестная команда!")
-                pass
             return True
         return False
 
@@ -180,7 +173,6 @@ class Client:
         resp = self.send_to_server(msg)
         if resp.error:
             self.view.render_info("Не удалось добавить контакт")
-            # self.view.render_info(resp.error)
             pass
         else:
             self.user.contacts.append(nickname)
@@ -218,9 +210,15 @@ class Client:
     def close(self, info=""):
         """ Закрываем клиент """
         msg = JIMClientMessage.quit()
+        print("close client")
         if self.conn:
-            self.send_to_server(msg)
+            self.conn.send(msg)
             self.conn.close()
+            self.conn = None
         if info:
             self.view.render_info(info)
         sys.exit()
+
+
+class QtClient(Client, QObject):
+    pass

@@ -1,10 +1,8 @@
 import argparse
-import sys
+
+from .client import QtClient
 from .client_connection import ClientConnection
 from .client_qtview import QtClientView
-from .client_db import ClientDB
-from .client import Client
-from .client_view import ConsoleClientView
 
 
 ###############################################################################
@@ -27,22 +25,9 @@ def read_args():
         default=7777,
         nargs="?",
         help="TCP-порт сервера (по умолчанию 7777)")
-    parser.add_argument(
-        "-r",
-        dest="read",
-        action="store_true",
-        help="определяет режим работы на получение сообщений")
-    parser.add_argument(
-        "-w",
-        dest="write",
-        action="store_true",
-        help="включает режим отправки сообщений")
 
     args = parser.parse_args()
-    if args.read and args.write:
-        print("Пожалуйста, определите режим работы:",
-              "\n\t-w на отправку сообщений", "\n\t-r на получение сообщений")
-        sys.exit(0)
+
     return args
 
 
@@ -52,24 +37,11 @@ def read_args():
 def main():
     """ Точка входа """
     args = read_args()
-    if args.write:
-        mode = "write"
-    elif args.read:
-        mode = "read"
-    else:
-        mode = None
 
     connection = ClientConnection(args.addr, args.port)
 
-    model = ClientDB("client.db")
-
-    if mode == "read":
-        client = Client(connection, model, ConsoleClientView)
-    elif mode == "write":
-        client = Client(connection, model, QtClientView)
-    else:
-        sys.exit()
-    client.run(mode)
+    client = QtClient(connection, QtClientView)
+    client.run()
 
     client.close("Good Bye!")
 

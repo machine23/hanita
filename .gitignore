@@ -109,5 +109,8 @@ ENV/
 .mypy_cache/
 run_2_clients.py
 *.db
+<<<<<<< HEAD
 *.html
 
+=======
+>>>>>>> master

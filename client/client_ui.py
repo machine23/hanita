@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file './main_client_ui01.ui'
+# Form implementation generated from reading ui file 'main_client_ui01.ui'
 #
 # Created by: PyQt5 UI code generator 5.9.1
 #
@@ -12,7 +12,82 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(720, 526)
+        palette = QtGui.QPalette()
+        brush = QtGui.QBrush(QtGui.QColor(244, 245, 246))
+        brush.setStyle(QtCore.Qt.SolidPattern)
+        palette.setBrush(QtGui.QPalette.Active, QtGui.QPalette.Button, brush)
+        brush = QtGui.QBrush(QtGui.QColor(244, 245, 246))
+        brush.setStyle(QtCore.Qt.SolidPattern)
+        palette.setBrush(QtGui.QPalette.Active, QtGui.QPalette.Midlight, brush)
+        brush = QtGui.QBrush(QtGui.QColor(244, 245, 246))
+        brush.setStyle(QtCore.Qt.SolidPattern)
+        palette.setBrush(QtGui.QPalette.Active, QtGui.QPalette.Base, brush)
+        brush = QtGui.QBrush(QtGui.QColor(244, 245, 246))
+        brush.setStyle(QtCore.Qt.SolidPattern)
+        palette.setBrush(QtGui.QPalette.Active, QtGui.QPalette.Window, brush)
+        brush = QtGui.QBrush(QtGui.QColor(244, 245, 246))
+        brush.setStyle(QtCore.Qt.SolidPattern)
+        palette.setBrush(QtGui.QPalette.Inactive, QtGui.QPalette.Button, brush)
+        brush = QtGui.QBrush(QtGui.QColor(244, 245, 246))
+        brush.setStyle(QtCore.Qt.SolidPattern)
+        palette.setBrush(QtGui.QPalette.Inactive, QtGui.QPalette.Midlight, brush)
+        brush = QtGui.QBrush(QtGui.QColor(244, 245, 246))
+        brush.setStyle(QtCore.Qt.SolidPattern)
+        palette.setBrush(QtGui.QPalette.Inactive, QtGui.QPalette.Base, brush)
+        brush = QtGui.QBrush(QtGui.QColor(244, 245, 246))
+        brush.setStyle(QtCore.Qt.SolidPattern)
+        palette.setBrush(QtGui.QPalette.Inactive, QtGui.QPalette.Window, brush)
+        brush = QtGui.QBrush(QtGui.QColor(244, 245, 246))
+        brush.setStyle(QtCore.Qt.SolidPattern)
+        palette.setBrush(QtGui.QPalette.Disabled, QtGui.QPalette.Button, brush)
+        brush = QtGui.QBrush(QtGui.QColor(244, 245, 246))
+        brush.setStyle(QtCore.Qt.SolidPattern)
+        palette.setBrush(QtGui.QPalette.Disabled, QtGui.QPalette.Midlight, brush)
+        brush = QtGui.QBrush(QtGui.QColor(244, 245, 246))
+        brush.setStyle(QtCore.Qt.SolidPattern)
+        palette.setBrush(QtGui.QPalette.Disabled, QtGui.QPalette.Base, brush)
+        brush = QtGui.QBrush(QtGui.QColor(244, 245, 246))
+        brush.setStyle(QtCore.Qt.SolidPattern)
+        palette.setBrush(QtGui.QPalette.Disabled, QtGui.QPalette.Window, brush)
+        MainWindow.setPalette(palette)
+        MainWindow.setAutoFillBackground(False)
+        MainWindow.setStyleSheet("QMainWindow {\n"
+"    background-color: #F4F5F6;\n"
+"}\n"
+"QScrollBar:vertical {\n"
+"     border: none;\n"
+"     background: #F4F5F6;\n"
+"     width: 8px;\n"
+"     margin: 0;\n"
+" }\n"
+" QScrollBar::handle:vertical {\n"
+"    border: 1px solid #F3F4F5;\n"
+"    border-radius: 4px;\n"
+"     background: lightgrey;\n"
+"     min-height: 20px;\n"
+" }\n"
+"QScrollBar::add-line:vertical {\n"
+"     border: none;\n"
+"     background: #F4F5F6;\n"
+"     height: 20px;\n"
+"     subcontrol-position: bottom;\n"
+"     subcontrol-origin: margin;\n"
+" }\n"
+"\n"
+" QScrollBar::sub-line:vertical {\n"
+"     border: none;\n"
+"     background: #F4F5F6;\n"
+"     height: 20px;\n"
+"     subcontrol-position: top;\n"
+"     subcontrol-origin: margin;\n"
+" }\n"
+" \n"
+"\n"
+" QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {\n"
+"     background: none;\n"
+" }")
         self.centralwidget = QtWidgets.QWidget(MainWindow)
+        self.centralwidget.setAutoFillBackground(False)
         self.centralwidget.setObjectName("centralwidget")
         self.horizontalLayout_3 = QtWidgets.QHBoxLayout(self.centralwidget)
         self.horizontalLayout_3.setObjectName("horizontalLayout_3")
@@ -69,6 +144,24 @@ class Ui_MainWindow(object):
         sizePolicy.setHeightForWidth(self.te_list_msg.sizePolicy().hasHeightForWidth())
         self.te_list_msg.setSizePolicy(sizePolicy)
         self.te_list_msg.setMinimumSize(QtCore.QSize(0, 300))
+        palette = QtGui.QPalette()
+        brush = QtGui.QBrush(QtGui.QColor(244, 245, 246))
+        brush.setStyle(QtCore.Qt.SolidPattern)
+        palette.setBrush(QtGui.QPalette.Active, QtGui.QPalette.Base, brush)
+        brush = QtGui.QBrush(QtGui.QColor(244, 245, 246))
+        brush.setStyle(QtCore.Qt.SolidPattern)
+        palette.setBrush(QtGui.QPalette.Inactive, QtGui.QPalette.Base, brush)
+        brush = QtGui.QBrush(QtGui.QColor(255, 255, 255))
+        brush.setStyle(QtCore.Qt.SolidPattern)
+        palette.setBrush(QtGui.QPalette.Disabled, QtGui.QPalette.Base, brush)
+        self.te_list_msg.setPalette(palette)
+        self.te_list_msg.setAutoFillBackground(True)
+        self.te_list_msg.setFrameShape(QtWidgets.QFrame.NoFrame)
+        self.te_list_msg.setFrameShadow(QtWidgets.QFrame.Plain)
+        self.te_list_msg.setLineWidth(1)
+        self.te_list_msg.setMidLineWidth(0)
+        self.te_list_msg.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
+        self.te_list_msg.setUndoRedoEnabled(False)
         self.te_list_msg.setReadOnly(True)
         self.te_list_msg.setObjectName("te_list_msg")
         self.verticalLayout.addWidget(self.te_list_msg)
@@ -89,6 +182,7 @@ class Ui_MainWindow(object):
         sizePolicy.setHeightForWidth(self.pb_send.sizePolicy().hasHeightForWidth())
         self.pb_send.setSizePolicy(sizePolicy)
         self.pb_send.setMaximumSize(QtCore.QSize(16777215, 200))
+        self.pb_send.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
         self.pb_send.setObjectName("pb_send")
         self.horizontalLayout.addWidget(self.pb_send)
         self.horizontalLayout_3.addWidget(self.splitter_2)

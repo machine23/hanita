@@ -1,6 +1,7 @@
 """ Модель данных для клиента """
 import sqlite3
 import time
+import threading
 
 from JIM import JIMMessage, JIMClientMessage
 
@@ -14,9 +15,10 @@ class ClientDB:
         self._observers = []
         self._active_chat = None
         self._active_user = None
+        self.lock = threading.Lock()
         if not path_to_db:
             path_to_db = ":memory:"
-        self.conn = sqlite3.connect(path_to_db)
+        self.conn = sqlite3.connect(path_to_db, check_same_thread=False)
         self.conn.execute("PRAGMA foreign_keys = ON")
         self.cursor = self.conn.cursor()
         self.setup()
