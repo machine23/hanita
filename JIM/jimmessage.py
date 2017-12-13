@@ -235,6 +235,11 @@ class JIMClientMessage(JIMMessage):
         msg.chat = {"chat_id":chat_id, "chat_name":chat_name}
         msg.chat_users = chat_users
         return msg
+
+    @staticmethod
+    def get_chats():
+        msg = JIMClientMessage(JIMMessage.GET_CHATS)
+        return msg
     # @staticmethod
     # def online_list(user_id):
     #     """ Онлайн лист """

@@ -84,6 +84,7 @@ class Client:
                 self.view.set_client_db(self.client_db)
                 ###
                 self.view.current_user = resp["user"]
+
                 ###
                 return True
 
@@ -152,6 +153,8 @@ class Client:
         """ Главный цикл работы клиента """
         while not self.authenticate():
             pass
+        msg = JIMClientMessage.get_chats()
+        self.send_to_server(msg)
         self.view.run()
         # self.view.render_info("Good bye!")
         self.close()

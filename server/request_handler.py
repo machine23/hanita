@@ -1,6 +1,7 @@
 import socketserver
 import socket
 import json
+import functools
 import time
 import threading
 from .models import *
@@ -26,12 +27,14 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
             # JIMMessage.WHO_ONLINE: self.handler_who_online,
             JIMMessage.GET_CONTACTS: self.handler_get_contacts,
             JIMMessage.ADD_CONTACT: self.handler_add_contact,
-            JIMMessage.NEW_CHAT: self.handler_new_chat
+            JIMMessage.NEW_CHAT: self.handler_new_chat,
+            JIMMessage.GET_CHATS: self.handler_get_chats
         }
         # yapf: enable
         self.__quit = False
         self.msg = None
         self.user = None
+        self._authenticate = False
         self.db = ServerDB(self.server.base, "sqlite:///server.db")
         self.lock = threading.Lock()
 
@@ -52,7 +55,7 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
                         self.msg = None
                     else:
                         self.send(JIMResponse(400))
-    
+
     def finish(self):
         self.db.set_user_online(self.user.id, False)
         self.db.close()
@@ -137,25 +140,25 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
             self.db.set_user_online(user.id, True, self.request.fileno())
             # Проверка, имеется ли уже подключение с данным ID
             # elif self.user_online(user.user_name):
-                # Добавить проверку, если уже имеется подключение с данным ID,
-                # то это подключение еще актуально (отправить PROBE)
-                # return 409
+            # Добавить проверку, если уже имеется подключение с данным ID,
+            # то это подключение еще актуально (отправить PROBE)
+            # return 409
             # Прошли все проверки, добавляем юсера в онлайн
             # self.db.save_hist(user, time.time(), str(
-                # self.client_address))
+            # self.client_address))
             self.server.clients[self.request] = user.id
             user_info = {"user_id": user.id, "user_name": user.name}
             # self.user_name = user.user_name
             response = JIMResponse(200, user=user_info)
-            ####### Вынести в другую функцию ##################################
-            user_chats = self.db.get_chats_for(self.user.id)
-            for chat in user_chats:
-                info_msg = self.get_chat_info(chat.id)
-                self.send(info_msg)
-            ###################################################################
             print(response)
             return response
         return JIMResponse(400)
+
+    def handler_get_chats(self):
+        user_chats = self.db.get_chats_for(self.user.id)
+        for chat in user_chats:
+            info_msg = self.get_chat_info(chat.id)
+            self.send(info_msg)
 
     def handler_quit(self):
         """ Обработчик события Quit """
@@ -189,9 +192,6 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
             raise
         return JIMResponse(200)
 
-
-
-
     def handler_get_contacts(self):
         """ Обработчик события Who online  """
         # users_list = self.db.get_contacts(self.user_name)
@@ -216,11 +216,10 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
             user = self.db.add_new_user(contact_name)
             contact_id = user.id
         self.db.add_contact(self.user.id, contact_id)
-        contact = {"user_id":contact_id, "user_name":contact_name}
+        contact = {"user_id": contact_id, "user_name": contact_name}
         msg = JIMClientMessage.contact_list([contact])
         self.send(msg)
         return JIMResponse(202)
-
 
     def handler_new_chat(self):
         """ Обработчик события new_chat """
@@ -246,4 +245,3 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
         print(chat_users)
         msg = JIMClientMessage.chat_info(chat.id, chat.name, chat_users)
         return msg
-
