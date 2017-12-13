@@ -53,14 +53,14 @@ def test_get_obj(db):
     assert user is None
 
 
-def test_user_exists(db):
+def test_obj_exists(db):
     assert db.obj_exists(User, 1)
     assert db.obj_exists(User, 2)
     assert db.obj_exists(User, 3)
     assert not db.obj_exists(User, 4)
 
 
-def test_add_user(db):
+def test_add_obj(db):
     assert not db.obj_exists(User, 4)
     db.add_obj(User("Petr"))
     assert db.obj_exists(User, 4)
@@ -75,6 +75,12 @@ def test_del_obj(db):
     with pytest.raises(ServerDBError):
         db.del_obj(Chat, 1)
 
+
+def test_get_user_id(db):
+    assert db.get_user_id("user1") == 1
+    assert db.get_user_id("user2") == 2
+    assert db.get_user_id("user3") == 3
+    assert db.get_user_id("unknown") is None
 
 def test_get_users_for(db):
     assert len(db.get_users_for(1)) == 2
@@ -165,3 +171,10 @@ def test_del_contact(db):
     assert len(db.get_contacts_for(1)) == 1
     db.del_contact(1, 3)
     assert not db.get_contacts_for(1)
+
+
+def test_set_user_status(db):
+    db.set_user_status(1, "online", 33)
+    user = db.get_obj(User, 1)
+    assert user.status == "online"
+    assert user.fileno == 33

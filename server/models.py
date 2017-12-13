@@ -9,13 +9,22 @@ Base = declarative_base()
 class User(Base):
     __tablename__ = "users"
     id = Column("id", Integer, primary_key=True)
-    name = Column(String(25))
+    login = Column(String(30), unique=True)
+    name = Column(String(30))
     status = Column(String(8), nullable=False)
+    online = Column(Integer, default=0)
+    fileno = Column(Integer, nullable=True)
     CheckConstraint("status in ('active', 'deleted')")
+    CheckConstraint("online in (0, 1)")
 
-    def __init__(self, name):
+    def __init__(self, login, name="", online=False):
+        self.login = login
+        if not name:
+            name = login
         self.name = name
+        self.online = online
         self.status = "active"
+
 
     def __repr__(self):
         return "User (userid = {}, name = {})".format(
@@ -61,18 +70,16 @@ class ChatMsg(Base):
     id = Column("id", Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"))
     chat_id = Column(Integer, ForeignKey("chats.id"))
-    time = Column(Float)
+    timestamp = Column(Float)
     message = Column(Text)
     status = Column(String(8))
     CheckConstraint("status in ('active', 'deleted')")
 
-    def __init__(self, msg: JIMMessage):
-        if not msg.action == JIMMessage.MSG:
-            raise 
-        self.user_id = msg.from_user
-        self.chat_id = msg.to_user
-        self.time = msg.time
-        self.message = msg.message
+    def __init__(self, user_id, chat_id, timestamp, message):
+        self.user_id = user_id
+        self.chat_id = chat_id
+        self.timestamp = timestamp
+        self.message = message
         self.status = "active"
 
     def __repr__(self):

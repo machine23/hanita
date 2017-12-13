@@ -83,18 +83,81 @@ class ServerDB:
         q = self.session.query(cls).filter(cls.id == obj_id)
         return self.session.query(q.exists()).scalar()
 
-    def get_users_for(self, chat_id):
+    def add_new_user(self, login):
+        """ Добавить нового пользователя """
+        if self.get_user_id(login):
+            raise ServerDBError("login уже занят")
+        user = User(login)
+        self.add_obj(user)
+        return user
+
+
+    def add_contact(self, user_id, contact_id):
+        """ Добавить контакт. """
+        contact = Contact(user_id, contact_id)
+        self.add_obj(contact)
+
+    def set_user_status(self, user_id, status):
+        """ Установить статус для пользователя """
+        user = self.session.query(User) \
+            .filter(User.id == user_id).first()
+        user.status = status
+        self.session.commit()
+
+    def set_user_online(self, user_id, online, fileno=None):
+        """ Установить статус для пользователя """
+        user = self.session.query(User) \
+            .filter(User.id == user_id).first()
+        user.online = online
+        user.fileno = fileno
+        self.session.commit()
+
+
+    def get_user_id(self, user_login):
+        """ Получить  user_id по логину. Если логина нет в базе,
+        возвращается None.
+        """
+        user = self.session.query(User) \
+            .filter(User.login == user_login) \
+            .first()
+        return user.id if user else None
+
+    def get_users_for(self, chat_id, status=None):
         """
         Получить список всех активных пользователей чата.
         Возвращает список объектов класса User. Если chat_id не существует,
         возвращается пустой список.
          """
+        status = status or "active"
         user_list = self.session.query(User) \
             .join(ChatUser) \
             .filter(ChatUser.chat_id == chat_id) \
             .filter(ChatUser.status == "active") \
-            .filter(User.status == "active").all()
+            .filter(User.status == status).all()
         return user_list
+
+    def get_online_users(self, chat_id):
+        """
+        Получить список пользователей чата, находящихся онлайн.
+        Возвращает список объектов класса User. Если chat_id не существует,
+        возвращается пустой список.
+        """
+        user_list = self.session.query(User) \
+            .join(ChatUser) \
+            .filter(ChatUser.chat_id == chat_id) \
+            .filter(ChatUser.status == "active") \
+            .filter(User.status == "active") \
+            .filter(User.online == 1).all()
+        return user_list
+
+    def add_new_chat(self, chat_name):
+        """ Добавить новый чат. """
+        chat = Chat(chat_name)
+        self.add_obj(chat)
+        return chat
+
+    def get_chat(self, chat_id):
+        return self.get_obj(Chat, chat_id)
 
     def get_chats_for(self, user_id):
         """

@@ -65,10 +65,14 @@ class JIMMessage(dict):
     DEL_CONTACT = "del_contact"
     WHO_ONLINE = "who_online"
     ONLINE_LIST = "online_list"
+    NEW_CHAT = "new_chat"
+    GET_CHATS = "get_chats"
+    CHAT_INFO = "chat_info"
 
     actions = (AUTHENTICATE, QUIT, PRESENCE, PROBE,
                MSG, JOIN, LEAVE, GET_CONTACTS, CONTACT_LIST,
-               ADD_CONTACT, DEL_CONTACT, WHO_ONLINE, ONLINE_LIST)
+               ADD_CONTACT, DEL_CONTACT, WHO_ONLINE, ONLINE_LIST,
+               NEW_CHAT, GET_CHATS, CHAT_INFO)
 
     status = {
         100: "базовое уведомление",
@@ -93,13 +97,16 @@ class JIMMessage(dict):
     action = JIMMessageAttr("action")
     timestamp = JIMMessageAttr("timestamp")
     user = JIMMessageAttr("user")
+    chat = JIMMessageAttr("chat")
     msg_id = JIMMessageAttr("msg_id")
     chat_id = JIMMessageAttr("chat_id")
+    chat_name = JIMMessageAttr("chat_name")
     user_id = JIMMessageAttr("user_id")
     message = JIMMessageAttr("message")
     user_status = JIMMessageAttr("user_status")
     password = JIMMessageAttr("password")
     contacts = JIMMessageAttr("contacts")
+    chat_users = JIMMessageAttr("chat_users")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -122,11 +129,10 @@ class JIMClientMessage(JIMMessage):
         self.timestamp = time.time()
 
     @staticmethod
-    def authenticate(user_id, password):
+    def authenticate(user_login, password):
         """ Посылается при аутентификации клиента """
         msg = JIMClientMessage(JIMMessage.AUTHENTICATE)
-        msg.user_id = user_id
-        msg.password = password
+        msg.user = {"login": user_login, "password": password}
         return msg
 
     @staticmethod
@@ -148,10 +154,10 @@ class JIMClientMessage(JIMMessage):
         return msg
 
     @staticmethod
-    def msg(user_id, chat_id, message, timestamp=None):
+    def msg(chat_id, message, timestamp=None):
         """ Сообщение пользователю или в чат """
         msg = JIMClientMessage(JIMMessage.MSG)
-        msg.user_id = user_id
+        # msg.user_id = user_id
         msg.chat_id = chat_id
         msg.message = message
         if timestamp:
@@ -213,6 +219,22 @@ class JIMClientMessage(JIMMessage):
         msg = JIMClientMessage(JIMMessage.WHO_ONLINE)
         return msg
 
+    @staticmethod
+    def new_chat(chat_name, contacts=None):
+        """ Запрос на создание нового чата """
+        contacts = contacts or []
+        msg = JIMClientMessage(JIMMessage.NEW_CHAT)
+        msg.chat_name = chat_name
+        msg.contacts = contacts
+
+    @staticmethod
+    def chat_info(chat_id, chat_name, chat_users=None):
+        """ Сообщение с данными о чате. """
+        chat_users = chat_users or []
+        msg = JIMClientMessage(JIMMessage.CHAT_INFO)
+        msg.chat = {"chat_id":chat_id, "chat_name":chat_name}
+        msg.chat_users = chat_users
+        return msg
     # @staticmethod
     # def online_list(user_id):
     #     """ Онлайн лист """
@@ -237,3 +259,4 @@ class JIMResponse(JIMMessage):
             self.alert = message if message else self.status[code]
         else:
             self.error = message if message else self.status[code]
+        print("kwargs", kwargs)

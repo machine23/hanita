@@ -69,7 +69,8 @@ class ClientConnection:
                     # просто отбросить, если пришел не json
                     pass
                 else:
-                    return JIMMessage(json_msg)
+                    if json_msg:
+                        return JIMMessage(json_msg)
 
     def close(self):
         """ Закрывает соединение с сервером """

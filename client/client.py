@@ -40,10 +40,17 @@ class Client:
 
     def __init__(self, conn: ClientConnection, ViewClass):
         super().__init__()
-        self.user = ClientUser()
-        self.model = None
+        # self.user = ClientUser()
+        self.self_id = None
+        self.client_db = None
         self.conn = conn
         self.view = ViewClass(self)
+        self.msg_handlers = {
+            JIMMessage.MSG: self.handle_msg,
+            JIMMessage.CONTACT_LIST: self.handle_contact,
+            JIMMessage.CHAT_INFO: self.handle_chat_info,
+
+        }
         try:
             self.conn.connect()
         except ClientConnectionError:
@@ -53,7 +60,7 @@ class Client:
 
     def send_presence(self):
         """ Сообщаем серверу о присутствии """
-        msg = JIMClientMessage.presence(self.user.name)
+        msg = JIMClientMessage.presence()
         self.send_to_server(msg)
 
     def authenticate(self):
@@ -65,29 +72,30 @@ class Client:
                 "Имя не может быть пустым или состоять из пробелов")
             sys.exit()
         msg = JIMClientMessage.authenticate(login, "")
-        resp = self.send_to_server(msg)
-        if resp.response and resp.error:
-            self.view.render_info(resp.error)
-            return False
-        self.user.name = login
-        db_name = login + ".db"
-        self.model = ClientDB(db_name)
-        self.view.set_model(self.model)
-        ###
-        self.model.active_user = login
-        self.model.active_chat = "#all"
-        ###
-        return True
+        resp = self.send_and_get(msg)
+        print("clint autehenticate resp:", resp)
+        if resp.response:
+            if resp.error:
+                self.view.render_info(resp.error)
+                return False
+            else:
+                db_name = login + ".db"
+                self.client_db = ClientDB(db_name)
+                self.view.set_client_db(self.client_db)
+                ###
+                self.view.current_user = resp["user"]
+                ###
+                return True
 
-    def send_msg_to(self, to_user, message):
+    def send_to_server(self, message):
         """
         Отправляем на сервер сообщение от пользователя.
         """
-        msg = JIMClientMessage.msg(self.user.name, to_user, message)
-        self.model.add_message(msg)
-        self.conn.send(msg)
+        # msg = JIMClientMessage.msg(chat_id, message)
+        # self.client_db.add_msg(**msg)
+        self.conn.send(message)
 
-    def send_to_server(self, message):
+    def send_and_get(self, message):
         """
         Отправляем на сервер и обрабатываем ответ от сервера.
         """
@@ -104,15 +112,48 @@ class Client:
     def get_from(self):
         """ Получаем и обрабатываем сообщение, присланное от другого клиента """
         msg = self.conn.get()
-        if msg and msg.action == msg.MSG:
-            self.model.add_message(msg)
+        if msg and msg.action:
+            print("client get_from msg:", msg)
+            self.msg_handlers[msg.action](msg)
+
+    def handle_msg(self, msg):
+        """ Обработка сообщения msg """
+        print("handle_msg msg", msg)
+        msg_id = msg.msg_id
+        user = msg.user
+        chat_id = msg.chat_id
+
+        self.client_db.add_msg(
+            msg_id, user["user_id"], chat_id, msg.timestamp, msg.message)
+
+    def handle_contact(self, msg):
+        """ Обработка сообщения contact_list """
+        print("handle_contact msg:", msg)
+        contacts = msg["contacts"]
+        for contact in contacts:
+            user_id = contact["user_id"]
+            user_name = contact["user_name"]
+            self.client_db.update_user(user_id, user_name, True)
+
+    def handle_chat_info(self, msg):
+        """ Обработка сообщения chat_list """
+        print("handle_chat_info msg:", msg)
+        chat_id = msg.chat["chat_id"]
+        chat_name = msg.chat["chat_name"]
+        chat_users = msg.chat_users
+        if not chat_name:
+            chat_name = chat_users[-1]["user_name"]
+        if not self.client_db.chat_exists(chat_id):
+            self.client_db.add_chat(chat_id, chat_name)
+        for user in chat_users:
+            self.client_db.update_user(user["user_id"], user["user_name"])
 
     def run(self):
         """ Главный цикл работы клиента """
         while not self.authenticate():
             pass
         self.view.run()
-        self.view.render_info("Good bye!")
+        # self.view.render_info("Good bye!")
         self.close()
 
     def receive(self):
@@ -120,91 +161,10 @@ class Client:
         while True:
             self.get_from()
 
-    def parse_cmd(self, user_msg: str):
-        """ Разбираем команды пользователя """
-        user_msg = user_msg.strip()
-        if user_msg.startswith("!") or user_msg.startswith("@"):
-            if len(user_msg.split(" ")) > 1:
-                cmd, msg = user_msg.split(" ", 1)
-            else:
-                cmd, msg = user_msg, ""
-            #
-            if cmd == "!quit":
-                self.close("Good bye")
-            elif cmd == "!contacts":
-                self.get_contacts()
-            elif cmd == "!add":
-                self.add_contact(msg)
-            elif cmd == "!del":
-                self.del_contact(msg)
-            elif cmd == "!help":
-                self.view.render_help()
-            elif cmd == "@":
-                self.who_online()
-            elif cmd.startswith("@") and len(cmd) > 1:
-                self.send_msg_to(cmd[1:], msg)
-            else:
-                self.view.render_info("Неизвестная команда!")
-            return True
-        return False
-
-    def get_contacts(self):
-        """ Получить контакты """
-        msg = JIMClientMessage.get_contacts()
-        resp = self.send_to_server(msg)
-        if resp.response == 202:
-            if resp.quantity:
-                while len(self.user.contacts) < resp.quantity:
-                    contact = self.conn.get()
-                    if contact.action == JIMMessage.CONTACT_LIST:
-                        self.user.contacts.append(contact.user_id)
-                        ###
-                        self.model.add_user(contact.user_id)
-                        ###
-                self.view.render_contacts(self.user.contacts, "Ваши контакты:")
-            else:
-                self.view.render_info("У вас нет контактов")
-        else:
-            self.view.render_info("get_contacts" + str(resp))
-
-    def add_contact(self, nickname):
-        """ Добавить контакт """
-        msg = JIMClientMessage.add_contact(nickname)
-        resp = self.send_to_server(msg)
-        if resp.error:
-            self.view.render_info("Не удалось добавить контакт")
-            pass
-        else:
-            self.user.contacts.append(nickname)
-            ###
-            self.model.add_user(nickname)
-            ###
-
-    def del_contact(self, nickname):
-        """ Удалить контакт """
-        msg = JIMClientMessage.del_contact(nickname)
-        resp = self.send_to_server(msg)
-        if resp.error:
-            self.view.render_info("Не удалось удалить контакт")
-            # self.view.render_info(resp.error)
-            pass
-        else:
-            if nickname in self.user.contacts:
-                self.user.contacts.remove(nickname)
-
-    def who_online(self):
-        """ Узнать, кто онлайн """
-        online_users = []
-        msg = JIMClientMessage.who_online()
-        resp = self.send_to_server(msg)
-        if resp.response == 202 and resp.quantity:
-            while len(online_users) < resp.quantity:
-                contact = self.conn.get()
-                if contact.action == JIMMessage.ONLINE_LIST:
-                    online_users.append(contact.user_id)
-            self.view.render_contacts(online_users, "Онлайн:")
-        else:
-            self.view.render_info(resp)
+    def parse_msg(self, msg):
+        """ Разбор сообщений пришедших с сервера """
+        action = msg.action
+        if msg.action:
             pass
 
     def close(self, info=""):

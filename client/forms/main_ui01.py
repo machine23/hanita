@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'main_client_ui01.ui'
+# Form implementation generated from reading ui file 'ui_forms/main_client_ui01.ui'
 #
-# Created by: PyQt5 UI code generator 5.9.1
+# Created by: PyQt5 UI code generator 5.9.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -12,80 +12,48 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(720, 526)
-        palette = QtGui.QPalette()
-        brush = QtGui.QBrush(QtGui.QColor(244, 245, 246))
-        brush.setStyle(QtCore.Qt.SolidPattern)
-        palette.setBrush(QtGui.QPalette.Active, QtGui.QPalette.Button, brush)
-        brush = QtGui.QBrush(QtGui.QColor(244, 245, 246))
-        brush.setStyle(QtCore.Qt.SolidPattern)
-        palette.setBrush(QtGui.QPalette.Active, QtGui.QPalette.Midlight, brush)
-        brush = QtGui.QBrush(QtGui.QColor(244, 245, 246))
-        brush.setStyle(QtCore.Qt.SolidPattern)
-        palette.setBrush(QtGui.QPalette.Active, QtGui.QPalette.Base, brush)
-        brush = QtGui.QBrush(QtGui.QColor(244, 245, 246))
-        brush.setStyle(QtCore.Qt.SolidPattern)
-        palette.setBrush(QtGui.QPalette.Active, QtGui.QPalette.Window, brush)
-        brush = QtGui.QBrush(QtGui.QColor(244, 245, 246))
-        brush.setStyle(QtCore.Qt.SolidPattern)
-        palette.setBrush(QtGui.QPalette.Inactive, QtGui.QPalette.Button, brush)
-        brush = QtGui.QBrush(QtGui.QColor(244, 245, 246))
-        brush.setStyle(QtCore.Qt.SolidPattern)
-        palette.setBrush(QtGui.QPalette.Inactive, QtGui.QPalette.Midlight, brush)
-        brush = QtGui.QBrush(QtGui.QColor(244, 245, 246))
-        brush.setStyle(QtCore.Qt.SolidPattern)
-        palette.setBrush(QtGui.QPalette.Inactive, QtGui.QPalette.Base, brush)
-        brush = QtGui.QBrush(QtGui.QColor(244, 245, 246))
-        brush.setStyle(QtCore.Qt.SolidPattern)
-        palette.setBrush(QtGui.QPalette.Inactive, QtGui.QPalette.Window, brush)
-        brush = QtGui.QBrush(QtGui.QColor(244, 245, 246))
-        brush.setStyle(QtCore.Qt.SolidPattern)
-        palette.setBrush(QtGui.QPalette.Disabled, QtGui.QPalette.Button, brush)
-        brush = QtGui.QBrush(QtGui.QColor(244, 245, 246))
-        brush.setStyle(QtCore.Qt.SolidPattern)
-        palette.setBrush(QtGui.QPalette.Disabled, QtGui.QPalette.Midlight, brush)
-        brush = QtGui.QBrush(QtGui.QColor(244, 245, 246))
-        brush.setStyle(QtCore.Qt.SolidPattern)
-        palette.setBrush(QtGui.QPalette.Disabled, QtGui.QPalette.Base, brush)
-        brush = QtGui.QBrush(QtGui.QColor(244, 245, 246))
-        brush.setStyle(QtCore.Qt.SolidPattern)
-        palette.setBrush(QtGui.QPalette.Disabled, QtGui.QPalette.Window, brush)
-        MainWindow.setPalette(palette)
         MainWindow.setAutoFillBackground(False)
-        MainWindow.setStyleSheet("QMainWindow {\n"
-"    background-color: #F4F5F6;\n"
-"}\n"
-"QScrollBar:vertical {\n"
-"     border: none;\n"
-"     background: #F4F5F6;\n"
-"     width: 8px;\n"
-"     margin: 0;\n"
-" }\n"
-" QScrollBar::handle:vertical {\n"
-"    border: 1px solid #F3F4F5;\n"
-"    border-radius: 4px;\n"
-"     background: lightgrey;\n"
-"     min-height: 20px;\n"
-" }\n"
-"QScrollBar::add-line:vertical {\n"
-"     border: none;\n"
-"     background: #F4F5F6;\n"
-"     height: 20px;\n"
-"     subcontrol-position: bottom;\n"
-"     subcontrol-origin: margin;\n"
-" }\n"
-"\n"
-" QScrollBar::sub-line:vertical {\n"
-"     border: none;\n"
-"     background: #F4F5F6;\n"
-"     height: 20px;\n"
-"     subcontrol-position: top;\n"
-"     subcontrol-origin: margin;\n"
-" }\n"
-" \n"
-"\n"
-" QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {\n"
-"     background: none;\n"
-" }")
+        MainWindow.setStyleSheet(
+            """QMainWindow {
+                    background-color: white;
+                }
+                QScrollBar:vertical {
+                    border: none;
+                    background: #F4F5F6;
+                    width: 8px;
+                    margin: 0;
+                }
+                QScrollBar::handle:vertical {
+                    border: 1px solid #F3F4F5;
+                    border-radius: 4px;
+                    background: lightgrey;
+                    min-height: 20px;
+                }
+                QScrollBar::add-line:vertical {
+                    border: none;
+                    background: #F4F5F6;
+                    height: 20px;
+                    subcontrol-position: bottom;
+                    subcontrol-origin: margin;
+                }
+
+                QScrollBar::sub-line:vertical {
+                    border: none;
+                    background: #F4F5F6;
+                    height: 20px;
+                    subcontrol-position: top;
+                    subcontrol-origin: margin;
+                }
+                QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+                    background: none;
+                }
+                QTextEdit {
+                    background-color: white;
+                }
+                table {
+                    background-color: blue;
+                }
+            """)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setAutoFillBackground(False)
         self.centralwidget.setObjectName("centralwidget")
@@ -113,17 +81,17 @@ class Ui_MainWindow(object):
         self.lw_list_chats.setMaximumSize(QtCore.QSize(300, 16777215))
         self.lw_list_chats.setObjectName("lw_list_chats")
         self.verticalLayout_2.addWidget(self.lw_list_chats)
-        self.pushButton = QtWidgets.QPushButton(self.horizontalLayoutWidget_2)
+        self.pb_main_newchat = QtWidgets.QPushButton(self.horizontalLayoutWidget_2)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(1)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.pushButton.sizePolicy().hasHeightForWidth())
-        self.pushButton.setSizePolicy(sizePolicy)
-        self.pushButton.setObjectName("pushButton")
-        self.verticalLayout_2.addWidget(self.pushButton)
-        self.pushButton_2 = QtWidgets.QPushButton(self.horizontalLayoutWidget_2)
-        self.pushButton_2.setObjectName("pushButton_2")
-        self.verticalLayout_2.addWidget(self.pushButton_2)
+        sizePolicy.setHeightForWidth(self.pb_main_newchat.sizePolicy().hasHeightForWidth())
+        self.pb_main_newchat.setSizePolicy(sizePolicy)
+        self.pb_main_newchat.setObjectName("pb_main_newchat")
+        self.verticalLayout_2.addWidget(self.pb_main_newchat)
+        self.pb_main_contacts = QtWidgets.QPushButton(self.horizontalLayoutWidget_2)
+        self.pb_main_contacts.setObjectName("pb_main_contacts")
+        self.verticalLayout_2.addWidget(self.pb_main_contacts)
         self.splitter = QtWidgets.QSplitter(self.splitter_2)
         self.splitter.setOrientation(QtCore.Qt.Vertical)
         self.splitter.setObjectName("splitter")
@@ -137,7 +105,7 @@ class Ui_MainWindow(object):
         self.ql_current_chat.setAlignment(QtCore.Qt.AlignCenter)
         self.ql_current_chat.setObjectName("ql_current_chat")
         self.verticalLayout.addWidget(self.ql_current_chat)
-        self.te_list_msg = QtWidgets.QTextEdit(self.verticalLayoutWidget)
+        self.te_list_msg = QtWidgets.QListWidget(self.verticalLayoutWidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(1)
         sizePolicy.setVerticalStretch(1)
@@ -161,8 +129,8 @@ class Ui_MainWindow(object):
         self.te_list_msg.setLineWidth(1)
         self.te_list_msg.setMidLineWidth(0)
         self.te_list_msg.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
-        self.te_list_msg.setUndoRedoEnabled(False)
-        self.te_list_msg.setReadOnly(True)
+        # self.te_list_msg.setUndoRedoEnabled(False)
+        # self.te_list_msg.setReadOnly(True)
         self.te_list_msg.setObjectName("te_list_msg")
         self.verticalLayout.addWidget(self.te_list_msg)
         self.horizontalLayoutWidget = QtWidgets.QWidget(self.splitter)
@@ -195,8 +163,8 @@ class Ui_MainWindow(object):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "Hanita"))
         self.label.setText(_translate("MainWindow", "Chats:"))
-        self.pushButton.setText(_translate("MainWindow", "New Chat"))
-        self.pushButton_2.setText(_translate("MainWindow", "Contacts"))
+        self.pb_main_newchat.setText(_translate("MainWindow", "New Chat"))
+        self.pb_main_contacts.setText(_translate("MainWindow", "Contacts"))
         self.ql_current_chat.setText(_translate("MainWindow", "all"))
         self.pb_send.setText(_translate("MainWindow", "Send"))
 

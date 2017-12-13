@@ -28,9 +28,9 @@ class ClientDB:
         return self._active_user
 
     @active_user.setter
-    def active_user(self, user_name):
-        self._active_user = user_name
-        self.add_user(user_name)
+    def active_user(self, user):
+        self._active_user = user["user_id"]
+        self.update_user(user["user_id"], user["user_name"])
 
     @property
     def active_chat(self):
@@ -39,7 +39,7 @@ class ClientDB:
     @active_chat.setter
     def active_chat(self, chat_name):
         self._active_chat = chat_name
-        self.add_chat(chat_name)
+        # self.add_chat(chat_name)
 
     def setup(self):
         """ Создаем таблицы """
@@ -47,19 +47,14 @@ class ClientDB:
             CREATE TABLE IF NOT EXISTS users(
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id INTEGER UNIQUE NOT NULL,
-                user_name TEXT
-            );
-
-            CREATE TABLE IF NOT EXISTS contacts(
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER UNIQUE,
-                FOREIGN KEY (user_id) REFERENCES users(user_id)
+                user_name TEXT,
+                contact INTEGER CHECK(contact IN (0, 1)) DEFAULT 0
             );
 
             CREATE TABLE IF NOT EXISTS chats(
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 chat_id INTEGER UNIQUE,
-                chat_name TEXT UNIQUE,
+                chat_name TEXT,
                 read_time REAL 
             );
 
@@ -95,16 +90,16 @@ class ClientDB:
         self.lock.release()
         return bool(self.cursor.fetchone())
 
-    def add_user(self, user_id, user_name):
+    def add_user(self, user_id, user_name, contact=False):
         """ Добавить пользователя в БД.
         Если пользователь с user_id уже имеется в базе,
         генерируется исключение ClientDBError
         """
         if self.user_exists(user_id):
             raise ClientDBError("user_id уже имеется в базе")
-        cmd = "INSERT INTO users(user_id, user_name) VALUES (?, ?)"
+        cmd = "INSERT INTO users(user_id, user_name, contact) VALUES (?, ?, ?)"
         self.lock.acquire()
-        self.cursor.execute(cmd, (user_id, user_name))
+        self.cursor.execute(cmd, (user_id, user_name, int(contact)))
         self.conn.commit()
         self.lock.release()
         self._notify()
@@ -127,20 +122,39 @@ class ClientDB:
 
         return user
 
-    def update_user(self, user_id, user_name):
+    def update_user(self, user_id, user_name=None, contact=None):
         """
         Обновить данные о пользователе.
         Если пользователя нет в базе, то он будет добавлен.
         """
         if self.user_exists(user_id):
-            cmd = "UPDATE users SET user_name = ? WHERE user_id = ?"
             self.lock.acquire()
-            self.cursor.execute(cmd, (user_name, user_id))
+            if user_name:
+                cmd = "UPDATE users SET user_name = ? WHERE user_id = ?"
+                self.cursor.execute(cmd, (user_name, user_id))
+            if contact is not None:
+                cmd = "UPDATE users SET contact = ? WHERE user_id = ?"
+                self.cursor.execute(cmd, (int(contact), user_id))
             self.conn.commit()
             self.lock.release()
             self._notify()
         else:
-            self.add_user(user_id, user_name)
+            contact = contact or False
+            self.add_user(user_id, user_name, contact)
+
+    def get_contacts(self, user_id):
+        """ Получить список контактов. """
+        cmd = "SELECT user_id, user_name FROM users WHERE contact = 1"
+        self.lock.acquire()
+        self.cursor.execute(cmd)
+        users_data = self.cursor.fetchall()
+        self.lock.release()
+        user_keys = "user_id", "user_name"
+        contacts = []
+        for data in users_data:
+            contact = dict(zip(user_keys, data))
+            contacts.append(contact)
+        return contacts
 
     ############################################################################
     def chat_exists(self, chat_id):

@@ -44,10 +44,12 @@ class TestJIMMessage:
         expect = {
             "action": "authenticate",
             "timestamp": time.time(),
-            "user_id": 123,
-            "password": "abc"
+            "user":{
+                "login": "user",
+                "password": "abc"
+            }
         }
-        result = JIMClientMessage.authenticate(123, "abc")
+        result = JIMClientMessage.authenticate("user", "abc")
         check_message(expect, result)
 
     def test_quit(self):
@@ -78,11 +80,11 @@ class TestJIMMessage:
         expect = {
             "action": "msg",
             "timestamp": time.time(),
-            "user_id": "John",
+            # "user_id": "John",
             "chat_id": "#all",
             "message": "Hello"
         }
-        result = JIMClientMessage.msg("John", "#all", "Hello")
+        result = JIMClientMessage.msg("#all", "Hello")
         check_message(expect, result)
 
     def test_join(self):

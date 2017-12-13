@@ -79,7 +79,6 @@ def main():
     """ mainloop """
     args = read_args()
 
-    sdb = ServerDB(Base, "sqlite:///server.db")
 
     with Server((args.addr, args.port), ClientRequestHandler, Base) as server:
         server_addr = server.socket.getsockname()
@@ -92,7 +91,6 @@ def main():
             pass
 
     print("\nKeyboard interrupt received, exiting.")
-    sdb.close()
     sys.exit(0)
 
 

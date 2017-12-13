@@ -25,11 +25,11 @@ def db():
     # client_db.cursor.execute(cmd_chat_user, (1, 2))
     # client_db.conn.commit()
 
-    msg1 = JIMClientMessage.msg(1, 1, "Hello", 3.3)
+    msg1 = JIMClientMessage.msg(1, "Hello", 3.3)
     # msg2 = JIMClientMessage.msg(2, 1, "Hi")
     # msg3 = JIMClientMessage.msg(1, 2, "Good!")
 
-    data1 = (1, msg1.user_id, msg1.chat_id, msg1.timestamp, msg1.message)
+    data1 = (1, 1, msg1.chat_id, msg1.timestamp, msg1.message)
     # data2 = (msg2.from_user, msg2.to_user, msg2.time, msg2.message)
     # data3 = (msg3.from_user, msg3.to_user, msg3.time, msg3.message)
 
@@ -121,8 +121,9 @@ def test_msg_exists(db):
     assert db.msg_exists(2) is False
 
 def test_add_msg(db):
-    msg2 = JIMClientMessage.msg(1, 1, "Hello", 1.1)
-    msg2.msg_id = 2
+    msg2 = {"msg_id":2, "user_id":1, "chat_id":1, "timestamp":5.5,
+            "message":"message text 2"}
+    # msg2.msg_id = 2
     db.add_msg(**msg2)
     assert db.msg_exists(2)
 
@@ -147,37 +148,3 @@ def test_get_msgs(db):
     assert db.get_msgs(1) == []
 
 ###############################################################################
-def test_get_chat_users(db):
-    assert db.get_chat_users("chat0") == ["1", "2"]
-    assert db.get_chat_users("chat1") == ["1"]
-    assert db.get_chat_users("chat2") == []
-    assert db.get_chat_users("no_chat") == []
-
-
-def test_add_chat_user(db):
-    assert "3" not in db.get_chat_users("chat0")
-    db.add_chat_user("3", "chat0")
-    assert "3" in db.get_chat_users("chat0")
-    with pytest.raises(ClientDBError):
-        assert db.add_chat_user("3", "chat0")
-    with pytest.raises(ClientDBError):
-        db.add_chat_user("unknown", "chat0")
-    with pytest.raises(ClientDBError):
-        db.add_chat_user("1", "no_chat")
-
-
-def test_get_messages(db):
-    assert len(db.get_messages("chat0")) == 2
-    assert len(db.get_messages("chat1")) == 1
-    assert len(db.get_messages("chat2")) == 0
-    for msg in db.get_messages("chat0"):
-        assert isinstance(msg, JIMMessage)
-        assert set(msg.keys()) == {"action", "from", "to", "time", "message"}
-
-
-def test_add_message(db):
-    before = len(db.get_messages("chat0"))
-    msg = JIMClientMessage.msg("1", "chat0", "check it")
-    db.add_message(msg)
-    assert len(db.get_messages("chat0")) - before == 1
-    assert msg in db.get_messages("chat0")

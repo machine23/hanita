@@ -6,138 +6,102 @@ from PyQt5 import QtWidgets
 from PyQt5.QtCore import QThread, pyqtSignal
 from sip import wrappertype
 
+# from .client_db import ClientDB
+from .forms.app_ui import MainWindow
 # from .client import Client
-from .client_db import ClientDB
-from .client_ui import Ui_MainWindow
+# from .forms.main_ui import Ui_MainWindow
 
 
-class ClientMeta(wrappertype, abc.ABCMeta):
-    pass
+# class ClientMeta(wrappertype, abc.ABCMeta):
+#     pass
 
 
-class BaseClientObserver(metaclass=abc.ABCMeta):
-    @abc.abstractmethod
-    def model_is_changed(self):
-        pass
+# class BaseClientObserver(metaclass=abc.ABCMeta):
+#     @abc.abstractmethod
+#     def model_is_changed(self):
+#         pass
 
 
-class QtClientView(
-        QtWidgets.QMainWindow, BaseClientObserver, metaclass=ClientMeta):
+class QtClientView(MainWindow):
+    """ Класс представления пользовательского интерфейса """
     app = QtWidgets.QApplication([])
     model_changed = pyqtSignal()
 
-    def __init__(self, client, client_model=None, parent=None):
-        QtWidgets.QMainWindow.__init__(self, parent)
-
+    def __init__(self, client=None, parent=None):
+        super().__init__(parent)
         self.controller = client
-        self.set_model(client_model)
-
+        self.client_db = None
         self.thread = None
 
-        self.ui = Ui_MainWindow()
-        self.ui.setupUi(self)
+    def set_client_db(self, client_db):
+        """ Передать объект хранилища, откуда будет браться инфо
+        для отображения
+        """
+        self.client_db = client_db
+        if self.client_db:
+            self.client_db.add_observer(self)
 
-        self.ui.pb_send.clicked.connect(self.send)
-        self.ui.lw_list_chats.itemDoubleClicked.connect(self.change_chat)
-
-    def set_model(self, client_model: ClientDB):
-        """ Получить БД """
-        self.model = client_model
-        if self.model:
-            self.model.add_observer(self)
-
-    def send(self):
-        data = self.ui.te_input_msg.toPlainText()
-        if data.strip():
-            self.controller.send_msg_to(self.model.active_chat, data)
-            self.ui.te_input_msg.setText("")
-            self.ui.te_input_msg.setFocus()
-
-    def model_is_changed(self):
-        self.model_changed.emit()
-
-    def render_view(self):
-        self.render_messages()
-        self.render_chats_list()
 
     def run(self):
+        """ Запускает цикл интерфейса """
         ################
-        self.model_changed.connect(self.render_view)
         self.thread = QThread()
         self.controller.moveToThread(self.thread)
-        self.thread.started.connect(self.render_view)
+        self.thread.started.connect(self.render)
         self.thread.started.connect(self.controller.receive)
         self.thread.start()
         ################
         self.show()
         self.app.exec_()
-        self.controller.close()
-
-    def change_chat(self, item):
-        chat_name = item.text()
-        self.model.active_chat = chat_name
-        self.ui.ql_current_chat.setText(chat_name)
 
     def render_info(self, info):
+        """ Отрисовывает информационное окно. """
         msg = QtWidgets.QMessageBox()
         msg.setText(str(info))
         msg.exec()
 
     def input(self, msg):
+        """ Отрисовывает окно с вопросом и полем ввода для ответа. """
         text, ok = QtWidgets.QInputDialog.getText(self, "Login",
                                                   "Enter your name")
         return text
 
-    def render_messages(self):
-        """
-        Отобразить все сообщения для чата
-        """
-        chat_name = self.model.active_chat
-        user = self.model.active_user
-        messages = self.model.get_messages(chat_name)
-        template = '''
-        <table 
-            bgcolor="#fff" 
-            width="100%" 
-            style="margin:5px {left} 5px {right};">
-            <tr>
-                <td style="padding:5px 15px;">
-                    <b style="color:{color};">
-                        {name}
-                    </b>
-                    <i style="color:lightgrey;font-size:small;">
-                        {timestamp}
-                    </i>
-                </td>
-            </tr>
-            <tr>
-                <td style="padding:0px 20px 10px;">
-                    {text}
-                </td>
-            </tr>
-        </table>
-        '''
+    def get_chatlist(self):
+        """ Получить список чатов. """
+        chat_ids = self.client_db.get_chats()
+        chats = []
+        for _id in chat_ids:
+            chat = self.client_db.get_chat(_id)
+            chats.append(chat)
+        return chats
+    
+    def get_contactlist(self):
+        """ Получить список контактов. """
+        contacts = self.client_db.get_contacts(self.current_user["user_id"])
+        return contacts
 
-        arr = [
-            template.format(
-                left="5px" if i.from_user == user else "25px",
-                right="25px" if i.from_user == user else "5px",
-                color="orange" if i.from_user == user else "blue",
-                name=i.from_user,
-                timestamp=time.ctime(i.time),
-                text=i.message.replace("\n", "<br>"))
-            for i in messages
-        ]
-        msg_string = '<body bgcolor="#F4F5F6">' + \
-            "".join(arr) + '<a name="end" style="color:#F4F5F6">a</a>' + '</html>'
-        self.ui.te_list_msg.setHtml(msg_string)
-        self.ui.te_list_msg.scrollToAnchor("end")
+    def get_msgslist(self):
+        msgs_ids = self.client_db.get_msgs(self.current_chat["chat_id"])
+        print("get_msgslist", msgs_ids)
+        msgs = []
+        for _id in msgs_ids:
+            msg = self.client_db.get_msg(_id)
+            user_id = msg["user_id"]
+            user_name = self.client_db.get_user(user_id)["user_name"]
+            timestamp = msg["timestamp"]
+            message = msg["message"]
+            msg_out = {"user_id": user_id, "user_name":user_name, "timestamp":timestamp, "message":message}
+            msgs.append(msg_out)
+        return msgs
 
-    def render_chats_list(self):
-        """
-        get names of chats from db
-        insert every name to list widget
-        """
-        chats = self.model.get_chats()
-        self.ui.lw_list_chats.clear()
-        self.ui.lw_list_chats.addItems(chats)
+    def get_handle_msg(self, data):
+        print("qtview get_handle_msg:", data)
+        self.controller.send_to_server(data)
+
+
+
+
+
+if __name__ == "__main__":
+    app = QtClientView()
+    app.run()
