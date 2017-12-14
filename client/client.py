@@ -43,7 +43,7 @@ class Client:
         # self.user = ClientUser()
         self.self_id = None
         self.client_db = None
-        self.conn = conn
+        self.connection = conn
         self.view = ViewClass(self)
         self.msg_handlers = {
             JIMMessage.MSG: self.handle_msg,
@@ -52,10 +52,10 @@ class Client:
 
         }
         try:
-            self.conn.connect()
+            self.connection.connect()
         except ClientConnectionError:
             self.view.render_info("Не могу соединиться с сервером")
-            self.conn = None
+            self.connection = None
             self.close()
 
     def send_presence(self):
@@ -95,17 +95,17 @@ class Client:
         """
         # msg = JIMClientMessage.msg(chat_id, message)
         # self.client_db.add_msg(**msg)
-        self.conn.send(message)
+        self.connection.send(message)
 
     def send_and_get(self, message):
         """
         Отправляем на сервер и обрабатываем ответ от сервера.
         """
-        self.conn.send(message)
+        self.connection.send(message)
         resp = None
         start = time.time()
         while resp is None:
-            resp = self.conn.get()
+            resp = self.connection.get()
             if time.time() - start > WAITING_TIME:
                 self.view.render_info("Потеряна связь с сервером")
                 break
@@ -113,7 +113,7 @@ class Client:
 
     def get_from(self):
         """ Получаем и обрабатываем сообщение, присланное от другого клиента """
-        msg = self.conn.get()
+        msg = self.connection.get()
         if msg and msg.action:
             print("client get_from msg:", msg)
             self.msg_handlers[msg.action](msg)
@@ -190,10 +190,10 @@ class Client:
         """ Закрываем клиент """
         msg = JIMClientMessage.quit()
         print("close client")
-        if self.conn:
-            self.conn.send(msg)
-            self.conn.close()
-            self.conn = None
+        if self.connection:
+            self.connection.send(msg)
+            self.connection.close()
+            self.connection = None
         if self.client_db:
             self.client_db.close()
             self.client_db = None
