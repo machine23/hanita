@@ -54,23 +54,34 @@ class ClientConnection:
         self.connection.sendall(byte_msg)
 
     def get(self):
-        """ Получает сообщение от сервера """
-        byte_msg = None
-        try:
-            byte_msg = self.connection.recv(BUFFERSIZE)
-        except socket.timeout:
-            pass
-        else:
-            if byte_msg:
-                msg = byte_msg.decode()
+        """ Получает сообщение от сервера.
+        Возвращает массив сообщений или пустой массив.
+        """
+        byte_msg = b""
+        out_msgs = []
+        _get_data = True
+        while _get_data:
+            try:
+                data = self.connection.recv(BUFFERSIZE)
+            except socket.timeout:
+                pass
+            else:
+                if not data or data.endswith(b"}"):
+                    _get_data = False
+                byte_msg += data
+        if byte_msg:
+            msgs = byte_msg.decode().replace("}{", "}<split>{").split("<split>")
+            for msg in msgs:
                 try:
                     json_msg = json.loads(msg)
                 except ValueError:
-                    # просто отбросить, если пришел не json
-                    pass
+                    print("!!! отброшено !!!\n client get:", msg)
                 else:
-                    if json_msg:
-                        return JIMMessage(json_msg)
+                    jim = JIMMessage(json_msg)
+                    out_msgs.append(jim)
+        return out_msgs
+            
+        
 
     def close(self):
         """ Закрывает соединение с сервером """
