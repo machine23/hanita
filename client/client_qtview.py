@@ -4,17 +4,15 @@ import time
 
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QThread, pyqtSignal
-from sip import wrappertype
 
 # from .client_db import ClientDB
 from .forms.app_ui import MainWindow
+
 # from .client import Client
 # from .forms.main_ui import Ui_MainWindow
 
-
 # class ClientMeta(wrappertype, abc.ABCMeta):
 #     pass
-
 
 # class BaseClientObserver(metaclass=abc.ABCMeta):
 #     @abc.abstractmethod
@@ -40,7 +38,6 @@ class QtClientView(MainWindow):
         self.client_db = client_db
         if self.client_db:
             self.client_db.add_observer(self)
-
 
     def run(self):
         """ Запускает цикл интерфейса """
@@ -74,7 +71,7 @@ class QtClientView(MainWindow):
             chat = self.client_db.get_chat(_id)
             chats.append(chat)
         return chats
-    
+
     def get_contactlist(self):
         """ Получить список контактов. """
         contacts = self.client_db.get_contacts(self.current_user["user_id"])
@@ -90,16 +87,18 @@ class QtClientView(MainWindow):
             user_name = self.client_db.get_user(user_id)["user_name"]
             timestamp = msg["timestamp"]
             message = msg["message"]
-            msg_out = {"user_id": user_id, "user_name":user_name, "timestamp":timestamp, "message":message}
+            msg_out = {
+                "user_id": user_id,
+                "user_name": user_name,
+                "timestamp": timestamp,
+                "message": message
+            }
             msgs.append(msg_out)
         return msgs
 
     def get_handle_msg(self, data):
         print("qtview get_handle_msg:", data)
         self.controller.send_to_server(data)
-
-
-
 
 
 if __name__ == "__main__":

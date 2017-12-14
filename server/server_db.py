@@ -157,6 +157,7 @@ class ServerDB:
         return chat
 
     def get_chat(self, chat_id):
+        """ Возвращает объект Chat по данномы chat_id """
         return self.get_obj(Chat, chat_id)
 
     def get_chats_for(self, user_id):

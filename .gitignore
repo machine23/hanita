@@ -112,3 +112,5 @@ run_2_clients.py
 *.html
 *.txt
 just_ui.py
+*.db-journal
+

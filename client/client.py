@@ -114,8 +114,13 @@ class Client:
     def get_from(self):
         """ Получаем и обрабатываем сообщение, присланное от другого клиента """
         msg = self.connection.get()
-        if msg and msg.action:
+        if msg:
             print("client get_from msg:", msg)
+            self.handle(msg)
+
+    def handle(self, msg):
+        """ Обрабатываем полученные сообщения """
+        if msg and msg.action and msg.action in self.msg_handlers:
             self.msg_handlers[msg.action](msg)
 
     def handle_msg(self, msg):
@@ -169,8 +174,14 @@ class Client:
         """ Главный цикл работы клиента """
         while not self.authenticate():
             pass
-        msg = JIMClientMessage.get_chats()
-        self.send_to_server(msg)
+        get_messages = [
+            JIMClientMessage.get_contacts(),
+            JIMClientMessage.get_chats()
+        ]
+        for msg in get_messages:
+            resp = self.send_and_get(msg)
+            self.handle(resp)
+
         self.view.run()
         # self.view.render_info("Good bye!")
         self.close()
