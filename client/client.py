@@ -123,9 +123,9 @@ class Client:
         msg_id = msg.msg_id
         user = msg.user
         chat_id = msg.chat_id
-
-        self.client_db.add_msg(
-            msg_id, user["user_id"], chat_id, msg.timestamp, msg.message)
+        if not self.client_db.msg_exists(msg_id):
+            self.client_db.add_msg(
+                msg_id, user["user_id"], chat_id, msg.timestamp, msg.message)
 
     def handle_contact(self, msg):
         """ Обработка сообщения contact_list """
