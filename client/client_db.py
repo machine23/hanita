@@ -25,7 +25,7 @@ class ClientDB:
 
     @property
     def active_user(self):
-        return self._active_user
+        return self.get_user(self._active_user)
 
     @active_user.setter
     def active_user(self, user):
@@ -107,7 +107,11 @@ class ClientDB:
     def get_user(self, user_id):
         """
         Получить данные о пользователе из БД.
-        Возвращает словарь {'user_id': ..., 'user_name': ...}.
+        Возвращает словарь
+        {
+            'user_id': ...,
+            'user_name': ...
+        }
         Если пользователя с user_id в БД не существует, возвращается {}
         """
         user = {}

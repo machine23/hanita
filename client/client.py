@@ -84,6 +84,7 @@ class Client:
                 self.view.set_client_db(self.client_db)
                 ###
                 self.view.current_user = resp["user"]
+                self.client_db.active_user = resp["user"]
 
                 ###
                 return True
@@ -143,11 +144,26 @@ class Client:
         chat_name = msg.chat["chat_name"]
         chat_users = msg.chat_users
         if not chat_name:
-            chat_name = chat_users[-1]["user_name"]
+            chat_name = self.create_chat_name(chat_users)
         if not self.client_db.chat_exists(chat_id):
             self.client_db.add_chat(chat_id, chat_name)
         for user in chat_users:
             self.client_db.update_user(user["user_id"], user["user_name"])
+
+    def create_chat_name(self, users):
+        """ Создает имя чата на основе списка пользователей чата. """
+        users_len = len(users)
+        if not users_len:
+            return
+        elif users_len == 1:
+            return users[0]["user_name"]
+        user_names = [
+            user["user_name"] for user in users
+            if user["user_name"] != self.client_db.active_user["user_name"]
+        ]
+        chat_name = ", ".join(user_names)
+        return chat_name
+
 
     def run(self):
         """ Главный цикл работы клиента """
@@ -178,6 +194,9 @@ class Client:
             self.conn.send(msg)
             self.conn.close()
             self.conn = None
+        if self.client_db:
+            self.client_db.close()
+            self.client_db = None
         if info:
             self.view.render_info(info)
         sys.exit()
