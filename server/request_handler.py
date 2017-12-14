@@ -38,6 +38,14 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
         self.db = ServerDB(self.server.base, "sqlite:///server.db")
         self.lock = threading.Lock()
 
+    def _login_required(func):
+        def inner(self, *args, **kwargs):
+            if self._authenticate:
+                return func(self, *args, **kwargs)
+            else:
+                return JIMResponse(401)
+        return inner
+
     def handle(self):
         """ Основной обработчик """
         while not self.__quit:
@@ -57,7 +65,9 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
                         self.send(JIMResponse(400))
 
     def finish(self):
-        self.db.set_user_online(self.user.id, False)
+        if self.user:
+            self.db.set_user_online(self.user.id, False)
+            self.user = None
         self.db.close()
 
     def response(self, resp_code=None):
@@ -138,6 +148,7 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
             print(user)
             self.user = user
             self.db.set_user_online(user.id, True, self.request.fileno())
+            self._authenticate = True
             # Проверка, имеется ли уже подключение с данным ID
             # elif self.user_online(user.user_name):
             # Добавить проверку, если уже имеется подключение с данным ID,
@@ -154,12 +165,14 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
             return response
         return JIMResponse(400)
 
+    @_login_required
     def handler_get_chats(self):
         user_chats = self.db.get_chats_for(self.user.id)
         for chat in user_chats:
             info_msg = self.get_chat_info(chat.id)
             self.send(info_msg)
 
+    @_login_required
     def handler_quit(self):
         """ Обработчик события Quit """
         if self.msg.action != JIMMessage.QUIT:
@@ -168,6 +181,7 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
         self.__quit = True
         return JIMResponse(200)
 
+    @_login_required
     def handler_msg(self):
         """ Обработчик события MSG """
         if self.msg.action != JIMMessage.MSG:
@@ -186,12 +200,14 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
         self.send_to_all(msg.chat_id, out_msg)
         return JIMResponse(200)
 
+    @_login_required
     def handler_presence(self):
         """ Обработчик события Presence """
         if self.msg.action != JIMMessage.PRESENCE:
             raise
         return JIMResponse(200)
 
+    @_login_required
     def handler_get_contacts(self):
         """ Обработчик события Who online  """
         # users_list = self.db.get_contacts(self.user_name)
@@ -206,6 +222,7 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
         #     self.send(msg)
         return JIMResponse(200)
 
+    @_login_required
     def handler_add_contact(self):
         """ Обработчик события ADD_CONTACT """
         print("handler_add_contact msg:", self.msg)
@@ -221,6 +238,7 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
         self.send(msg)
         return JIMResponse(202)
 
+    @_login_required
     def handler_new_chat(self):
         """ Обработчик события new_chat """
         chat_name = self.msg["chat_name"]
@@ -235,6 +253,7 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
         self.send_to_all(chat.id, msg)
         return JIMResponse(202)
 
+    @_login_required
     def get_chat_info(self, chat_id):
         chat = self.db.get_chat(chat_id)
         users = self.db.get_users_for(chat.id)
