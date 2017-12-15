@@ -38,7 +38,7 @@ class ClientUser:
 class Client:
     """ класс Client """
 
-    def __init__(self, conn: ClientConnection, ViewClass):
+    def __init__(self, conn: ClientConnection, ViewClass: QtClientView):
         super().__init__()
         # self.user = ClientUser()
         self.self_id = None
@@ -49,6 +49,7 @@ class Client:
             JIMMessage.MSG: self.handle_msg,
             JIMMessage.CONTACT_LIST: self.handle_contact,
             JIMMessage.CHAT_INFO: self.handle_chat_info,
+            JIMMessage.DEL_CONTACT: self.handle_del_contact
 
         }
         try:
@@ -72,22 +73,23 @@ class Client:
                 "Имя не может быть пустым или состоять из пробелов")
             sys.exit()
         msg = JIMClientMessage.authenticate(login, "")
-        resp = self.send_and_get(msg)
-        print("clint autehenticate resp:", resp)
-        if resp.response:
-            if resp.error:
-                self.view.render_info(resp.error)
-                return False
-            else:
-                db_name = login + ".db"
-                self.client_db = ClientDB(db_name)
-                self.view.set_client_db(self.client_db)
-                ###
-                self.view.current_user = resp["user"]
-                self.client_db.active_user = resp["user"]
+        responses = self.send_and_get(msg)
+        print("clint autehenticate resp:", responses)
+        for resp in responses:
+            if resp.response and "user" in resp:
+                if resp.error:
+                    self.view.render_info(resp.error)
+                    return False
+                else:
+                    db_name = login + ".db"
+                    self.client_db = ClientDB() #(db_name)
+                    self.view.set_client_db(self.client_db)
+                    ###
+                    self.view.current_user = resp["user"]
+                    self.client_db.active_user = resp["user"]
 
-                ###
-                return True
+                    ###
+                    return True
 
     def send_to_server(self, message):
         """
@@ -113,10 +115,11 @@ class Client:
 
     def get_from(self):
         """ Получаем и обрабатываем сообщение, присланное от другого клиента """
-        msg = self.connection.get()
-        if msg:
-            print("client get_from msg:", msg)
-            self.handle(msg)
+        msgs = self.connection.get()
+        for msg in msgs:
+            if msg:
+                print("client get_from msg:", msg)
+                self.handle(msg)
 
     def handle(self, msg):
         """ Обрабатываем полученные сообщения """
@@ -141,6 +144,11 @@ class Client:
             user_id = contact["user_id"]
             user_name = contact["user_name"]
             self.client_db.update_user(user_id, user_name, True)
+
+    def handle_del_contact(self, msg):
+        """ Обработка сообщения del_contact. """
+        contact_id = msg["user_id"]
+        self.client_db.update_user(contact_id, contact=False)
 
     def handle_chat_info(self, msg):
         """ Обработка сообщения chat_list """
@@ -174,17 +182,19 @@ class Client:
         """ Главный цикл работы клиента """
         while not self.authenticate():
             pass
+        
+
+        self.view.run()
+        # self.view.render_info("Good bye!")
+        self.close()
+
+    def get_init_info(self):
         get_messages = [
             JIMClientMessage.get_contacts(),
             JIMClientMessage.get_chats()
         ]
         for msg in get_messages:
-            resp = self.send_and_get(msg)
-            self.handle(resp)
-
-        self.view.run()
-        # self.view.render_info("Good bye!")
-        self.close()
+            self.send_to_server(msg)
 
     def receive(self):
         """ Получаем сообщения от сервера """

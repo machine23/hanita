@@ -245,7 +245,7 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
         """ Обработчик события del_contact. """
         print("handler_del_contact msg:", self.msg)
         self.db.del_contact(self.user.id, self.msg.user_id)
-        self.send(JIMResponse(202))
+        self.send(self.msg)
 
     @_login_required
     def handler_new_chat(self):

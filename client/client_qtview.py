@@ -2,11 +2,12 @@ import abc
 import sys
 import time
 
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtCore import QThread, pyqtSignal
 
 # from .client_db import ClientDB
 from .forms.app_ui import MainWindow
+from JIM import JIMClientMessage
 
 # from .client import Client
 # from .forms.main_ui import Ui_MainWindow
@@ -30,6 +31,15 @@ class QtClientView(MainWindow):
         self.controller = client
         self.client_db = None
         self.thread = None
+        self._inited = False
+
+    # def event(self, e):
+    #     if e.type() == QtCore.QEvent.MouseButtonPress:
+    #         if not self._inited:
+    #             print("_inited")
+    #             self.controller.get_init_info()
+    #             self._inited = True
+    #     return QtWidgets.QMainWindow.event(self, e)
 
     def set_client_db(self, client_db):
         """ Передать объект хранилища, откуда будет браться инфо
@@ -49,6 +59,7 @@ class QtClientView(MainWindow):
         self.thread.start()
         ################
         self.show()
+        self.controller.get_init_info()
         self.app.exec_()
 
     def render_info(self, info):

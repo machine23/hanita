@@ -177,6 +177,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.send_signal.connect(self.get_handle_msg)
         self.model_changed.connect(self.render)
 
+
     def model_is_changed(self):
         """ Оповестить о изменении данных """
         self.model_changed.emit()
