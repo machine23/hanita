@@ -1,12 +1,15 @@
-import socketserver
-import socket
-import json
 import functools
-import time
+import json
+import socket
+import socketserver
 import threading
+import time
+from pprint import pprint
+
+from JIM import JIMClientMessage, JIMMessage, JIMResponse
+
 from .models import *
 from .server_db import ServerDB
-from JIM import JIMMessage, JIMResponse, JIMClientMessage
 
 RECV_BUFFER = 1024
 
@@ -54,7 +57,8 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
             msgs = self.get()
             if msgs:
                 for msg in msgs:
-                    print("server handle msg:", msg)
+                    print("\nserver handle msg:")
+                    pprint(msg)
                     if self.__quit:
                         break
                     if msg.action and msg.action in self.action_handlers:
@@ -80,7 +84,8 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
     def send_to_all(self, chat_id, message):
         """ Отправить сообщение всем авторизованным пользователям чата. """
         online_users = self.db.get_online_users(chat_id)
-        print("send_to_all online_users:", online_users)
+        print("\nsend_to_all online_users:")
+        pprint(online_users)
         for user in online_users:
             self.send_to(user, message)
 
@@ -153,7 +158,8 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
             self.server.clients[self.request] = user.id
             user_info = {"user_id": user.id, "user_name": user.name}
             response = JIMResponse(200, user=user_info)
-            print("authentication response:", response)
+            print("\nauthentication response:")
+            pprint(response)
             self.send(response)
         else:
             self.send(JIMResponse(400))
@@ -252,11 +258,6 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
         """ Обработчик события new_chat """
         chat_name = self.msg["chat_name"]
         chat_user_ids = self.msg["chat_user_ids"]
-        print(
-            "create new chat",
-            chat_name,
-            "with",
-        )
         chat = self.db.add_new_chat(chat_name)
         print("self.user.id:", self.user.id)
         self.db.add_user_to_chat(chat.id, self.user.id)
@@ -292,4 +293,6 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
             chat_users.append(chat_user)
         print(chat_users)
         msg = JIMClientMessage.chat_info(chat.id, chat.name, chat_users)
+        msg["from"] = self.user.id
+
         return msg

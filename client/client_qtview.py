@@ -1,6 +1,7 @@
 import abc
 import sys
 import time
+from pprint import pprint
 
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtCore import QThread, pyqtSignal
@@ -90,7 +91,8 @@ class QtClientView(MainWindow):
 
     def get_msgslist(self):
         msgs_ids = self.client_db.get_msgs(self.current_chat["chat_id"])
-        print("get_msgslist", msgs_ids)
+        # print("\nget_msgslist")
+        # pprint(msgs_ids)
         msgs = []
         for _id in msgs_ids:
             msg = self.client_db.get_msg(_id)
@@ -108,7 +110,8 @@ class QtClientView(MainWindow):
         return msgs
 
     def get_handle_msg(self, data):
-        print("qtview get_handle_msg:", data)
+        print("\nqtview get_handle_msg:")
+        pprint(data)
         self.controller.send_to_server(data)
 
 

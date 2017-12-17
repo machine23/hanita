@@ -150,7 +150,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.newchat_dialog = NewChatDialog
         self.contacts_dialog = ContactsDialog
 
-        self.current_user = "Vasja"
+        self.current_user = {
+            "user_id": None,
+            "user_name": None
+        }
         self.current_chat = {
             "chat_id": None,
             "chat_name": None

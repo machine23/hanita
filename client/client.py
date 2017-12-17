@@ -3,6 +3,7 @@ import random
 import sys
 import threading
 import time
+from pprint import pprint
 
 from PyQt5.QtCore import QObject
 
@@ -74,7 +75,8 @@ class Client:
             sys.exit()
         msg = JIMClientMessage.authenticate(login, "")
         responses = self.send_and_get(msg)
-        print("clint autehenticate resp:", responses)
+        print("\nclint autehenticate resp:")
+        pprint(responses)
         for resp in responses:
             if resp.response and "user" in resp:
                 if resp.error:
@@ -118,7 +120,8 @@ class Client:
         msgs = self.connection.get()
         for msg in msgs:
             if msg:
-                print("client get_from msg:", msg)
+                print("\nclient get_from msg:")
+                pprint(msg)
                 self.handle(msg)
 
     def handle(self, msg):
@@ -128,7 +131,8 @@ class Client:
 
     def handle_msg(self, msg):
         """ Обработка сообщения msg """
-        print("handle_msg msg", msg)
+        # print("\nhandle_msg msg")
+        # pprint(msg)
         msg_id = msg.msg_id
         user = msg.user
         chat_id = msg.chat_id
@@ -138,7 +142,8 @@ class Client:
 
     def handle_contact(self, msg):
         """ Обработка сообщения contact_list """
-        print("handle_contact msg:", msg)
+        # print("\nhandle_contact msg:")
+        # pprint(msg)
         contacts = msg["contacts"]
         for contact in contacts:
             user_id = contact["user_id"]
@@ -152,7 +157,8 @@ class Client:
 
     def handle_chat_info(self, msg):
         """ Обработка сообщения chat_list """
-        print("handle_chat_info msg:", msg)
+        # print("\nhandle_chat_info msg:")
+        # pprint(msg)
         chat_id = msg.chat["chat_id"]
         chat_name = msg.chat["chat_name"]
         chat_users = msg.chat_users
@@ -160,6 +166,10 @@ class Client:
             chat_name = self.create_chat_name(chat_users)
         if not self.client_db.chat_exists(chat_id):
             self.client_db.add_chat(chat_id, chat_name)
+
+        if self.view.current_user["user_id"] == msg["from"]:
+            self.view.current_chat = msg.chat
+        
         for user in chat_users:
             self.client_db.update_user(user["user_id"], user["user_name"])
 
