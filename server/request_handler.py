@@ -32,7 +32,8 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
             JIMMessage.ADD_CONTACT: self.handler_add_contact,
             JIMMessage.DEL_CONTACT: self.handler_del_contact,
             JIMMessage.NEW_CHAT: self.handler_new_chat,
-            JIMMessage.GET_CHATS: self.handler_get_chats
+            JIMMessage.GET_CHATS: self.handler_get_chats,
+            JIMMessage.LEAVE: self.handler_leave
         }
         # yapf: enable
         self.__quit = False
@@ -63,6 +64,8 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
                         break
                     if msg.action and msg.action in self.action_handlers:
                         self.msg = msg
+                        if self.user:
+                            self.msg["from"] = self.user.id
                         action_handler = self.action_handlers[msg.action]
                         action_handler()
                         # self.send(resp)
@@ -106,6 +109,7 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
             messages_str = bmsg.decode().replace("}{", "}<split>{")
             arr_msgstr = messages_str.split("<split>")
             msgs = [JIMMessage(json.loads(msg)) for msg in arr_msgstr]
+
             return msgs
 
     def send_to(self, user, message):
@@ -296,3 +300,12 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
         msg["from"] = self.user.id
 
         return msg
+
+    @_login_required
+    def handler_leave(self):
+        """ Покинуть чат. Обработчик события leave. """
+        chat_id = self.msg["chat_id"]
+        user_id = self.user.id
+        self.db.del_user_from_chat(chat_id, user_id)
+        self.send(self.msg)
+

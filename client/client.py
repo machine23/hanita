@@ -50,7 +50,8 @@ class Client:
             JIMMessage.MSG: self.handle_msg,
             JIMMessage.CONTACT_LIST: self.handle_contact,
             JIMMessage.CHAT_INFO: self.handle_chat_info,
-            JIMMessage.DEL_CONTACT: self.handle_del_contact
+            JIMMessage.DEL_CONTACT: self.handle_del_contact,
+            JIMMessage.LEAVE: self.handle_leave
 
         }
         try:
@@ -172,6 +173,11 @@ class Client:
         
         for user in chat_users:
             self.client_db.update_user(user["user_id"], user["user_name"])
+
+    def handle_leave(self, msg):
+        """ Обработка сообщения покинуть чат leave. """
+        chat_id = msg["chat_id"]
+        self.client_db.del_chat(chat_id)
 
     def create_chat_name(self, users):
         """ Создает имя чата на основе списка пользователей чата. """
