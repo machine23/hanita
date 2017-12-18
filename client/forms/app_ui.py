@@ -139,7 +139,7 @@ class MainWindow(QtWidgets.QMainWindow):
         get_msgslist(self) -> [{'user_name':..., 'timestamp':..., 'message':...,}, ...]
     """
     redraw_contacts = QtCore.pyqtSignal(list)
-    send_signal = QtCore.pyqtSignal(dict)
+    handle_msg = QtCore.pyqtSignal(dict)
     model_changed = QtCore.pyqtSignal()
 
     def __init__(self, parent=None):
@@ -177,7 +177,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.pb_main_contacts.clicked.connect(self.show_contacts_dialog)
         self.ui.lw_list_chats.itemClicked.connect(self.change_current_chat)
         self.ui.pb_send.clicked.connect(self.send_message)
-        self.send_signal.connect(self.get_handle_msg)
+        self.handle_msg.connect(self.get_handle_msg)
         self.model_changed.connect(self.render)
 
 
@@ -256,11 +256,33 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.lw_list_chats.clear()
         data = self.get_chatlist()
         for chat in data:
-            item = QtWidgets.QListWidgetItem(self.ui.lw_list_chats)
-            item.setText(chat["chat_name"])
-            item.setData(QtCore.Qt.UserRole, chat["chat_id"])
-            if self.current_chat["chat_id"] == chat["chat_id"]:
-                self.ui.lw_list_chats.setCurrentItem(item)
+            self.createItem(chat)
+            
+        
+    def createItem(self, chat):
+        item = QtWidgets.QListWidgetItem(self.ui.lw_list_chats)
+        widget = QtWidgets.QWidget()
+        widgetText = QtWidgets.QLabel(chat["chat_name"])
+        widgetButton = QtWidgets.QPushButton("X")
+        widgetButton.setProperty("id", chat["chat_id"])
+        widgetButton.clicked.connect(self.del_chat)
+        widgetButton.setFixedWidth(24)
+        widgetLayout = QtWidgets.QHBoxLayout()
+        widgetLayout.addWidget(widgetText)
+        widgetLayout.addWidget(widgetButton)
+        widget.setLayout(widgetLayout)
+        item.setSizeHint(widget.sizeHint())
+        self.ui.lw_list_chats.setItemWidget(item, widget)
+        item.setData(QtCore.Qt.UserRole, chat["chat_id"])
+        if self.current_chat["chat_id"] == chat["chat_id"]:
+            self.ui.lw_list_chats.setCurrentItem(item)
+
+    def del_chat(self):
+        msg = {
+            "action": "leave",
+            "chat_id": self.sender().property("id")
+        }
+        self.handle_msg.emit(msg)
         
 
     def get_chatlist(self):
@@ -304,7 +326,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 "timestamp": time.time(),
                 "message": text
             }
-            self.send_signal.emit(message)
+            self.handle_msg.emit(message)
 
 
 
