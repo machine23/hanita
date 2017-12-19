@@ -161,7 +161,8 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
             self._authenticate = True
             self.server.clients[self.request] = user.id
             user_info = {"user_id": user.id, "user_name": user.name}
-            response = JIMResponse(200, user=user_info)
+            response = JIMResponse(202, user=user_info)
+            response["action"] = "authenticate"
             print("\nauthentication response:")
             pprint(response)
             self.send(response)

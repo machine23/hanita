@@ -139,6 +139,7 @@ class MainWindow(QtWidgets.QMainWindow):
         get_msgslist(self) -> [{'user_name':..., 'timestamp':..., 'message':...,}, ...]
     """
     redraw_contacts = QtCore.pyqtSignal(list)
+    change_view = QtCore.pyqtSignal()
     handle_msg = QtCore.pyqtSignal(dict)
     model_changed = QtCore.pyqtSignal()
 
@@ -151,7 +152,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.newchat_dialog = NewChatDialog
         self.contacts_dialog = ContactsDialog
 
-        self.current_user = "Vasja"
+        self.current_user = {}
         self.current_chat = {
             "chat_id": None,
             "chat_name": None
@@ -178,6 +179,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.pb_login_submit.clicked.connect(self.login)
         self.handle_msg.connect(self.get_handle_msg)
         self.model_changed.connect(self.render)
+        self.change_view.connect(self.change_current_view)
 
     def model_is_changed(self):
         """ Оповестить о изменении данных """
@@ -185,9 +187,13 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def render(self):
         """ Перерисовать внешний вид """
-        self.draw_chatlist()
-        self.draw_msgslist()
-        self.redraw_contacts.emit(self.get_contactlist())
+        if self.current_user:
+            self.draw_chatlist()
+            self.draw_msgslist()
+            self.redraw_contacts.emit(self.get_contactlist())
+
+    def change_current_view(self):
+        self.ui.main_stack.setCurrentIndex(1)
         
 
     def change_current_chat(self):

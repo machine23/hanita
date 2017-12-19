@@ -37,10 +37,6 @@ class JIMMessageAttr:
         return obj.get(self.key, None)
 
     def __set__(self, obj, value):
-        if obj.__contains__("action") and self.key == "response":
-            raise JIMMessageError("action and response in one message")
-        if obj.__contains__("response") and self.key == "action":
-            raise JIMMessageError("action and response in one message")
         if isinstance(value, str) and self.max_len:
             if len(value) > self.max_len:
                 raise JIMMessageError("Слишком длинное значение")
@@ -108,10 +104,10 @@ class JIMMessage(dict):
     contacts = JIMMessageAttr("contacts")
     chat_users = JIMMessageAttr("chat_users")
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if self.action and self.response:
-            raise JIMMessageError("Неправильный формат сообщения")
+    # def __init__(self, *args, **kwargs):
+    #     super().__init__(*args, **kwargs)
+    #     if self.action and self.response:
+    #         raise JIMMessageError("Неправильный формат сообщения")
 
     # def __eq__(self, other):
     #     return self. == other

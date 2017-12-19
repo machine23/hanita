@@ -60,7 +60,7 @@ class QtClientView(MainWindow):
         self.thread.start()
         ################
         self.show()
-        self.controller.get_init_info()
+        # self.controller.get_init_info()
         self.app.exec_()
 
     def render_info(self, info):
@@ -77,16 +77,19 @@ class QtClientView(MainWindow):
 
     def get_chatlist(self):
         """ Получить список чатов. """
-        chat_ids = self.client_db.get_chats()
         chats = []
-        for _id in chat_ids:
-            chat = self.client_db.get_chat(_id)
-            chats.append(chat)
+        if self.client_db:
+            chat_ids = self.client_db.get_chats()
+            for _id in chat_ids:
+                chat = self.client_db.get_chat(_id)
+                chats.append(chat)
         return chats
 
     def get_contactlist(self):
         """ Получить список контактов. """
-        contacts = self.client_db.get_contacts(self.current_user["user_id"])
+        contacts = []
+        if self.client_db:
+            contacts = self.client_db.get_contacts(self.current_user["user_id"])
         return contacts
 
     def get_msgslist(self):

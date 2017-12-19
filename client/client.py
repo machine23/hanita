@@ -51,7 +51,8 @@ class Client:
             JIMMessage.CONTACT_LIST: self.handle_contact,
             JIMMessage.CHAT_INFO: self.handle_chat_info,
             JIMMessage.DEL_CONTACT: self.handle_del_contact,
-            JIMMessage.LEAVE: self.handle_leave
+            JIMMessage.LEAVE: self.handle_leave,
+            JIMMessage.AUTHENTICATE: self.handle_authenticate
 
         }
         try:
@@ -66,33 +67,17 @@ class Client:
         msg = JIMClientMessage.presence()
         self.send_to_server(msg)
 
-    def authenticate(self):
-        """ Аутентификация пользователя """
-        # Пока все просто, без пароля
-        login = self.view.input("Login: ").strip()
-        if not login:
-            self.view.render_info(
-                "Имя не может быть пустым или состоять из пробелов")
-            sys.exit()
-        msg = JIMClientMessage.authenticate(login, "")
-        responses = self.send_and_get(msg)
-        print("\nclint autehenticate resp:")
-        pprint(responses)
-        for resp in responses:
-            if resp.response and "user" in resp:
-                if resp.error:
-                    self.view.render_info(resp.error)
-                    return False
-                else:
-                    db_name = login + ".db"
-                    self.client_db = ClientDB() #(db_name)
-                    self.view.set_client_db(self.client_db)
-                    ###
-                    self.view.current_user = resp["user"]
-                    self.client_db.active_user = resp["user"]
-
-                    ###
-                    return True
+    def handle_authenticate(self, msg):
+        """ Обработка сообщения authenticate """
+        if msg.response == 202 and msg.user:
+            db_name = msg.user["user_name"] + ".db"
+            self.client_db = ClientDB(db_name)
+            self.view.set_client_db(self.client_db)
+            self.view.current_user = msg.user
+            self.client_db.active_user = msg.user
+            self.get_init_info()
+            self.view.change_view.emit()
+            print("\nauthenticated!!!\n")
 
     def send_to_server(self, message):
         """
@@ -132,8 +117,8 @@ class Client:
 
     def handle_msg(self, msg):
         """ Обработка сообщения msg """
-        # print("\nhandle_msg msg")
-        # pprint(msg)
+        print("\nhandle_msg msg")
+        pprint(msg)
         msg_id = msg.msg_id
         user = msg.user
         chat_id = msg.chat_id
@@ -170,7 +155,7 @@ class Client:
 
         if self.view.current_user["user_id"] == msg["from"]:
             self.view.current_chat = msg.chat
-        
+
         for user in chat_users:
             self.client_db.update_user(user["user_id"], user["user_name"])
 
@@ -193,12 +178,10 @@ class Client:
         chat_name = ", ".join(user_names)
         return chat_name
 
-
     def run(self):
         """ Главный цикл работы клиента """
-        while not self.authenticate():
-            pass
-        
+        # while not self.authenticate():
+        #     pass
 
         self.view.run()
         # self.view.render_info("Good bye!")
