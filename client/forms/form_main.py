@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'ui_forms/main_client_ui01.ui'
+# Form implementation generated from reading ui file 'ui_forms/login_form02.ui'
 #
 # Created by: PyQt5 UI code generator 5.9
 #
@@ -11,7 +11,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(720, 526)
+        MainWindow.resize(681, 654)
         MainWindow.setAutoFillBackground(False)
         MainWindow.setStyleSheet("QMainWindow {\n"
 "    background-color: #fff;\n"
@@ -138,9 +138,99 @@ class Ui_MainWindow(object):
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setAutoFillBackground(False)
         self.centralwidget.setObjectName("centralwidget")
-        self.horizontalLayout_3 = QtWidgets.QHBoxLayout(self.centralwidget)
-        self.horizontalLayout_3.setObjectName("horizontalLayout_3")
-        self.splitter_2 = QtWidgets.QSplitter(self.centralwidget)
+        self.verticalLayout_3 = QtWidgets.QVBoxLayout(self.centralwidget)
+        self.verticalLayout_3.setContentsMargins(0, 0, 0, 0)
+        self.verticalLayout_3.setObjectName("verticalLayout_3")
+        self.main_stack = QtWidgets.QStackedWidget(self.centralwidget)
+        self.main_stack.setLineWidth(0)
+        self.main_stack.setObjectName("main_stack")
+        self.login_page = QtWidgets.QWidget()
+        self.login_page.setObjectName("login_page")
+        self.verticalLayout_5 = QtWidgets.QVBoxLayout(self.login_page)
+        self.verticalLayout_5.setContentsMargins(0, 0, 0, 0)
+        self.verticalLayout_5.setObjectName("verticalLayout_5")
+        self.frame = QtWidgets.QFrame(self.login_page)
+        self.frame.setStyleSheet("QFrame {\n"
+"    background-color: #66bb6a;\n"
+"    border: none;\n"
+"    max-height: 200px;\n"
+"}")
+        self.frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.frame.setFrameShadow(QtWidgets.QFrame.Raised)
+        self.frame.setObjectName("frame")
+        self.verticalLayout_8 = QtWidgets.QVBoxLayout(self.frame)
+        self.verticalLayout_8.setObjectName("verticalLayout_8")
+        self.login_greet = QtWidgets.QLabel(self.frame)
+        self.login_greet.setAlignment(QtCore.Qt.AlignCenter)
+        self.login_greet.setWordWrap(True)
+        self.login_greet.setObjectName("login_greet")
+        self.verticalLayout_8.addWidget(self.login_greet)
+        self.verticalLayout_5.addWidget(self.frame)
+        self.horizontalLayout_2 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_2.setObjectName("horizontalLayout_2")
+        self.frame_2 = QtWidgets.QFrame(self.login_page)
+        self.frame_2.setStyleSheet("QFrame {\n"
+"    max-width: 270px;\n"
+"    border: none;\n"
+"    margin-top: 60px;\n"
+"}\n"
+"\n"
+"QFrame#login_frame {\n"
+"    margin-top: 0px;\n"
+"    max-height: 150px;\n"
+"}")
+        self.frame_2.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.frame_2.setFrameShadow(QtWidgets.QFrame.Raised)
+        self.frame_2.setObjectName("frame_2")
+        self.verticalLayout_7 = QtWidgets.QVBoxLayout(self.frame_2)
+        self.verticalLayout_7.setObjectName("verticalLayout_7")
+        self.login_frame = QtWidgets.QFrame(self.frame_2)
+        self.login_frame.setObjectName("login_frame")
+        self.verticalLayout_6 = QtWidgets.QVBoxLayout(self.login_frame)
+        self.verticalLayout_6.setContentsMargins(0, 0, 0, 0)
+        self.verticalLayout_6.setObjectName("verticalLayout_6")
+        self.le_login_input = QtWidgets.QLineEdit(self.login_frame)
+        self.le_login_input.setObjectName("le_login_input")
+        self.verticalLayout_6.addWidget(self.le_login_input)
+        self.le_login_password = QtWidgets.QLineEdit(self.login_frame)
+        self.le_login_password.setEchoMode(QtWidgets.QLineEdit.Password)
+        self.le_login_password.setObjectName("le_login_password")
+        self.verticalLayout_6.addWidget(self.le_login_password)
+        self.pb_login_submit = QtWidgets.QPushButton(self.login_frame)
+        self.pb_login_submit.setObjectName("pb_login_submit")
+        self.verticalLayout_6.addWidget(self.pb_login_submit)
+        self.verticalLayout_7.addWidget(self.login_frame)
+        self.frame_3 = QtWidgets.QFrame(self.frame_2)
+        self.frame_3.setStyleSheet("QFrame {\n"
+"    margin: 0;\n"
+"    padding: 0;\n"
+"}\n"
+"\n"
+"#login_error {\n"
+"    color: red;\n"
+"}")
+        self.frame_3.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.frame_3.setFrameShadow(QtWidgets.QFrame.Raised)
+        self.frame_3.setObjectName("frame_3")
+        self.verticalLayout_9 = QtWidgets.QVBoxLayout(self.frame_3)
+        self.verticalLayout_9.setContentsMargins(0, 0, 0, 0)
+        self.verticalLayout_9.setObjectName("verticalLayout_9")
+        self.login_error = QtWidgets.QLabel(self.frame_3)
+        self.login_error.setText("")
+        self.login_error.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignTop)
+        self.login_error.setWordWrap(True)
+        self.login_error.setObjectName("login_error")
+        self.verticalLayout_9.addWidget(self.login_error)
+        self.verticalLayout_7.addWidget(self.frame_3)
+        self.horizontalLayout_2.addWidget(self.frame_2)
+        self.verticalLayout_5.addLayout(self.horizontalLayout_2)
+        self.main_stack.addWidget(self.login_page)
+        self.main_page = QtWidgets.QWidget()
+        self.main_page.setObjectName("main_page")
+        self.verticalLayout_4 = QtWidgets.QVBoxLayout(self.main_page)
+        self.verticalLayout_4.setContentsMargins(9, 9, 9, 9)
+        self.verticalLayout_4.setObjectName("verticalLayout_4")
+        self.splitter_2 = QtWidgets.QSplitter(self.main_page)
         self.splitter_2.setOrientation(QtCore.Qt.Horizontal)
         self.splitter_2.setObjectName("splitter_2")
         self.horizontalLayoutWidget_2 = QtWidgets.QWidget(self.splitter_2)
@@ -266,15 +356,22 @@ class Ui_MainWindow(object):
         self.pb_send.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
         self.pb_send.setObjectName("pb_send")
         self.horizontalLayout.addWidget(self.pb_send)
-        self.horizontalLayout_3.addWidget(self.splitter_2)
+        self.verticalLayout_4.addWidget(self.splitter_2)
+        self.main_stack.addWidget(self.main_page)
+        self.verticalLayout_3.addWidget(self.main_stack)
         MainWindow.setCentralWidget(self.centralwidget)
 
         self.retranslateUi(MainWindow)
+        self.main_stack.setCurrentIndex(1)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "Hanita"))
+        self.login_greet.setText(_translate("MainWindow", "<html><head/><body><p><span style=\" font-size:36pt; font-weight:600; color:#ffffff;\">Welcome to Hanita</span></p></body></html>"))
+        self.le_login_input.setPlaceholderText(_translate("MainWindow", "Enter your login"))
+        self.le_login_password.setPlaceholderText(_translate("MainWindow", "Enter your password"))
+        self.pb_login_submit.setText(_translate("MainWindow", "Login"))
         self.label.setText(_translate("MainWindow", "Chats:"))
         __sortingEnabled = self.lw_list_chats.isSortingEnabled()
         self.lw_list_chats.setSortingEnabled(False)

@@ -49,10 +49,9 @@ class Ui_MainWindow(object):
                 }
                 QTextEdit {
                     background-color: white;
+                    border: 1px solid #66BB6A;
                 }
-                table {
-                    background-color: blue;
-                }
+                
             """)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setAutoFillBackground(False)

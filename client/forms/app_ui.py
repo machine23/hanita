@@ -7,7 +7,7 @@ from PyQt5 import Qt, QtCore, QtWidgets
 # import form_add_contact
 from . import form_contacts
 from . import form_new_chat
-from . import main_ui
+from . import form_main
 
 
 class ContactsDialog(QtWidgets.QDialog):
@@ -144,16 +144,14 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def __init__(self, parent=None):
         QtWidgets.QMainWindow.__init__(self, parent)
-        self.ui = main_ui.Ui_MainWindow()
+        self.ui = form_main.Ui_MainWindow()
         self.ui.setupUi(self)
+        self.ui.main_stack.setCurrentIndex(0)
 
         self.newchat_dialog = NewChatDialog
         self.contacts_dialog = ContactsDialog
 
-        self.current_user = {
-            "user_id": None,
-            "user_name": None
-        }
+        self.current_user = "Vasja"
         self.current_chat = {
             "chat_id": None,
             "chat_name": None
@@ -177,9 +175,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.pb_main_contacts.clicked.connect(self.show_contacts_dialog)
         self.ui.lw_list_chats.itemClicked.connect(self.change_current_chat)
         self.ui.pb_send.clicked.connect(self.send_message)
+        self.ui.pb_login_submit.clicked.connect(self.login)
         self.handle_msg.connect(self.get_handle_msg)
         self.model_changed.connect(self.render)
-
 
     def model_is_changed(self):
         """ Оповестить о изменении данных """
@@ -203,7 +201,23 @@ class MainWindow(QtWidgets.QMainWindow):
         }
         self.model_is_changed()
 
+    def login(self):
+        self.ui.login_error.setText("")
+        login = self.ui.le_login_input.text().strip()
+        password = self.ui.le_login_password.text()
+        if not login:
+            self.ui.login_error.setText("Error: empty login")
+            return
 
+        msg = {
+            "action": "authenticate",
+            "user": {
+                "login": login,
+                "password": password
+            }
+        }
+        self.handle_msg.emit(msg)
+    
     @QtCore.pyqtSlot(dict)
     def get_handle_msg(self, data):
         """ Обработка управляющих сообщений.
@@ -227,7 +241,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 user_name = ""
                 contacts = self.get_contactlist()
                 for user in self.storage["contacts"]:
-                    if user["user_id"] == data["chat_user_ids"][0]:
+                    if user["user_id"] == data["contact_ids"][0]:
                         user_name = user["user_name"]
                 chat = {"chat_id":random.randint(1,1000), "chat_name":user_name}
             self.storage["chats"].append(chat)
@@ -235,6 +249,12 @@ class MainWindow(QtWidgets.QMainWindow):
         elif data["action"] == "msg":
             data["user"] = {"user_id":12345, "user_name":self.current_user}
             self.storage["messages"].append(data)
+        elif data["action"] == "leave":
+            chats = self.storage["chats"]
+            chats = [i for i in chats if i["chat_id"] != data["chat_id"]]
+            self.storage["chats"] = chats
+        elif data["action"] == "authenticate":
+            self.ui.main_stack.setCurrentIndex(1)
         self.model_is_changed()
 
 
@@ -371,8 +391,8 @@ class MainWindow(QtWidgets.QMainWindow):
                 text=i["message"].replace("\n", "<br>"))
             for i in messages
         ]
-        msg_string = '<body bgcolor="#F4F5F6">' + \
-            "".join(arr) + '<a name="end" style="color:#F4F5F6">a</a>' + '</html>'
+        msg_string = '<body bgcolor="#FFF">' + \
+            "".join(arr) + '<a name="end" style="color:#FFF">a</a>' + '</html>'
         self.ui.te_list_msg.setHtml(msg_string)
         self.ui.te_list_msg.scrollToAnchor("end")
 
