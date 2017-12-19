@@ -134,6 +134,7 @@ class Client:
         for contact in contacts:
             user_id = contact["user_id"]
             user_name = contact["user_name"]
+            print("handle_contact user_id", user_id)
             self.client_db.update_user(user_id, user_name, True)
 
     def handle_del_contact(self, msg):

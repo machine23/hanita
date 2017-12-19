@@ -84,7 +84,7 @@ class ClientDB:
     ############################################################################
     def user_exists(self, user_id):
         """ Проверить наличие пользователя """
-        cmd = "SELECT 1 FROM users WHERE users.user_id = ?"
+        cmd = "SELECT 1 FROM users WHERE user_id = ?"
         self.lock.acquire()
         self.cursor.execute(cmd, (user_id, ))
         self.lock.release()

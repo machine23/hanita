@@ -100,6 +100,7 @@ class QtClientView(MainWindow):
         for _id in msgs_ids:
             msg = self.client_db.get_msg(_id)
             user_id = msg["user_id"]
+            print("get_msgslist user_id", user_id)
             user_name = self.client_db.get_user(user_id)["user_name"]
             timestamp = msg["timestamp"]
             message = msg["message"]

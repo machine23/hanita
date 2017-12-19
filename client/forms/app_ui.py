@@ -362,45 +362,60 @@ class MainWindow(QtWidgets.QMainWindow):
         chat_id = self.current_chat["chat_id"]
         chat_name = self.current_chat["chat_name"]
         self.ui.l_current_chat.setText(chat_name)
-        user_id = self.current_user["user_id"]
-        user_name = self.current_user["user_name"]
-        template = '''
-        <table 
-            bgcolor="#fff" 
-            width="100%" 
-            style="margin:5px {left} 5px {right};">
-            <tr>
-                <td style="padding:5px 15px;">
-                    <b style="color:{color};">
-                        {name}
-                    </b>
-                    <i style="color:lightgrey;font-size:small;">
-                        {timestamp}
-                    </i>
-                </td>
-            </tr>
-            <tr>
-                <td style="padding:0px 20px 10px;">
-                    {text}
-                </td>
-            </tr>
-        </table>
-        '''
+        curr_user_id = self.current_user["user_id"]
+        curr_user_name = self.current_user["user_name"]
 
-        arr = [
-            template.format(
-                left="5px" if i["user_id"] == user_id else "25px",
-                right="25px" if i["user_id"] == user_id else "5px",
-                color="orange" if i["user_id"] == user_id else "blue",
-                name=i["user_name"],
-                timestamp=time.ctime(i["timestamp"]),
-                text=i["message"].replace("\n", "<br>"))
-            for i in messages
-        ]
+        arr = []
+        for i, msg in enumerate(messages):
+            formated_msg = self.format_msg(
+                name=msg["user_name"],
+                text=msg["message"],
+                timestamp=msg["timestamp"],
+                ident=msg["user_id"] == curr_user_id,
+                add=msg["user_id"] == messages[i-1]["user_id"] if i>0 else False
+            )
+            print(formated_msg)
+            arr.append(formated_msg)
         msg_string = '<body bgcolor="#FFF">' + \
             "".join(arr) + '<a name="end" style="color:#FFF">a</a>' + '</html>'
         self.ui.te_list_msg.setHtml(msg_string)
         self.ui.te_list_msg.scrollToAnchor("end")
+
+    def format_msg(self, name, text, timestamp, ident=False, add=False):
+        """ Отформатировать текст для отображения. """
+        template_text = '''
+            <div style="margin:0 {right} 0 {left};">
+                {text}
+            </div>
+            '''
+
+        template_name = '''
+            <div style="margin:15px {right} 0 {left};">
+                <b style="color:{color};">
+                    {name}
+                </b>
+                <i style="color:lightgrey;font-size:small;">
+                    {timestamp}
+                </i>
+            </div>
+            '''
+
+        formated_name = template_name.format(
+            left="5px" if ident else "25px",
+            right="25px" if ident else "5px",
+            color="orange" if ident else "blue",
+            name=name,
+            timestamp=time.ctime(timestamp),
+        )
+        formated_text = template_text.format(
+            left="15px" if ident else "35px",
+            right="25px" if ident else "5px",
+            text=text.replace("\n", "<br>")
+        )
+
+        if add:
+            return formated_text
+        return formated_name + formated_text
 
 
 
