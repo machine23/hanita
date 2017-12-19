@@ -63,7 +63,6 @@ class ContactsDialog(QtWidgets.QDialog):
                     "action": "add_contact",
                     "user_name": user_name
                 })
-            
 
     def del_contact(self):
         self.handle_msg.emit(
@@ -71,7 +70,6 @@ class ContactsDialog(QtWidgets.QDialog):
                 "action": "del_contact",
                 "user_id": self.sender().property("id")
             })
-        
 
     def chat_with(self):
         action = "new_chat"
@@ -82,13 +80,11 @@ class ContactsDialog(QtWidgets.QDialog):
                 i.data(QtCore.Qt.UserRole)
                 for i in user
             ]
-        self.data = {"action": action, "chat_name": "", "chat_user_ids": selected_id}
-        
+        self.data = {"action": action, "chat_name": "",
+                     "chat_user_ids": selected_id}
+
         self.handle_msg.emit(self.data)
         self.close()
-
-
-
 
 
 class NewChatDialog(QtWidgets.QDialog):
@@ -111,11 +107,13 @@ class NewChatDialog(QtWidgets.QDialog):
     def chat_create(self):
         name = self.ui.le_chat_name.text()
         if not name:
-            QtWidgets.QMessageBox.information(self, "info", "Пожалуйста, введите название чата")
+            QtWidgets.QMessageBox.information(
+                self, "info", "Пожалуйста, введите название чата")
             return
         users = self.ui.lw_chat_contacts.selectedItems()
         if not users:
-            QtWidgets.QMessageBox.information(self, "info", "Пожалуйста, выберите минимум одного пользователя")
+            QtWidgets.QMessageBox.information(
+                self, "info", "Пожалуйста, выберите минимум одного пользователя")
             return
         # print(data)
         users_data = [i.data(QtCore.Qt.UserRole) for i in users]
@@ -176,10 +174,19 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.pb_main_contacts.clicked.connect(self.show_contacts_dialog)
         self.ui.lw_list_chats.itemClicked.connect(self.change_current_chat)
         self.ui.pb_send.clicked.connect(self.send_message)
+        self.ui.te_input_msg.installEventFilter(self)
         self.ui.pb_login_submit.clicked.connect(self.login)
         self.handle_msg.connect(self.get_handle_msg)
         self.model_changed.connect(self.render)
         self.change_view.connect(self.change_current_view)
+
+    def eventFilter(self, source, event):
+        """ Фильтр событий """
+        if (event.type() == QtCore.QEvent.KeyPress and
+                event.key() == QtCore.Qt.Key_Return):
+            self.send_message()
+            return True
+        return QtWidgets.QMainWindow.eventFilter(self, source, event)
 
     def model_is_changed(self):
         """ Оповестить о изменении данных """
@@ -194,7 +201,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def change_current_view(self):
         self.ui.main_stack.setCurrentIndex(1)
-        
 
     def change_current_chat(self):
         """ Изменить активный чат """
@@ -223,7 +229,7 @@ class MainWindow(QtWidgets.QMainWindow):
             }
         }
         self.handle_msg.emit(msg)
-    
+
     @QtCore.pyqtSlot(dict)
     def get_handle_msg(self, data):
         """ Обработка управляющих сообщений.
@@ -239,21 +245,24 @@ class MainWindow(QtWidgets.QMainWindow):
             ###########################################
         elif data["action"] == "add_contact":
             _id = random.randint(100, 10000)
-            self.storage["contacts"].append({"user_id": _id, "user_name": data["user_name"]})
+            self.storage["contacts"].append(
+                {"user_id": _id, "user_name": data["user_name"]})
         elif data["action"] == "new_chat":
             if data["chat_name"]:
-                chat = {"chat_id":random.randint(1,1000), "chat_name":data["chat_name"]}
+                chat = {"chat_id": random.randint(
+                    1, 1000), "chat_name": data["chat_name"]}
             else:
                 user_name = ""
                 contacts = self.get_contactlist()
                 for user in self.storage["contacts"]:
                     if user["user_id"] == data["contact_ids"][0]:
                         user_name = user["user_name"]
-                chat = {"chat_id":random.randint(1,1000), "chat_name":user_name}
+                chat = {"chat_id": random.randint(
+                    1, 1000), "chat_name": user_name}
             self.storage["chats"].append(chat)
             # self.redraw_chatlist.emit(self.storage["chats"])
         elif data["action"] == "msg":
-            data["user"] = {"user_id":12345, "user_name":self.current_user}
+            data["user"] = {"user_id": 12345, "user_name": self.current_user}
             self.storage["messages"].append(data)
         elif data["action"] == "leave":
             chats = self.storage["chats"]
@@ -263,13 +272,11 @@ class MainWindow(QtWidgets.QMainWindow):
             self.ui.main_stack.setCurrentIndex(1)
         self.model_is_changed()
 
-
     def show_newchat_dialog(self):
         """ Показать окно создания нового чата """
         dialog = self.newchat_dialog(self, self.get_contactlist())
         dialog.handle_msg.connect(self.get_handle_msg)
         dialog.exec_()
-
 
     def show_contacts_dialog(self):
         """ Показать окно контактов """
@@ -283,8 +290,7 @@ class MainWindow(QtWidgets.QMainWindow):
         data = self.get_chatlist()
         for chat in data:
             self.createItem(chat)
-            
-        
+
     def createItem(self, chat):
         item = QtWidgets.QListWidgetItem(self.ui.lw_list_chats)
         widget = QtWidgets.QWidget()
@@ -309,24 +315,23 @@ class MainWindow(QtWidgets.QMainWindow):
             "chat_id": self.sender().property("id")
         }
         self.handle_msg.emit(msg)
-        
 
     def get_chatlist(self):
         """ Получить список чатов.
             Данный метод нужно переопределить.
-        """        
+        """
         return self.storage["chats"]
 
     def get_contactlist(self):
         """ Получить список контактов.
             Данный метод нужно переопределить.
-        """        
+        """
         return self.storage["contacts"]
 
     def get_msgslist(self):
         """ Получить список сообщений для активного чата.
             Данный метод нужно переопределить.
-        """        
+        """
         cur_msgs = [
             i for i in self.storage["messages"]
             if i["chat_id"] == self.current_chat["chat_id"]
@@ -354,8 +359,6 @@ class MainWindow(QtWidgets.QMainWindow):
             }
             self.handle_msg.emit(message)
 
-
-
     def draw_msgslist(self):
         """ Перерисовать окно чата """
         messages = self.get_msgslist()
@@ -372,7 +375,8 @@ class MainWindow(QtWidgets.QMainWindow):
                 text=msg["message"],
                 timestamp=msg["timestamp"],
                 ident=msg["user_id"] == curr_user_id,
-                add=msg["user_id"] == messages[i-1]["user_id"] if i>0 else False
+                add=msg["user_id"] == messages[i -
+                                               1]["user_id"] if i > 0 else False
             )
             print(formated_msg)
             arr.append(formated_msg)
@@ -416,8 +420,6 @@ class MainWindow(QtWidgets.QMainWindow):
         if add:
             return formated_text
         return formated_name + formated_text
-
-
 
 
 if __name__ == "__main__":

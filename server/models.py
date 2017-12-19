@@ -11,17 +11,19 @@ class User(Base):
     id = Column("id", Integer, primary_key=True)
     login = Column(String(30), unique=True)
     name = Column(String(30))
+    password = Column(String)
     status = Column(String(8), nullable=False)
     online = Column(Integer, default=0)
     fileno = Column(Integer, nullable=True)
     CheckConstraint("status in ('active', 'deleted')")
     CheckConstraint("online in (0, 1)")
 
-    def __init__(self, login, name="", online=False):
+    def __init__(self, login, name="", online=False, password=""):
         self.login = login
         if not name:
             name = login
         self.name = name
+        self.password = password
         self.online = online
         self.status = "active"
 
