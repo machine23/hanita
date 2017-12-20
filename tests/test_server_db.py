@@ -2,8 +2,8 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from server import ServerDB, ServerDBError, Base
-from server import User, Chat, ChatUser, ChatMsg, Contact
+from hanita_server import ServerDB, ServerDBError, Base
+from hanita_server import User, Chat, ChatUser, ChatMsg, Contact
 from JIM import JIMClientMessage
 
 

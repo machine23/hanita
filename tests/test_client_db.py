@@ -4,7 +4,7 @@ import time
 
 from JIM import JIMClientMessage, JIMMessage
 
-from client import ClientDB, ClientDBError
+from hanita import ClientDB, ClientDBError
 
 
 @pytest.fixture

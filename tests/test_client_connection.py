@@ -1,7 +1,7 @@
 import socket
 import pytest
 
-from client import ClientConnection, ClientConnectionError
+from hanita import ClientConnection, ClientConnectionError
 
 
 class MySocket:
