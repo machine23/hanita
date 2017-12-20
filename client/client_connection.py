@@ -70,7 +70,8 @@ class ClientConnection:
                     _get_data = False
                 byte_msg += data
         if byte_msg:
-            msgs = byte_msg.decode().replace("}{", "}<split>{").split("<split>")
+            msgs = byte_msg.decode().replace(
+                "}{", "}<split>{").split("<split>")
             for msg in msgs:
                 try:
                     json_msg = json.loads(msg)
@@ -80,8 +81,6 @@ class ClientConnection:
                     jim = JIMMessage(json_msg)
                     out_msgs.append(jim)
         return out_msgs
-            
-        
 
     def close(self):
         """ Закрывает соединение с сервером """

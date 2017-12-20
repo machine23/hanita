@@ -1,15 +1,16 @@
 """ Модель данных для клиента """
 import sqlite3
-import time
 import threading
-
-from JIM import JIMMessage, JIMClientMessage
+import time
 
 
 class ClientDBError(Exception):
     pass
 
 
+###############################################################################
+# ### ClientDB
+###############################################################################
 class ClientDB:
     def __init__(self, path_to_db=None):
         self._observers = []
@@ -259,7 +260,8 @@ class ClientDB:
         cmd = "INSERT INTO messages(msg_id, user_id, chat_id, time, message)" \
             "VALUES (?, ?, ?, ?, ?)"
         self.lock.acquire()
-        self.cursor.execute(cmd, (msg_id, user_id, chat_id, timestamp, message))
+        self.cursor.execute(
+            cmd, (msg_id, user_id, chat_id, timestamp, message))
         self.conn.commit()
         self.lock.release()
         self._notify()
@@ -269,7 +271,8 @@ class ClientDB:
         Получить сообщение из БД.
         """
         msg = {}
-        msg_keys = ("msg_id", "user_id", "chat_id", "timestamp", "message", "readed")
+        msg_keys = ("msg_id", "user_id", "chat_id",
+                    "timestamp", "message", "readed")
         if self.msg_exists(msg_id):
             cmd = "SELECT * FROM messages WHERE msg_id = ?"
             self.lock.acquire()

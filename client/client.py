@@ -1,36 +1,16 @@
 """ Hanita client class and client mainloop """
-import random
 import sys
-import threading
 import time
-from pprint import pprint
 
 from PyQt5.QtCore import QObject
 
-from JIM import JIMClientMessage, JIMMessage, JIMResponse
+from JIM import JIMClientMessage, JIMMessage
 
 from .client_connection import ClientConnection, ClientConnectionError
-from .client_db import ClientDB, ClientDBError
+from .client_db import ClientDB
 from .client_qtview import QtClientView
 
 WAITING_TIME = 1.0
-
-
-###############################################################################
-# ### ClientError
-###############################################################################
-class ClientError(Exception):
-    """ Класс для ошибок клиента """
-    pass
-
-
-###############################################################################
-# ### class ClientUser
-###############################################################################
-class ClientUser:
-    def __init__(self, user_id, user_name):
-        self.user_id = user_id
-        self.user_name = user_name
 
 
 ###############################################################################
@@ -53,7 +33,6 @@ class Client:
             JIMMessage.DEL_CONTACT: self.handle_del_contact,
             JIMMessage.LEAVE: self.handle_leave,
             JIMMessage.AUTHENTICATE: self.handle_authenticate
-
         }
         try:
             self.connection.connect()
@@ -77,14 +56,11 @@ class Client:
             self.client_db.active_user = msg.user
             self.get_init_info()
             self.view.change_view.emit()
-            print("\nauthenticated!!!\n")
 
     def send_to_server(self, message):
         """
         Отправляем на сервер сообщение от пользователя.
         """
-        # msg = JIMClientMessage.msg(chat_id, message)
-        # self.client_db.add_msg(**msg)
         self.connection.send(message)
 
     def send_and_get(self, message):
@@ -106,8 +82,6 @@ class Client:
         msgs = self.connection.get()
         for msg in msgs:
             if msg:
-                print("\nclient get_from msg:")
-                pprint(msg)
                 self.handle(msg)
 
     def handle(self, msg):
@@ -117,8 +91,6 @@ class Client:
 
     def handle_msg(self, msg):
         """ Обработка сообщения msg """
-        print("\nhandle_msg msg")
-        pprint(msg)
         msg_id = msg.msg_id
         user = msg.user
         chat_id = msg.chat_id
@@ -128,13 +100,10 @@ class Client:
 
     def handle_contact(self, msg):
         """ Обработка сообщения contact_list """
-        # print("\nhandle_contact msg:")
-        # pprint(msg)
         contacts = msg["contacts"]
         for contact in contacts:
             user_id = contact["user_id"]
             user_name = contact["user_name"]
-            print("handle_contact user_id", user_id)
             self.client_db.update_user(user_id, user_name, True)
 
     def handle_del_contact(self, msg):
@@ -144,8 +113,6 @@ class Client:
 
     def handle_chat_info(self, msg):
         """ Обработка сообщения chat_list """
-        # print("\nhandle_chat_info msg:")
-        # pprint(msg)
         chat_id = msg.chat["chat_id"]
         chat_name = msg.chat["chat_name"]
         chat_users = msg.chat_users
@@ -181,11 +148,7 @@ class Client:
 
     def run(self):
         """ Главный цикл работы клиента """
-        # while not self.authenticate():
-        #     pass
-
         self.view.run()
-        # self.view.render_info("Good bye!")
         self.close()
 
     def get_init_info(self):
@@ -200,12 +163,6 @@ class Client:
         """ Получаем сообщения от сервера """
         while True:
             self.get_from()
-
-    def parse_msg(self, msg):
-        """ Разбор сообщений пришедших с сервера """
-        action = msg.action
-        if msg.action:
-            pass
 
     def close(self, info=""):
         """ Закрываем клиент """

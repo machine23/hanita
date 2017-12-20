@@ -1,25 +1,9 @@
-import abc
-import sys
-import time
-from pprint import pprint
-
-from PyQt5 import QtWidgets, QtCore
+from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtCore import QThread, pyqtSignal
 
-# from .client_db import ClientDB
-from .forms.app_ui import MainWindow
 from JIM import JIMClientMessage
 
-# from .client import Client
-# from .forms.main_ui import Ui_MainWindow
-
-# class ClientMeta(wrappertype, abc.ABCMeta):
-#     pass
-
-# class BaseClientObserver(metaclass=abc.ABCMeta):
-#     @abc.abstractmethod
-#     def model_is_changed(self):
-#         pass
+from .forms.app_ui import MainWindow
 
 
 class QtClientView(MainWindow):
@@ -33,14 +17,6 @@ class QtClientView(MainWindow):
         self.client_db = None
         self.thread = None
         self._inited = False
-
-    # def event(self, e):
-    #     if e.type() == QtCore.QEvent.MouseButtonPress:
-    #         if not self._inited:
-    #             print("_inited")
-    #             self.controller.get_init_info()
-    #             self._inited = True
-    #     return QtWidgets.QMainWindow.event(self, e)
 
     def set_client_db(self, client_db):
         """ Передать объект хранилища, откуда будет браться инфо
@@ -60,7 +36,6 @@ class QtClientView(MainWindow):
         self.thread.start()
         ################
         self.show()
-        # self.controller.get_init_info()
         self.app.exec_()
 
     def render_info(self, info):
@@ -89,18 +64,16 @@ class QtClientView(MainWindow):
         """ Получить список контактов. """
         contacts = []
         if self.client_db:
-            contacts = self.client_db.get_contacts(self.current_user["user_id"])
+            contacts = self.client_db.get_contacts(
+                self.current_user["user_id"])
         return contacts
 
     def get_msgslist(self):
         msgs_ids = self.client_db.get_msgs(self.current_chat["chat_id"])
-        # print("\nget_msgslist")
-        # pprint(msgs_ids)
         msgs = []
         for _id in msgs_ids:
             msg = self.client_db.get_msg(_id)
             user_id = msg["user_id"]
-            print("get_msgslist user_id", user_id)
             user_name = self.client_db.get_user(user_id)["user_name"]
             timestamp = msg["timestamp"]
             message = msg["message"]
@@ -114,8 +87,6 @@ class QtClientView(MainWindow):
         return msgs
 
     def get_handle_msg(self, data):
-        print("\nqtview get_handle_msg:")
-        pprint(data)
         self.controller.send_to_server(data)
 
 

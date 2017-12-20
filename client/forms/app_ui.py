@@ -4,7 +4,6 @@ import time
 
 from PyQt5 import Qt, QtCore, QtWidgets
 
-# import form_add_contact
 from . import form_contacts
 from . import form_new_chat
 from . import form_main
@@ -45,7 +44,6 @@ class ContactsDialog(QtWidgets.QDialog):
         widgetLayout = QtWidgets.QHBoxLayout()
         widgetLayout.addWidget(widgetText)
         widgetLayout.addWidget(widgetButton)
-        # widgetLayout.addStretch(1)
 
         widget.setLayout(widgetLayout)
         item.setSizeHint(widget.sizeHint())
@@ -115,11 +113,12 @@ class NewChatDialog(QtWidgets.QDialog):
             QtWidgets.QMessageBox.information(
                 self, "info", "Пожалуйста, выберите минимум одного пользователя")
             return
-        # print(data)
         users_data = [i.data(QtCore.Qt.UserRole) for i in users]
-        # print(contacts)
         self.chat_data = {
-            "action": "new_chat", "chat_name": name, "chat_user_ids": users_data}
+            "action": "new_chat",
+            "chat_name": name,
+            "chat_user_ids": users_data
+        }
         self.handle_msg.emit(self.chat_data)
         self.close()
 
@@ -167,8 +166,6 @@ class MainWindow(QtWidgets.QMainWindow):
             for i in range(10)
         ]
         self.storage["contacts"] = contact_list
-
-        # self.draw_chatlist()
 
         self.ui.pb_main_newchat.clicked.connect(self.show_newchat_dialog)
         self.ui.pb_main_contacts.clicked.connect(self.show_contacts_dialog)
@@ -235,7 +232,6 @@ class MainWindow(QtWidgets.QMainWindow):
         """ Обработка управляющих сообщений.
             Данный метод нужно переопределить.
         """
-        print(data)
         if data["action"] == "del_contact":
             #########################################
             _id = data["user_id"]
@@ -260,7 +256,6 @@ class MainWindow(QtWidgets.QMainWindow):
                 chat = {"chat_id": random.randint(
                     1, 1000), "chat_name": user_name}
             self.storage["chats"].append(chat)
-            # self.redraw_chatlist.emit(self.storage["chats"])
         elif data["action"] == "msg":
             data["user"] = {"user_id": 12345, "user_name": self.current_user}
             self.storage["messages"].append(data)
@@ -379,7 +374,6 @@ class MainWindow(QtWidgets.QMainWindow):
                 add=msg["user_id"] == messages[i -
                                                1]["user_id"] if i > 0 else False
             )
-            print(formated_msg)
             arr.append(formated_msg)
         msg_string = '<body bgcolor="#FFF">' + \
             "".join(arr) + '<a name="end" style="color:#FFF">a</a>' + '</html>'
