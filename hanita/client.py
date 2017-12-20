@@ -1,4 +1,5 @@
 """ Hanita client class and client mainloop """
+import os
 import sys
 import time
 
@@ -50,7 +51,10 @@ class Client:
         """ Обработка сообщения authenticate """
         if msg.response == 202 and msg.user:
             db_name = msg.user["user_name"] + ".db"
-            self.client_db = ClientDB(db_name)
+            full_db_name = os.path.join(
+                os.path.dirname(
+                    os.path.abspath(__file__)), db_name)
+            self.client_db = ClientDB(full_db_name)
             self.view.set_client_db(self.client_db)
             self.view.current_user = msg.user
             self.client_db.active_user = msg.user

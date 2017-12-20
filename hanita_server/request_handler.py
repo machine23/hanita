@@ -1,9 +1,8 @@
-import functools
 import json
+import os
 import socket
 import socketserver
 import threading
-import time
 from pprint import pprint
 
 from JIM import JIMClientMessage, JIMMessage, JIMResponse
@@ -40,7 +39,10 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
         self.msg = None
         self.user = None
         self._authenticate = False
-        self.db = ServerDB(self.server.base, "sqlite:///server.db")
+        db_name = os.path.join(
+            os.path.dirname(
+                os.path.abspath(__file__)), 'server.db')
+        self.db = ServerDB(self.server.base, "sqlite:///" + db_name)
         self.lock = threading.Lock()
 
     def _login_required(func):
@@ -309,4 +311,3 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
         user_id = self.user.id
         self.db.del_user_from_chat(chat_id, user_id)
         self.send(self.msg)
-
