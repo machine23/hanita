@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file './new_chat.ui'
+# Form implementation generated from reading ui file 'ui_forms/new_chat.ui'
 #
-# Created by: PyQt5 UI code generator 5.9.2
+# Created by: PyQt5 UI code generator 5.9
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -30,6 +30,9 @@ class Ui_dialog_new_chat(object):
         self.pb_chat_create.setObjectName("pb_chat_create")
         self.horizontalLayout.addWidget(self.pb_chat_create)
         self.verticalLayout.addLayout(self.horizontalLayout)
+        self.label = QtWidgets.QLabel(dialog_new_chat)
+        self.label.setObjectName("label")
+        self.verticalLayout.addWidget(self.label)
         self.lw_chat_contacts = QtWidgets.QListWidget(dialog_new_chat)
         self.lw_chat_contacts.setSelectionMode(QtWidgets.QAbstractItemView.MultiSelection)
         self.lw_chat_contacts.setObjectName("lw_chat_contacts")
@@ -44,4 +47,6 @@ class Ui_dialog_new_chat(object):
         dialog_new_chat.setWindowTitle(_translate("dialog_new_chat", "New Chat"))
         self.le_chat_name.setPlaceholderText(_translate("dialog_new_chat", "Name of chat"))
         self.pb_chat_create.setText(_translate("dialog_new_chat", "Create"))
+        self.label.setText(_translate("dialog_new_chat", "Select users:"))
+        self.lw_chat_contacts.setSortingEnabled(True)
 

@@ -310,6 +310,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.ui.lw_list_chats.setCurrentItem(item)
 
     def del_chat(self):
+        """ Сгенерировать сообщение о покидании чата. """
         msg = {
             "action": "leave",
             "chat_id": self.sender().property("id")

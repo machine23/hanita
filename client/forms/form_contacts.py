@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file './contacts.ui'
+# Form implementation generated from reading ui file 'ui_forms/contacts.ui'
 #
-# Created by: PyQt5 UI code generator 5.9.2
+# Created by: PyQt5 UI code generator 5.9
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -12,19 +12,6 @@ class Ui_dialog_contacts(object):
     def setupUi(self, dialog_contacts):
         dialog_contacts.setObjectName("dialog_contacts")
         dialog_contacts.resize(364, 575)
-        dialog_contacts.setStyleSheet(
-            """
-            QListWidget::item:selected {
-                background-color: lightblue;
-            }
-            QListWidget::item:selected:active {
-                background-color: orange;
-            }
-            QListWidget::item:hover {
-                background-color: lightgrey;
-            }
-            """
-        )
         self.verticalLayout_3 = QtWidgets.QVBoxLayout(dialog_contacts)
         self.verticalLayout_3.setObjectName("verticalLayout_3")
         self.verticalLayout_2 = QtWidgets.QVBoxLayout()
@@ -55,6 +42,8 @@ class Ui_dialog_contacts(object):
     def retranslateUi(self, dialog_contacts):
         _translate = QtCore.QCoreApplication.translate
         dialog_contacts.setWindowTitle(_translate("dialog_contacts", "Contacts"))
+        self.le_add_input.setPlaceholderText(_translate("dialog_contacts", "Enter name"))
         self.pb_add_contact.setText(_translate("dialog_contacts", "Add"))
         self.l_contacts.setText(_translate("dialog_contacts", "Contacts:"))
+        self.lw_contacts.setSortingEnabled(True)
 

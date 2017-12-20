@@ -19,12 +19,16 @@
      <item>
       <layout class="QHBoxLayout" name="horizontalLayout">
        <item>
-        <widget class="QLineEdit" name="le_find_input"/>
+        <widget class="QLineEdit" name="le_add_input">
+         <property name="placeholderText">
+          <string>Enter name</string>
+         </property>
+        </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="pb_find_contact">
+        <widget class="QPushButton" name="pb_add_contact">
          <property name="text">
-          <string>Find</string>
+          <string>Add</string>
          </property>
         </widget>
        </item>
@@ -40,7 +44,11 @@
         </widget>
        </item>
        <item>
-        <widget class="QListWidget" name="lw_contacts"/>
+        <widget class="QListWidget" name="lw_contacts">
+         <property name="sortingEnabled">
+          <bool>true</bool>
+         </property>
+        </widget>
        </item>
       </layout>
      </item>

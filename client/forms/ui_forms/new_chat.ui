@@ -41,9 +41,19 @@
       </layout>
      </item>
      <item>
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string>Select users:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QListWidget" name="lw_chat_contacts">
        <property name="selectionMode">
         <enum>QAbstractItemView::MultiSelection</enum>
+       </property>
+       <property name="sortingEnabled">
+        <bool>true</bool>
        </property>
       </widget>
      </item>
