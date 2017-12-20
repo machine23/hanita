@@ -5,6 +5,7 @@ setup(
     description='Simple messenger.',
     long_description='Hanita is simple messenger with multiusers chats.',
     url='https://github.com/machine23/hanita',
+    license='MIT',
     keywords=['python', 'messenger', 'hanita'],
     author='Vassili Baranov',
     author_email='vassili.baranov@gmail.com',
