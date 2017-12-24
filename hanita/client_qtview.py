@@ -69,6 +69,14 @@ class QtClientView(MainWindow):
         return contacts
 
     def get_msgslist(self):
+        """ Возвращает список сообщений чата.
+        {
+            "user_id": ...,
+            "user_name": ...,
+            "timestamp": ...,
+            "message": ...
+        }
+        """
         msgs_ids = self.client_db.get_msgs(self.current_chat["chat_id"])
         msgs = []
         for _id in msgs_ids:

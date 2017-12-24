@@ -2,7 +2,7 @@ import random
 import sys
 import time
 
-from PyQt5 import Qt, QtCore, QtWidgets
+from PyQt5 import Qt, QtCore, QtWidgets, QtGui
 
 from . import form_contacts
 from . import form_new_chat
@@ -149,7 +149,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.newchat_dialog = NewChatDialog
         self.contacts_dialog = ContactsDialog
 
-        self.current_user = {}
+        self._current_user = {}
         self.current_chat = {
             "chat_id": None,
             "chat_name": None
@@ -167,21 +167,47 @@ class MainWindow(QtWidgets.QMainWindow):
         ]
         self.storage["contacts"] = contact_list
 
+        self.avatar = QtGui.QPixmap("hanita/forms/default_avatar.png")
+        self.ui.l_main_avatar.setPixmap(self.avatar)
+
+        self.ui.te_input_msg.installEventFilter(self)
+        self.ui.l_main_avatar.installEventFilter(self)
+
         self.ui.pb_main_newchat.clicked.connect(self.show_newchat_dialog)
         self.ui.pb_main_contacts.clicked.connect(self.show_contacts_dialog)
         self.ui.lw_list_chats.itemClicked.connect(self.change_current_chat)
         self.ui.pb_send.clicked.connect(self.send_message)
-        self.ui.te_input_msg.installEventFilter(self)
         self.ui.pb_login_submit.clicked.connect(self.login)
         self.handle_msg.connect(self.get_handle_msg)
         self.model_changed.connect(self.render)
         self.change_view.connect(self.change_current_view)
+    
+    @property
+    def current_user(self):
+        return self._current_user
+
+    @current_user.setter
+    def current_user(self, value):
+        self._current_user = value
+        self.ui.l_main_uname.setText(value["user_name"])
 
     def eventFilter(self, source, event):
         """ Фильтр событий """
-        if (event.type() == QtCore.QEvent.KeyPress and
+        if (source == self.ui.te_input_msg and
+                event.type() == QtCore.QEvent.KeyPress and
                 event.key() == QtCore.Qt.Key_Return):
             self.send_message()
+            return True
+        elif (source == self.ui.l_main_avatar and
+                event.type() == QtCore.QEvent.MouseButtonPress):
+            avatar_name = QtWidgets.QFileDialog.getOpenFileName(
+                self,
+                "Open Your Avatar",
+                filter="*.jpg *.gif *.png"
+            )
+            if avatar_name:
+                self.avatar = QtGui.QPixmap(avatar_name[0])
+                self.ui.l_main_avatar.setPixmap(self.avatar)
             return True
         return QtWidgets.QMainWindow.eventFilter(self, source, event)
 
@@ -202,11 +228,11 @@ class MainWindow(QtWidgets.QMainWindow):
     def change_current_chat(self):
         """ Изменить активный чат """
         item = self.ui.lw_list_chats.selectedItems()[0]
-        chat_id = item.data(QtCore.Qt.UserRole)
-        chat_name = item.text()
+        chat = item.data(QtCore.Qt.UserRole)
+        # chat_name = item.text()
         self.current_chat = {
-            "chat_id": chat_id,
-            "chat_name": chat_name
+            "chat_id": chat["chat_id"],
+            "chat_name": chat["chat_name"]
         }
         self.model_is_changed()
 
@@ -299,8 +325,9 @@ class MainWindow(QtWidgets.QMainWindow):
         widgetLayout.addWidget(widgetButton)
         widget.setLayout(widgetLayout)
         item.setSizeHint(widget.sizeHint())
+        # item.setText(chat["chat_name"])
         self.ui.lw_list_chats.setItemWidget(item, widget)
-        item.setData(QtCore.Qt.UserRole, chat["chat_id"])
+        item.setData(QtCore.Qt.UserRole, chat)
         if self.current_chat["chat_id"] == chat["chat_id"]:
             self.ui.lw_list_chats.setCurrentItem(item)
 
@@ -327,6 +354,13 @@ class MainWindow(QtWidgets.QMainWindow):
     def get_msgslist(self):
         """ Получить список сообщений для активного чата.
             Данный метод нужно переопределить.
+            Возвращает список словарей вида:
+            {
+                "user_id": ...,
+                "user_name": ...,
+                "timestamp": ...,
+                "message": ...
+            }
         """
         cur_msgs = [
             i for i in self.storage["messages"]
@@ -334,6 +368,7 @@ class MainWindow(QtWidgets.QMainWindow):
         ]
         return [
             {
+                "user_id": i["user"]["user_id"],
                 "user_name": i["user"]["user_name"],
                 "timestamp": i["timestamp"],
                 "message": i["message"]
