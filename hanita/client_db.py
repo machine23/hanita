@@ -88,8 +88,9 @@ class ClientDB:
         cmd = "SELECT 1 FROM users WHERE user_id = ?"
         self.lock.acquire()
         self.cursor.execute(cmd, (user_id, ))
+        result = self.cursor.fetchone()
         self.lock.release()
-        return bool(self.cursor.fetchone())
+        return bool(result)
 
     def add_user(self, user_id, user_name, contact=False):
         """ Добавить пользователя в БД.

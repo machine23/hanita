@@ -51,39 +51,42 @@ class ClientConnection:
 
         json_msg = json.dumps(message)
         byte_msg = json_msg.encode()
-        self.connection.sendall(byte_msg)
+        if self.connection:
+            self.connection.sendall(byte_msg)
 
     def get(self):
         """ Получает сообщение от сервера.
         Возвращает массив сообщений или пустой массив.
         """
-        byte_msg = b""
-        out_msgs = []
-        _get_data = True
-        while _get_data:
-            try:
-                data = self.connection.recv(BUFFERSIZE)
-            except socket.timeout:
-                pass
-            else:
-                if not data or data.endswith(b"}"):
-                    _get_data = False
-                byte_msg += data
-        if byte_msg:
-            msgs = byte_msg.decode().replace(
-                "}{", "}<split>{").split("<split>")
-            for msg in msgs:
+        if self.connection:
+            byte_msg = b""
+            out_msgs = []
+            _get_data = True
+            while _get_data:
                 try:
-                    json_msg = json.loads(msg)
-                except ValueError:
-                    print("!!! отброшено !!!\n client get:", msg)
+                    data = self.connection.recv(BUFFERSIZE)
+                except socket.timeout:
+                    pass
                 else:
-                    jim = JIMMessage(json_msg)
-                    out_msgs.append(jim)
-        return out_msgs
+                    if not data or data.endswith(b"}"):
+                        _get_data = False
+                    byte_msg += data
+            if byte_msg:
+                msgs = byte_msg.decode().replace(
+                    "}{", "}<split>{").split("<split>")
+                for msg in msgs:
+                    try:
+                        json_msg = json.loads(msg)
+                    except ValueError:
+                        print("!!! отброшено !!!\n client get:", msg)
+                    else:
+                        jim = JIMMessage(json_msg)
+                        out_msgs.append(jim)
+            return out_msgs
 
     def close(self):
         """ Закрывает соединение с сервером """
         if self.connection:
+            self.connection.shutdown(socket.SHUT_RDWR)
             self.connection.close()
             self.connection = None
