@@ -11,7 +11,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(681, 654)
+        MainWindow.resize(806, 650)
         MainWindow.setAutoFillBackground(False)
         MainWindow.setStyleSheet("QMainWindow {\n"
 "    background-color: #fff;\n"
@@ -227,17 +227,21 @@ class Ui_MainWindow(object):
         self.main_stack.addWidget(self.login_page)
         self.main_page = QtWidgets.QWidget()
         self.main_page.setObjectName("main_page")
-        self.horizontalLayout_5 = QtWidgets.QHBoxLayout(self.main_page)
-        self.horizontalLayout_5.setObjectName("horizontalLayout_5")
-        self.horizontalLayout_4 = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_4 = QtWidgets.QHBoxLayout(self.main_page)
         self.horizontalLayout_4.setObjectName("horizontalLayout_4")
-        self.verticalLayout_2 = QtWidgets.QVBoxLayout()
+        self.splitter_2 = QtWidgets.QSplitter(self.main_page)
+        self.splitter_2.setOrientation(QtCore.Qt.Horizontal)
+        self.splitter_2.setObjectName("splitter_2")
+        self.horizontalLayoutWidget_2 = QtWidgets.QWidget(self.splitter_2)
+        self.horizontalLayoutWidget_2.setObjectName("horizontalLayoutWidget_2")
+        self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.horizontalLayoutWidget_2)
         self.verticalLayout_2.setSizeConstraint(QtWidgets.QLayout.SetMinAndMaxSize)
+        self.verticalLayout_2.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout_2.setObjectName("verticalLayout_2")
-        self.label = QtWidgets.QLabel(self.main_page)
+        self.label = QtWidgets.QLabel(self.horizontalLayoutWidget_2)
         self.label.setObjectName("label")
         self.verticalLayout_2.addWidget(self.label)
-        self.lw_list_chats = QtWidgets.QListWidget(self.main_page)
+        self.lw_list_chats = QtWidgets.QListWidget(self.horizontalLayoutWidget_2)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(1)
         sizePolicy.setVerticalStretch(0)
@@ -254,7 +258,7 @@ class Ui_MainWindow(object):
         item = QtWidgets.QListWidgetItem()
         self.lw_list_chats.addItem(item)
         self.verticalLayout_2.addWidget(self.lw_list_chats)
-        self.pb_main_newchat = QtWidgets.QPushButton(self.main_page)
+        self.pb_main_newchat = QtWidgets.QPushButton(self.horizontalLayoutWidget_2)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(1)
         sizePolicy.setVerticalStretch(0)
@@ -263,18 +267,21 @@ class Ui_MainWindow(object):
         self.pb_main_newchat.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
         self.pb_main_newchat.setObjectName("pb_main_newchat")
         self.verticalLayout_2.addWidget(self.pb_main_newchat)
-        self.pb_main_contacts = QtWidgets.QPushButton(self.main_page)
+        self.pb_main_contacts = QtWidgets.QPushButton(self.horizontalLayoutWidget_2)
         self.pb_main_contacts.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
         self.pb_main_contacts.setObjectName("pb_main_contacts")
         self.verticalLayout_2.addWidget(self.pb_main_contacts)
-        self.horizontalLayout_4.addLayout(self.verticalLayout_2)
-        self.verticalLayout_4 = QtWidgets.QVBoxLayout()
-        self.verticalLayout_4.setObjectName("verticalLayout_4")
-        self.verticalLayout = QtWidgets.QVBoxLayout()
+        self.splitter = QtWidgets.QSplitter(self.splitter_2)
+        self.splitter.setOrientation(QtCore.Qt.Vertical)
+        self.splitter.setObjectName("splitter")
+        self.layoutWidget = QtWidgets.QWidget(self.splitter)
+        self.layoutWidget.setObjectName("layoutWidget")
+        self.verticalLayout = QtWidgets.QVBoxLayout(self.layoutWidget)
+        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout.setObjectName("verticalLayout")
         self.horizontalLayout_3 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_3.setObjectName("horizontalLayout_3")
-        self.l_main_avatar = QtWidgets.QLabel(self.main_page)
+        self.l_main_avatar = QtWidgets.QLabel(self.layoutWidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -288,17 +295,17 @@ class Ui_MainWindow(object):
         self.l_main_avatar.setScaledContents(True)
         self.l_main_avatar.setObjectName("l_main_avatar")
         self.horizontalLayout_3.addWidget(self.l_main_avatar)
-        self.l_main_uname = QtWidgets.QLabel(self.main_page)
+        self.l_main_uname = QtWidgets.QLabel(self.layoutWidget)
         self.l_main_uname.setObjectName("l_main_uname")
         self.horizontalLayout_3.addWidget(self.l_main_uname)
         self.verticalLayout.addLayout(self.horizontalLayout_3)
-        self.l_current_chat = QtWidgets.QLabel(self.main_page)
+        self.l_current_chat = QtWidgets.QLabel(self.layoutWidget)
         self.l_current_chat.setTextFormat(QtCore.Qt.RichText)
         self.l_current_chat.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
         self.l_current_chat.setWordWrap(True)
         self.l_current_chat.setObjectName("l_current_chat")
         self.verticalLayout.addWidget(self.l_current_chat)
-        self.te_list_msg = QtWidgets.QTextEdit(self.main_page)
+        self.te_list_msg = QtWidgets.QTextEdit(self.layoutWidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(1)
         sizePolicy.setVerticalStretch(1)
@@ -348,15 +355,94 @@ class Ui_MainWindow(object):
         self.te_list_msg.setReadOnly(True)
         self.te_list_msg.setObjectName("te_list_msg")
         self.verticalLayout.addWidget(self.te_list_msg)
-        self.verticalLayout_4.addLayout(self.verticalLayout)
+        self.layoutWidget1 = QtWidgets.QWidget(self.splitter)
+        self.layoutWidget1.setObjectName("layoutWidget1")
+        self.verticalLayout_4 = QtWidgets.QVBoxLayout(self.layoutWidget1)
+        self.verticalLayout_4.setSizeConstraint(QtWidgets.QLayout.SetMinAndMaxSize)
+        self.verticalLayout_4.setContentsMargins(0, 0, 0, 0)
+        self.verticalLayout_4.setObjectName("verticalLayout_4")
+        self.f_main_tools = QtWidgets.QFrame(self.layoutWidget1)
+        self.f_main_tools.setMaximumSize(QtCore.QSize(16777215, 25))
+        self.f_main_tools.setStyleSheet("QPushButton {\n"
+"    background-color: white;\n"
+"    border: none;\n"
+"    color: #333;\n"
+"    max-width: 33px;\n"
+"    margin: 0;\n"
+"    padding: 0;\n"
+"}\n"
+"QPushButton:hover {\n"
+"    border: 1px solid #66BB6A;\n"
+"}\n"
+"QFrame {\n"
+"    background: none;\n"
+"    border: none;\n"
+"    margin: 0;\n"
+"    padding: 0;\n"
+"}\n"
+"#f_main_tools {\n"
+"    margin-bottom: -0px;\n"
+"    border-top: 1px solid #66BB6A;\n"
+"}\n"
+"#pb_bold {\n"
+"    font-weight: bold;\n"
+"}\n"
+"#pb_italic {\n"
+"    font-style: italic;\n"
+"}\n"
+"#pb_underline {\n"
+"    text-decoration: underline;\n"
+"}")
+        self.f_main_tools.setObjectName("f_main_tools")
+        self.horizontalLayout_6 = QtWidgets.QHBoxLayout(self.f_main_tools)
+        self.horizontalLayout_6.setContentsMargins(0, 0, 0, 0)
+        self.horizontalLayout_6.setSpacing(0)
+        self.horizontalLayout_6.setObjectName("horizontalLayout_6")
+        self.pb_bold = QtWidgets.QPushButton(self.f_main_tools)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.pb_bold.sizePolicy().hasHeightForWidth())
+        self.pb_bold.setSizePolicy(sizePolicy)
+        self.pb_bold.setMinimumSize(QtCore.QSize(24, 24))
+        self.pb_bold.setMaximumSize(QtCore.QSize(33, 24))
+        self.pb_bold.setObjectName("pb_bold")
+        self.horizontalLayout_6.addWidget(self.pb_bold)
+        self.pb_italic = QtWidgets.QPushButton(self.f_main_tools)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.pb_italic.sizePolicy().hasHeightForWidth())
+        self.pb_italic.setSizePolicy(sizePolicy)
+        self.pb_italic.setMinimumSize(QtCore.QSize(24, 24))
+        self.pb_italic.setMaximumSize(QtCore.QSize(33, 24))
+        self.pb_italic.setObjectName("pb_italic")
+        self.horizontalLayout_6.addWidget(self.pb_italic)
+        self.pb_underline = QtWidgets.QPushButton(self.f_main_tools)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.pb_underline.sizePolicy().hasHeightForWidth())
+        self.pb_underline.setSizePolicy(sizePolicy)
+        self.pb_underline.setMinimumSize(QtCore.QSize(24, 24))
+        self.pb_underline.setMaximumSize(QtCore.QSize(33, 24))
+        self.pb_underline.setObjectName("pb_underline")
+        self.horizontalLayout_6.addWidget(self.pb_underline)
+        spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.horizontalLayout_6.addItem(spacerItem)
+        self.verticalLayout_4.addWidget(self.f_main_tools)
         self.horizontalLayout = QtWidgets.QHBoxLayout()
         self.horizontalLayout.setSizeConstraint(QtWidgets.QLayout.SetMinAndMaxSize)
         self.horizontalLayout.setObjectName("horizontalLayout")
-        self.te_input_msg = QtWidgets.QTextEdit(self.main_page)
+        self.te_input_msg = QtWidgets.QTextEdit(self.layoutWidget1)
         self.te_input_msg.setMaximumSize(QtCore.QSize(16777215, 200))
+        font = QtGui.QFont()
+        font.setFamily("Sans Serif")
+        self.te_input_msg.setFont(font)
+        self.te_input_msg.setUndoRedoEnabled(False)
         self.te_input_msg.setObjectName("te_input_msg")
         self.horizontalLayout.addWidget(self.te_input_msg)
-        self.pb_send = QtWidgets.QPushButton(self.main_page)
+        self.pb_send = QtWidgets.QPushButton(self.layoutWidget1)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -367,8 +453,7 @@ class Ui_MainWindow(object):
         self.pb_send.setObjectName("pb_send")
         self.horizontalLayout.addWidget(self.pb_send)
         self.verticalLayout_4.addLayout(self.horizontalLayout)
-        self.horizontalLayout_4.addLayout(self.verticalLayout_4)
-        self.horizontalLayout_5.addLayout(self.horizontalLayout_4)
+        self.horizontalLayout_4.addWidget(self.splitter_2)
         self.main_stack.addWidget(self.main_page)
         self.verticalLayout_3.addWidget(self.main_stack)
         MainWindow.setCentralWidget(self.centralwidget)
@@ -398,5 +483,13 @@ class Ui_MainWindow(object):
         self.pb_main_contacts.setText(_translate("MainWindow", "Contacts"))
         self.l_main_uname.setText(_translate("MainWindow", "uname"))
         self.l_current_chat.setText(_translate("MainWindow", "all"))
+        self.pb_bold.setText(_translate("MainWindow", "B"))
+        self.pb_italic.setText(_translate("MainWindow", "I"))
+        self.pb_underline.setText(_translate("MainWindow", "U"))
+        self.te_input_msg.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+"<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+"p, li { white-space: pre-wrap; }\n"
+"</style></head><body style=\" font-family:\'Sans Serif\'; font-size:11pt; font-weight:400; font-style:normal;\">\n"
+"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>"))
         self.pb_send.setText(_translate("MainWindow", "Send"))
 

@@ -181,6 +181,24 @@ class MainWindow(QtWidgets.QMainWindow):
         self.handle_msg.connect(self.get_handle_msg)
         self.model_changed.connect(self.render)
         self.change_view.connect(self.change_current_view)
+
+        self.ui.pb_bold.clicked.connect(self.format_text)
+        self.ui.pb_italic.clicked.connect(self.format_text)
+        self.ui.pb_underline.clicked.connect(self.format_text)
+
+    def format_text(self):
+        sender = self.sender()
+        if sender == self.ui.pb_bold:
+            if self.ui.te_input_msg.fontWeight() == QtGui.QFont.Bold:
+                self.ui.te_input_msg.setFontWeight(QtGui.QFont.Normal)
+            else:
+                self.ui.te_input_msg.setFontWeight(QtGui.QFont.Bold)
+        elif sender == self.ui.pb_italic:
+            state = self.ui.te_input_msg.fontItalic()
+            self.ui.te_input_msg.setFontItalic(not state)
+        elif sender == self.ui.pb_underline:
+            state = self.ui.te_input_msg.fontUnderline()
+            self.ui.te_input_msg.setFontUnderline(not state)
     
     @property
     def current_user(self):
@@ -378,8 +396,18 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def send_message(self):
         """ Отправить сообщение. """
-        text = self.ui.te_input_msg.toPlainText()
-        self.ui.te_input_msg.setText("")
+        text = self.ui.te_input_msg.toHtml()
+        print("*"*80, text, "*"*80, sep="\n")
+        try:
+            text = text.replace(';">\n<p ', ';"><split><p ', 1)
+            text = text.split("<split>")[1]
+            text = text.split("</body>")[0]
+            text = text.replace("<p ", "<span ")
+            text = text.replace("</p>", "</span></br>")
+        except IndexError:
+            pass
+        print("***",text)
+        self.ui.te_input_msg.clear()
         self.ui.te_input_msg.setFocus()
         if text:
             message = {
