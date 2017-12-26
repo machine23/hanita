@@ -10,7 +10,7 @@ setup(
     keywords=['python', 'messenger', 'hanita'],
     author='Vassili Baranov',
     author_email='vassili.baranov@gmail.com',
-    packages=['hanita', 'hanita/forms', 'hanita_server', 'JIM'],
+    packages=['hanita', 'hanita/forms', 'hanita_server', 'hanita_JIM'],
     include_package_data=True,
     python_requires='>=3.5',
     install_requires=[
