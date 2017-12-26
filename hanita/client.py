@@ -26,6 +26,7 @@ class Client:
         self.self_id = None
         self.client_db = None
         self.connection = conn
+        self._receiving = True
         self.view = ViewClass(self)
         self.msg_handlers = {
             JIMMessage.MSG: self.handle_msg,
@@ -165,13 +166,14 @@ class Client:
 
     def receive(self):
         """ Получаем сообщения от сервера """
-        while True:
+        while self._receiving:
             self.get_from()
 
     def close(self, info=""):
         """ Закрываем клиент """
         msg = JIMClientMessage.quit()
         print("close client")
+        self._receiving = False
         if self.connection:
             self.connection.send(msg)
             self.connection.close()

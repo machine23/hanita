@@ -397,7 +397,6 @@ class MainWindow(QtWidgets.QMainWindow):
     def send_message(self):
         """ Отправить сообщение. """
         text = self.ui.te_input_msg.toHtml()
-        print("*"*80, text, "*"*80, sep="\n")
         try:
             text = text.replace(';">\n<p ', ';"><split><p ', 1)
             text = text.split("<split>")[1]
@@ -406,8 +405,10 @@ class MainWindow(QtWidgets.QMainWindow):
             text = text.replace("</p>", "</span></br>")
         except IndexError:
             pass
-        print("***",text)
         self.ui.te_input_msg.clear()
+        self.ui.te_input_msg.setFontWeight(QtGui.QFont.Normal)
+        self.ui.te_input_msg.setFontItalic(False)
+        self.ui.te_input_msg.setFontUnderline(False)
         self.ui.te_input_msg.setFocus()
         if text:
             message = {
