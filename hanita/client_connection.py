@@ -4,7 +4,7 @@
 import json
 import socket
 
-from JIM import JIMMessage
+from hanita_JIM import JIMMessage
 
 BUFFERSIZE = 1024
 

@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="Hanita",
-    version='0.1',
+    version='0.1.1',
     description='Simple messenger.',
     long_description='Hanita is simple messenger with multiusers chats.',
     url='https://github.com/machine23/hanita',

@@ -1,8 +1,6 @@
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtCore import QThread, pyqtSignal
 
-from JIM import JIMClientMessage
-
 from .forms.app_ui import MainWindow
 
 

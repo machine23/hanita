@@ -5,7 +5,7 @@ import socketserver
 import threading
 from pprint import pprint
 
-from JIM import JIMClientMessage, JIMMessage, JIMResponse
+from hanita_JIM import JIMClientMessage, JIMMessage, JIMResponse
 
 from .models import *
 from .server_db import ServerDB

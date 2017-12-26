@@ -1,7 +1,6 @@
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, String, Integer, ForeignKey, Float, Text
 from sqlalchemy import UniqueConstraint, CheckConstraint
-from JIM import JIMMessage
 
 Base = declarative_base()
 

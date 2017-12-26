@@ -2,7 +2,7 @@ from sqlalchemy import create_engine, event
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import sessionmaker
 
-from JIM import JIMClientMessage
+from hanita_JIM import JIMClientMessage
 
 from .models import Chat, ChatMsg, ChatUser, Contact, User
 
@@ -243,7 +243,7 @@ class ServerDB:
             .filter(ChatMsg.chat_id == chat_id) \
             .all()
         jim_msgs = [
-            JIMClientMessage.msg(m.user_id, m.chat_id, m.message, m.time)
+            JIMClientMessage.msg(m.chat_id, m.message, m.time)
             for m in msgs
         ]
         return jim_msgs

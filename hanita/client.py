@@ -5,7 +5,7 @@ import time
 
 from PyQt5.QtCore import QObject
 
-from JIM import JIMClientMessage, JIMMessage
+from hanita_JIM import JIMClientMessage, JIMMessage
 
 from .client_connection import ClientConnection, ClientConnectionError
 from .client_db import ClientDB
