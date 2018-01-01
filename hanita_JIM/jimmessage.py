@@ -64,11 +64,12 @@ class JIMMessage(dict):
     NEW_CHAT = "new_chat"
     GET_CHATS = "get_chats"
     CHAT_INFO = "chat_info"
+    AVATAR = "avatar"
 
     actions = (AUTHENTICATE, QUIT, PRESENCE, PROBE,
                MSG, JOIN, LEAVE, GET_CONTACTS, CONTACT_LIST,
                ADD_CONTACT, DEL_CONTACT, WHO_ONLINE, ONLINE_LIST,
-               NEW_CHAT, GET_CHATS, CHAT_INFO)
+               NEW_CHAT, GET_CHATS, CHAT_INFO, AVATAR)
 
     status = {
         100: "базовое уведомление",

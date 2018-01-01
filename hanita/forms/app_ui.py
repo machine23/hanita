@@ -167,7 +167,7 @@ class MainWindow(QtWidgets.QMainWindow):
         ]
         self.storage["contacts"] = contact_list
 
-        self.avatar = QtGui.QPixmap("hanita/forms/default_avatar.png")
+        self.avatar = QtGui.QPixmap()
         self.ui.l_main_avatar.setPixmap(self.avatar)
 
         self.ui.te_input_msg.installEventFilter(self)
@@ -239,6 +239,12 @@ class MainWindow(QtWidgets.QMainWindow):
             self.draw_chatlist()
             self.draw_msgslist()
             self.redraw_contacts.emit(self.get_contactlist())
+            self.update_avatar()
+
+    def update_avatar(self):
+        """ Метод получения аватарки.
+        Метод нужно переопределить. """
+        return self.avatar
 
     def change_current_view(self):
         self.ui.main_stack.setCurrentIndex(1)

@@ -1,4 +1,5 @@
 """ Hanita client class and client mainloop """
+import base64
 import os
 import sys
 import time
@@ -34,7 +35,8 @@ class Client:
             JIMMessage.CHAT_INFO: self.handle_chat_info,
             JIMMessage.DEL_CONTACT: self.handle_del_contact,
             JIMMessage.LEAVE: self.handle_leave,
-            JIMMessage.AUTHENTICATE: self.handle_authenticate
+            JIMMessage.AUTHENTICATE: self.handle_authenticate,
+            JIMMessage.AVATAR: self.handle_avatar
         }
         try:
             self.connection.connect()
@@ -93,6 +95,15 @@ class Client:
         """ Обрабатываем полученные сообщения """
         if msg and msg.action and msg.action in self.msg_handlers:
             self.msg_handlers[msg.action](msg)
+
+    def handle_avatar(self, msg):
+        """ Обработка сообщения avatar. """
+        # print(msg)
+        image_raw = msg["avatar"]
+        image = base64.b64decode(image_raw)
+        self.client_db.update_user(msg["user_id"], avatar_bytes=image)
+        
+
 
     def handle_msg(self, msg):
         """ Обработка сообщения msg """

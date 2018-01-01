@@ -49,6 +49,7 @@ class ClientDB:
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id INTEGER UNIQUE NOT NULL,
                 user_name TEXT,
+                avatar BLOB,
                 contact INTEGER CHECK(contact IN (0, 1)) DEFAULT 0
             );
 
@@ -128,7 +129,18 @@ class ClientDB:
 
         return user
 
-    def update_user(self, user_id, user_name=None, contact=None):
+    def get_user_avatar(self, user_id):
+        """ Получить аватарку пользователя. """
+        if self.user_exists(user_id):
+            cmd = "SELECT avatar FROM users WHERE user_id = ?"
+            self.lock.acquire()
+            self.cursor.execute(cmd, (user_id,))
+            user_avatar = self.cursor.fetchone()[0]
+            # print("user_avatar", user_avatar)
+            self.lock.release()
+            return user_avatar
+
+    def update_user(self, user_id, user_name=None, contact=None, avatar_bytes=None):
         """
         Обновить данные о пользователе.
         Если пользователя нет в базе, то он будет добавлен.
@@ -141,6 +153,9 @@ class ClientDB:
             if contact is not None:
                 cmd = "UPDATE users SET contact = ? WHERE user_id = ?"
                 self.cursor.execute(cmd, (int(contact), user_id))
+            if avatar_bytes:
+                cmd = "UPDATE users SET avatar = ? WHERE user_id = ?"
+                self.cursor.execute(cmd, (avatar_bytes, user_id))
             self.conn.commit()
             self.lock.release()
             self._notify()

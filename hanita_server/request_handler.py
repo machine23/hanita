@@ -1,4 +1,5 @@
 import json
+import base64
 import os
 import socket
 import socketserver
@@ -168,6 +169,7 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
             print("\nauthentication response:")
             pprint(response)
             self.send(response)
+            self.send_avatar(self.user.id)
         else:
             self.send(JIMResponse(400))
 
@@ -239,7 +241,6 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
         }
         print("_get_contacts out_msg:", msg)
         self.send(msg)
-
 
     @_login_required
     def handler_add_contact(self):
@@ -327,3 +328,21 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
         user_id = self.user.id
         self.db.del_user_from_chat(chat_id, user_id)
         self.send(self.msg)
+
+    def send_avatar(self, user_id):
+        """ Отправить аватарку пользователю. """
+        path_to_avatar = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "avatars", str(user_id) + ".png")
+        if not os.path.isfile(path_to_avatar):
+            path_to_avatar = os.path.join(
+                os.path.dirname(path_to_avatar),
+                "default_avatar.png"
+            )
+        with open(path_to_avatar, "rb") as avatar:
+            msg = {
+                "action": "avatar",
+                "user_id": user_id,
+                "avatar": base64.b64encode(avatar.read()).decode()
+            }
+            self.send(msg)

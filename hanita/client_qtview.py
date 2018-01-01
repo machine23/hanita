@@ -92,6 +92,12 @@ class QtClientView(MainWindow):
             msgs.append(msg_out)
         return msgs
 
+    def update_avatar(self):
+        """ Получить из бд аватарку. """
+        self.avatar.loadFromData(
+            self.client_db.get_user_avatar(self.current_user["user_id"]))
+        self.ui.l_main_avatar.setPixmap(self.avatar)
+
     def get_handle_msg(self, data):
         self.controller.send_to_server(data)
 
