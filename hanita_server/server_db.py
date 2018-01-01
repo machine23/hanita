@@ -2,8 +2,6 @@ from sqlalchemy import create_engine, event
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import sessionmaker
 
-from hanita_JIM import JIMClientMessage
-
 from .models import Chat, ChatMsg, ChatUser, Contact, User
 
 
@@ -91,7 +89,6 @@ class ServerDB:
         self.add_obj(user)
         return user
 
-
     def add_contact(self, user_id, contact_id):
         """ Добавить контакт. """
         contact = Contact(user_id, contact_id)
@@ -111,7 +108,6 @@ class ServerDB:
         user.online = online
         user.fileno = fileno
         self.session.commit()
-
 
     def get_user_id(self, user_login):
         """ Получить  user_id по логину. Если логина нет в базе,
@@ -243,7 +239,13 @@ class ServerDB:
             .filter(ChatMsg.chat_id == chat_id) \
             .all()
         jim_msgs = [
-            JIMClientMessage.msg(m.chat_id, m.message, m.time)
+            {
+                "action": "msg",
+                "timestamp": m.time,
+                "user_id": m.user_id,
+                "chat_id": m.chat_id,
+                "message": m.message
+            }
             for m in msgs
         ]
         return jim_msgs

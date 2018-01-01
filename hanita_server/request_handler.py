@@ -5,7 +5,7 @@ import socketserver
 import threading
 from pprint import pprint
 
-from hanita_JIM import JIMClientMessage, JIMMessage, JIMResponse
+from hanita_JIM import JIMMessage, JIMResponse
 
 from .models import *
 from .server_db import ServerDB
@@ -121,7 +121,7 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
         with socket.fromfd(user.fileno, socket.AF_INET,
                            socket.SOCK_STREAM) as s:
             try:
-                print("send_to:", s, bmsg)
+                print("send_to:", user.name, bmsg)
                 s.sendall(bmsg)
             except socket.error:
                 self.db.set_user_online(user.id, False)
@@ -216,7 +216,7 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
         Отправляет пользователю следующую структуру:
         {
             "action": "contact_list",
-            "users": [
+            "contacts": [
                 {
                     "user_id": int,
                     "user_name": str,
@@ -233,7 +233,10 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
                 "user_name": contact.name
             }
             users.append(user)
-        msg = JIMClientMessage.contact_list(users)
+        msg = {
+            "action": "contact_list",
+            "contacts": users
+        }
         print("_get_contacts out_msg:", msg)
         self.send(msg)
 
@@ -249,8 +252,14 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
             user = self.db.add_new_user(contact_name)
             contact_id = user.id
         self.db.add_contact(self.user.id, contact_id)
-        contact = {"user_id": contact_id, "user_name": contact_name}
-        msg = JIMClientMessage.contact_list([contact])
+        contact = {
+            "user_id": contact_id,
+            "user_name": contact_name
+        }
+        msg = {
+            "action": "contact_list",
+            "contacts": [contact]
+        }
         self.send(msg)
 
     @_login_required
@@ -299,7 +308,14 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
             chat_user = {"user_id": user.id, "user_name": user.name}
             chat_users.append(chat_user)
         print(chat_users)
-        msg = JIMClientMessage.chat_info(chat.id, chat.name, chat_users)
+        msg = {
+            "action": "chat_info",
+            "chat": {
+                "chat_id": chat.id,
+                "chat_name": chat.name
+            },
+            "chat_users": chat_users
+        }
         msg["from"] = self.user.id
 
         return msg
