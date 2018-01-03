@@ -1,16 +1,16 @@
+import base64
+import os
 import random
 import sys
-import base64
 import time
 
-if sys.platform.startswith( 'linux' ) :
+from jinja2 import Template
+from PyQt5 import QtCore, QtGui, QtWidgets
+
+from . import form_contacts, form_main, form_new_chat
+
+if sys.platform.startswith('linux'):
     from OpenGL import GL
-
-from PyQt5 import Qt, QtCore, QtWidgets, QtGui
-
-from . import form_contacts
-from . import form_new_chat
-from . import form_main
 
 
 class ContactsDialog(QtWidgets.QDialog):
@@ -203,7 +203,7 @@ class MainWindow(QtWidgets.QMainWindow):
         elif sender == self.ui.pb_underline:
             state = self.ui.te_input_msg.fontUnderline()
             self.ui.te_input_msg.setFontUnderline(not state)
-    
+
     @property
     def current_user(self):
         return self._current_user
@@ -431,85 +431,48 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def draw_msgslist(self):
         """ Перерисовать окно чата """
-        messages = self.get_msgslist()
-        chat_id = self.current_chat["chat_id"]
-        chat_name = self.current_chat["chat_name"]
-        self.ui.l_current_chat.setText(chat_name)
-        curr_user_id = self.current_user["user_id"]
-        curr_user_name = self.current_user["user_name"]
+        messages_for_draw = self.get_formated_msgs()
+        template_path = os.path.join(
+            os.path.dirname(
+                os.path.abspath(__file__)), "templates", "template.html")
+        with open(template_path) as template_file:
+            template = Template(template_file.read())
+            html = template.render(messages=messages_for_draw)
+            self.ui.te_list_msg.setHtml(html)
 
-        arr = []
-        for i, msg in enumerate(messages):
-            formated_msg = self.format_msg(
-                name=msg["user_name"],
-                text=msg["message"],
-                timestamp=msg["timestamp"],
-                ident=msg["user_id"] == curr_user_id,
-                add=msg["user_id"] == messages[i -
-                                               1]["user_id"] if i > 0 else False
-            )
-            arr.append(formated_msg)
-        msg_string = '''
-            <!DOCTYPE html>
-            <html lang="en">
-            <head>
-                <style type="text/css">
-                    html {
-                        overflow: hidden;
-                    }
-                    body {
-                        height: 98vh;
-                        transform: scaley(-1);
-                        overflow: auto;
-                    }
-                </style>
-            </head>
-            <body>
-        ''' + \
-        "".join(reversed(arr))  + \
-        '</body></html>'
-                
-        self.ui.te_list_msg.setHtml(msg_string)
-        # self.ui.te_list_msg.scrollToAnchor("end")
+    def get_formated_msgs(self):
+        """ Отформатировать сообщения для отображения.
+        Возвращает:
+        [
+            {
+                "avatar": "",
+                "name":   "",
+                "items":  [ { "time": "", "text": "" }, ... ]
+            },
+            ...
+        ]
+        """
+        user_id = None
+        messages = []
+        message = {}
+        msgs = self.get_msgslist()
+        for msg in msgs:
+            if user_id != msg["user_id"]:
+                user_id = msg["user_id"]
+                message = {
+                    "avatar": None,
+                    "name": None,
+                    "items": []
+                }
+                # message["avatar"] = ...
+                message["name"] = msg["user_name"]
+                messages.append(message)
+            item = {}
+            item["time"] = time.ctime(msg["timestamp"])
+            item["text"] = msg["message"]
+            messages[-1]["items"].append(item)
 
-    def format_msg(self, name, text, timestamp, ident=False, add=False):
-        """ Отформатировать текст для отображения. """
-        template_text = '''
-            <div style="margin:0 {right} 0 {left};">
-                <div style="margin:0; margin-left: 64px;">{text}</div>
-            </div>
-            '''
-
-        template_name = '''
-            <div style="clear:left;"></div>
-            <div style="margin:15px {right} 0 {left};">
-                <img src="data:image/png;base64,{avatar}" width="50" style="float:left; margin:8px;"/>
-                <b style="color:{color};">
-                    {name}
-                </b>
-                <i style="color:lightgrey;font-size:small;">
-                    {timestamp}
-                </i>
-            </div>
-            '''
-
-        formated_name = template_name.format(
-            left="5px" if ident else "25px",
-            right="25px" if ident else "5px",
-            color="orange" if ident else "blue",
-            name=name,
-            avatar=base64.b64encode(self.avatar).decode(),
-            timestamp=time.ctime(timestamp),
-        )
-        formated_text = template_text.format(
-            left="15px" if ident else "35px",
-            right="25px" if ident else "5px",
-            text=text.replace("\n", "<br>")
-        )
-
-        if add:
-            return '<div style="transform:scaley(-1);">'+formated_text+'</div>'
-        return '<div style="transform:scaley(-1);">'+formated_name + formated_text+'</div>'
+        return reversed(messages)
 
 
 if __name__ == "__main__":
