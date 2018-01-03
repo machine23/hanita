@@ -1,4 +1,4 @@
-from PyQt5 import QtCore, QtWidgets
+from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtCore import QThread, pyqtSignal
 
 from .forms.app_ui import MainWindow
@@ -94,9 +94,10 @@ class QtClientView(MainWindow):
 
     def update_avatar(self):
         """ Получить из бд аватарку. """
-        self.avatar.loadFromData(
-            self.client_db.get_user_avatar(self.current_user["user_id"]))
-        self.ui.l_main_avatar.setPixmap(self.avatar)
+        self.avatar = self.client_db.get_user_avatar(self.current_user["user_id"])
+        pixmap = QtGui.QPixmap()
+        pixmap.loadFromData(self.avatar)
+        self.ui.l_main_avatar.setPixmap(pixmap)
 
     def get_handle_msg(self, data):
         self.controller.send_to_server(data)

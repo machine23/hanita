@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'ui_forms/login_form02.ui'
+# Form implementation generated from reading ui file 'ui_forms/login_form03.ui'
 #
 # Created by: PyQt5 UI code generator 5.9.2
 #
@@ -305,54 +305,8 @@ class Ui_MainWindow(object):
         self.l_current_chat.setWordWrap(True)
         self.l_current_chat.setObjectName("l_current_chat")
         self.verticalLayout.addWidget(self.l_current_chat)
-        self.te_list_msg = QtWidgets.QTextEdit(self.layoutWidget)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-        sizePolicy.setHorizontalStretch(1)
-        sizePolicy.setVerticalStretch(1)
-        sizePolicy.setHeightForWidth(self.te_list_msg.sizePolicy().hasHeightForWidth())
-        self.te_list_msg.setSizePolicy(sizePolicy)
-        self.te_list_msg.setMinimumSize(QtCore.QSize(0, 300))
-        palette = QtGui.QPalette()
-        brush = QtGui.QBrush(QtGui.QColor(255, 255, 255))
-        brush.setStyle(QtCore.Qt.SolidPattern)
-        palette.setBrush(QtGui.QPalette.Active, QtGui.QPalette.Button, brush)
-        brush = QtGui.QBrush(QtGui.QColor(255, 255, 255))
-        brush.setStyle(QtCore.Qt.SolidPattern)
-        palette.setBrush(QtGui.QPalette.Active, QtGui.QPalette.Base, brush)
-        brush = QtGui.QBrush(QtGui.QColor(255, 255, 255))
-        brush.setStyle(QtCore.Qt.SolidPattern)
-        palette.setBrush(QtGui.QPalette.Active, QtGui.QPalette.Window, brush)
-        brush = QtGui.QBrush(QtGui.QColor(255, 255, 255))
-        brush.setStyle(QtCore.Qt.SolidPattern)
-        palette.setBrush(QtGui.QPalette.Inactive, QtGui.QPalette.Button, brush)
-        brush = QtGui.QBrush(QtGui.QColor(255, 255, 255))
-        brush.setStyle(QtCore.Qt.SolidPattern)
-        palette.setBrush(QtGui.QPalette.Inactive, QtGui.QPalette.Base, brush)
-        brush = QtGui.QBrush(QtGui.QColor(255, 255, 255))
-        brush.setStyle(QtCore.Qt.SolidPattern)
-        palette.setBrush(QtGui.QPalette.Inactive, QtGui.QPalette.Window, brush)
-        brush = QtGui.QBrush(QtGui.QColor(255, 255, 255))
-        brush.setStyle(QtCore.Qt.SolidPattern)
-        palette.setBrush(QtGui.QPalette.Disabled, QtGui.QPalette.Button, brush)
-        brush = QtGui.QBrush(QtGui.QColor(255, 255, 255))
-        brush.setStyle(QtCore.Qt.SolidPattern)
-        palette.setBrush(QtGui.QPalette.Disabled, QtGui.QPalette.Base, brush)
-        brush = QtGui.QBrush(QtGui.QColor(255, 255, 255))
-        brush.setStyle(QtCore.Qt.SolidPattern)
-        palette.setBrush(QtGui.QPalette.Disabled, QtGui.QPalette.Window, brush)
-        self.te_list_msg.setPalette(palette)
-        self.te_list_msg.setAutoFillBackground(True)
-        self.te_list_msg.setStyleSheet("QTextEdit {\n"
-"    background-color: #fff;\n"
-"    border: none;\n"
-"}")
-        self.te_list_msg.setFrameShape(QtWidgets.QFrame.NoFrame)
-        self.te_list_msg.setFrameShadow(QtWidgets.QFrame.Plain)
-        self.te_list_msg.setLineWidth(1)
-        self.te_list_msg.setMidLineWidth(0)
-        self.te_list_msg.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
-        self.te_list_msg.setUndoRedoEnabled(False)
-        self.te_list_msg.setReadOnly(True)
+        self.te_list_msg = QtWebEngineWidgets.QWebEngineView(self.layoutWidget)
+        self.te_list_msg.setUrl(QtCore.QUrl("about:blank"))
         self.te_list_msg.setObjectName("te_list_msg")
         self.verticalLayout.addWidget(self.te_list_msg)
         self.layoutWidget1 = QtWidgets.QWidget(self.splitter)
@@ -406,6 +360,7 @@ class Ui_MainWindow(object):
         self.pb_bold.setSizePolicy(sizePolicy)
         self.pb_bold.setMinimumSize(QtCore.QSize(24, 24))
         self.pb_bold.setMaximumSize(QtCore.QSize(33, 24))
+        self.pb_bold.setWhatsThis("")
         self.pb_bold.setObjectName("pb_bold")
         self.horizontalLayout_6.addWidget(self.pb_bold)
         self.pb_italic = QtWidgets.QPushButton(self.f_main_tools)
@@ -483,8 +438,11 @@ class Ui_MainWindow(object):
         self.pb_main_contacts.setText(_translate("MainWindow", "Contacts"))
         self.l_main_uname.setText(_translate("MainWindow", "uname"))
         self.l_current_chat.setText(_translate("MainWindow", "all"))
+        self.pb_bold.setToolTip(_translate("MainWindow", "Bold"))
         self.pb_bold.setText(_translate("MainWindow", "B"))
+        self.pb_italic.setToolTip(_translate("MainWindow", "Italic"))
         self.pb_italic.setText(_translate("MainWindow", "I"))
+        self.pb_underline.setToolTip(_translate("MainWindow", "Underline"))
         self.pb_underline.setText(_translate("MainWindow", "U"))
         self.te_input_msg.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
@@ -493,3 +451,4 @@ class Ui_MainWindow(object):
 "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>"))
         self.pb_send.setText(_translate("MainWindow", "Send"))
 
+from PyQt5 import QtWebEngineWidgets

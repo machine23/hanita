@@ -1,6 +1,10 @@
 import random
 import sys
+import base64
 import time
+
+if sys.platform.startswith( 'linux' ) :
+    from OpenGL import GL
 
 from PyQt5 import Qt, QtCore, QtWidgets, QtGui
 
@@ -445,21 +449,41 @@ class MainWindow(QtWidgets.QMainWindow):
                                                1]["user_id"] if i > 0 else False
             )
             arr.append(formated_msg)
-        msg_string = '<body bgcolor="#FFF">' + \
-            "".join(arr) + '<a name="end" style="color:#FFF">a</a>' + '</html>'
+        msg_string = '''
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <style type="text/css">
+                    html {
+                        overflow: hidden;
+                    }
+                    body {
+                        height: 98vh;
+                        transform: scaley(-1);
+                        overflow: auto;
+                    }
+                </style>
+            </head>
+            <body>
+        ''' + \
+        "".join(reversed(arr))  + \
+        '</body></html>'
+                
         self.ui.te_list_msg.setHtml(msg_string)
-        self.ui.te_list_msg.scrollToAnchor("end")
+        # self.ui.te_list_msg.scrollToAnchor("end")
 
     def format_msg(self, name, text, timestamp, ident=False, add=False):
         """ Отформатировать текст для отображения. """
         template_text = '''
             <div style="margin:0 {right} 0 {left};">
-                {text}
+                <div style="margin:0; margin-left: 64px;">{text}</div>
             </div>
             '''
 
         template_name = '''
+            <div style="clear:left;"></div>
             <div style="margin:15px {right} 0 {left};">
+                <img src="data:image/png;base64,{avatar}" width="50" style="float:left; margin:8px;"/>
                 <b style="color:{color};">
                     {name}
                 </b>
@@ -474,6 +498,7 @@ class MainWindow(QtWidgets.QMainWindow):
             right="25px" if ident else "5px",
             color="orange" if ident else "blue",
             name=name,
+            avatar=base64.b64encode(self.avatar).decode(),
             timestamp=time.ctime(timestamp),
         )
         formated_text = template_text.format(
@@ -483,8 +508,8 @@ class MainWindow(QtWidgets.QMainWindow):
         )
 
         if add:
-            return formated_text
-        return formated_name + formated_text
+            return '<div style="transform:scaley(-1);">'+formated_text+'</div>'
+        return '<div style="transform:scaley(-1);">'+formated_name + formated_text+'</div>'
 
 
 if __name__ == "__main__":
