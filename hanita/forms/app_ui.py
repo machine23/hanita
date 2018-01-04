@@ -3,6 +3,7 @@ import os
 import random
 import sys
 import time
+from pprint import pprint
 
 from jinja2 import Template
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -438,6 +439,7 @@ class MainWindow(QtWidgets.QMainWindow):
         with open(template_path) as template_file:
             template = Template(template_file.read())
             html = template.render(messages=messages_for_draw)
+            # pprint(html)
             self.ui.te_list_msg.setHtml(html)
 
     def get_formated_msgs(self):
@@ -464,7 +466,7 @@ class MainWindow(QtWidgets.QMainWindow):
                     "name": None,
                     "items": []
                 }
-                # message["avatar"] = ...
+                message["avatar"] = self.get_avatar(msg["user_id"])
                 message["name"] = msg["user_name"]
                 messages.append(message)
             item = {}
@@ -473,6 +475,22 @@ class MainWindow(QtWidgets.QMainWindow):
             messages[-1]["items"].append(item)
 
         return reversed(messages)
+
+    def get_avatar(self, user_id):
+        """ Получить аватарку для пользователя с user_id.
+        Возвращает строку с байтовым представлением аватарки.
+        Метод можно переопределить.
+        Если метод не переопределен, возвращается дефолтная аватарка.
+        """
+        avatar_path = os.path.join(
+            os.path.dirname(
+                os.path.abspath(__file__)
+            ), "templates", "default_avatar.png"
+        )
+        with open(avatar_path, "rb") as avatar_file:
+            avatar_raw = avatar_file.read()
+            avatar_encoded_bytes = base64.b64encode(avatar_raw).decode()
+            return avatar_encoded_bytes
 
 
 if __name__ == "__main__":
