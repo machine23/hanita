@@ -67,6 +67,9 @@ class ClientConnection:
                     data = self.connection.recv(BUFFERSIZE)
                 except socket.timeout:
                     pass
+                except OSError:
+                    print("потеряна связь с сервером")
+                    _get_data = False
                 else:
                     if not data or data.endswith(b"}"):
                         _get_data = False
