@@ -407,28 +407,29 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def send_message(self):
         """ Отправить сообщение. """
-        text = self.ui.te_input_msg.toHtml()
-        try:
-            text = text.replace(';">\n<p ', ';"><split><p ', 1)
-            text = text.split("<split>")[1]
-            text = text.split("</body>")[0]
-            text = text.replace("<p ", "<span ")
-            text = text.replace("</p>", "</span></br>")
-        except IndexError:
-            pass
-        self.ui.te_input_msg.clear()
-        self.ui.te_input_msg.setFontWeight(QtGui.QFont.Normal)
-        self.ui.te_input_msg.setFontItalic(False)
-        self.ui.te_input_msg.setFontUnderline(False)
-        self.ui.te_input_msg.setFocus()
-        if text:
-            message = {
-                "action": "msg",
-                "chat_id": self.current_chat["chat_id"],
-                "timestamp": time.time(),
-                "message": text
-            }
-            self.handle_msg.emit(message)
+        if self.ui.te_input_msg.toPlainText():
+            text = self.ui.te_input_msg.toHtml()
+            try:
+                text = text.replace(';">\n<p ', ';"><split><p ', 1)
+                text = text.split("<split>")[1]
+                text = text.split("</body>")[0]
+                text = text.replace("<p ", "<span ")
+                text = text.replace("</p>", "</span></br>")
+            except IndexError:
+                pass
+            self.ui.te_input_msg.clear()
+            self.ui.te_input_msg.setFontWeight(QtGui.QFont.Normal)
+            self.ui.te_input_msg.setFontItalic(False)
+            self.ui.te_input_msg.setFontUnderline(False)
+            self.ui.te_input_msg.setFocus()
+            if text:
+                message = {
+                    "action": "msg",
+                    "chat_id": self.current_chat["chat_id"],
+                    "timestamp": time.time(),
+                    "message": text
+                }
+                self.handle_msg.emit(message)
 
     def draw_msgslist(self):
         """ Перерисовать окно чата """
