@@ -442,6 +442,7 @@ class MainWindow(QtWidgets.QMainWindow):
             html = template.render(messages=messages_for_draw)
             # pprint(html)
             self.ui.te_list_msg.setHtml(html)
+            self.ui.te_input_msg.setFocus()
 
     def get_formated_msgs(self):
         """ Отформатировать сообщения для отображения.
