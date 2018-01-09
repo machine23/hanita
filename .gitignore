@@ -109,7 +109,6 @@ ENV/
 .mypy_cache/
 run_2_clients.py
 *.db
-*.html
 *.txt
 just_ui.py
 *.db-journal
