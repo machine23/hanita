@@ -1,4 +1,5 @@
-import base64, os
+import base64
+import os
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtCore import QThread, pyqtSignal
 
@@ -97,11 +98,15 @@ class QtClientView(MainWindow):
 
     def update_avatar(self):
         """ Получить из бд аватарку. """
-        self.avatar = self.client_db.get_user_avatar(self.current_user["user_id"])
+        self.avatar = self.client_db.get_user_avatar(
+            self.current_user["user_id"])
+        pixmap = QtGui.QPixmap()
         if self.avatar:
-            pixmap = QtGui.QPixmap()
             pixmap.loadFromData(base64.b64decode(self.avatar))
-            self.ui.l_main_avatar.setPixmap(pixmap)
+        else:
+            pixmap.loadFromData(base64.b64decode(self.default_avatar))
+
+        self.ui.l_main_avatar.setPixmap(pixmap)
 
     def get_avatar(self, user_id):
         """ Получить из бд аватарку для пользователя user_id. """
@@ -110,7 +115,6 @@ class QtClientView(MainWindow):
             return avatar_str
         else:
             return self.default_avatar
-    
 
     def load_default_avatar(self):
         avatar_path = os.path.join(

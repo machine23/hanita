@@ -173,8 +173,9 @@ class Client:
 
     def get_init_info(self):
         get_messages = [
+            JIMClientMessage.get_avatar(self.view.current_user["user_id"]),
             JIMClientMessage.get_contacts(),
-            JIMClientMessage.get_chats()
+            JIMClientMessage.get_chats(),
         ]
         for msg in get_messages:
             self.send_to_server(msg)
