@@ -3,6 +3,9 @@ import os
 import random
 import sys
 import time
+from io import BytesIO
+import PIL
+from PIL import Image
 from pprint import pprint
 
 from jinja2 import Template
@@ -231,6 +234,19 @@ class MainWindow(QtWidgets.QMainWindow):
             if avatar_name:
                 self.avatar = QtGui.QPixmap(avatar_name[0])
                 self.ui.l_main_avatar.setPixmap(self.avatar)
+                with Image.open(avatar_name[0]) as avatar_file:
+                    avatar_resized = avatar_file.resize((64, 64))
+                    avatar_bytes = BytesIO()
+                    avatar_resized.save(avatar_bytes, format="PNG")
+                    avatar_bytes.seek(0)
+                    avatar = base64.b64encode(avatar_bytes.read()).decode()
+                    # avatar_str = base64.b64encode(avatar_resized.tobytes()).decode()
+                    print("*" * 50, avatar)
+                    message = {
+                        "action": "new_avatar",
+                        "avatar": avatar
+                    }
+                    self.handle_msg.emit(message)
             return True
         return QtWidgets.QMainWindow.eventFilter(self, source, event)
 

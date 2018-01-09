@@ -1,3 +1,4 @@
+import base64, os
 from PyQt5 import QtCore, QtWidgets, QtGui
 from PyQt5.QtCore import QThread, pyqtSignal
 
@@ -14,7 +15,9 @@ class QtClientView(MainWindow):
         self.controller = client
         self.client_db = None
         self.thread = None
+        self.default_avatar = None
         self._inited = False
+        self.load_default_avatar()
 
     def set_client_db(self, client_db):
         """ Передать объект хранилища, откуда будет браться инфо
@@ -95,9 +98,30 @@ class QtClientView(MainWindow):
     def update_avatar(self):
         """ Получить из бд аватарку. """
         self.avatar = self.client_db.get_user_avatar(self.current_user["user_id"])
-        pixmap = QtGui.QPixmap()
-        pixmap.loadFromData(self.avatar)
-        self.ui.l_main_avatar.setPixmap(pixmap)
+        if self.avatar:
+            pixmap = QtGui.QPixmap()
+            pixmap.loadFromData(base64.b64decode(self.avatar))
+            self.ui.l_main_avatar.setPixmap(pixmap)
+
+    def get_avatar(self, user_id):
+        """ Получить из бд аватарку для пользователя user_id. """
+        avatar_str = self.client_db.get_user_avatar(user_id)
+        if avatar_str:
+            return avatar_str
+        else:
+            return self.default_avatar
+    
+
+    def load_default_avatar(self):
+        avatar_path = os.path.join(
+            os.path.dirname(
+                os.path.abspath(__file__)
+            ), "forms", "templates", "default_avatar.png"
+        )
+        with open(avatar_path, "rb") as avatar_file:
+            avatar_raw = avatar_file.read()
+            avatar_encoded_bytes = base64.b64encode(avatar_raw).decode()
+            self.default_avatar = avatar_encoded_bytes
 
     def get_handle_msg(self, data):
         self.controller.send_to_server(data)

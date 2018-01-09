@@ -33,7 +33,9 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
             JIMMessage.DEL_CONTACT: self.handler_del_contact,
             JIMMessage.NEW_CHAT: self.handler_new_chat,
             JIMMessage.GET_CHATS: self.handler_get_chats,
-            JIMMessage.LEAVE: self.handler_leave
+            JIMMessage.LEAVE: self.handler_leave,
+            JIMMessage.NEW_AVATAR: self.handler_new_avatar,
+            JIMMessage.GET_AVATAR: self.handler_get_avatar
         }
         # yapf: enable
         self.__quit = False
@@ -62,7 +64,7 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
             if msgs:
                 for msg in msgs:
                     print("\nserver handle msg:")
-                    pprint(msg)
+                    # pprint(msg)
                     if self.__quit:
                         break
                     if msg.action and msg.action in self.action_handlers:
@@ -87,13 +89,19 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
         if resp_code:
             self.send(JIMResponse(resp_code))
 
-    def send_to_all(self, chat_id, message):
+    def send_to_chat(self, chat_id, message):
         """ Отправить сообщение всем авторизованным пользователям чата. """
         online_users = self.db.get_online_users(chat_id)
-        print("\nsend_to_all online_users:")
+        print("\nsend_to_chat online_users:")
         pprint(online_users)
         for user in online_users:
             self.send_to(user, message)
+
+    def send_to_all(self, message):
+        """ Отправить сообщение всем авторизованным пользователям. """
+        chats = self.db.get_chats_for(self.user.id)
+        for chat in chats:
+            self.send_to_chat(chat.id, message)
 
     def get(self):
         """ Получить сообщение от ... """
@@ -122,7 +130,7 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
         with socket.fromfd(user.fileno, socket.AF_INET,
                            socket.SOCK_STREAM) as s:
             try:
-                print("send_to:", user.name, bmsg)
+                # print("send_to:", user.name, bmsg)
                 s.sendall(bmsg)
             except socket.error:
                 self.db.set_user_online(user.id, False)
@@ -169,7 +177,6 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
             print("\nauthentication response:")
             pprint(response)
             self.send(response)
-            self.send_avatar(self.user.id)
         else:
             self.send(JIMResponse(400))
 
@@ -194,7 +201,7 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
         """ Обработчик события MSG """
         if self.msg.action != JIMMessage.MSG:
             raise
-        print("handler_msg self.msg:", self.msg)
+        # print("handler_msg self.msg:", self.msg)
         msg = ChatMsg(self.user.id, self.msg.chat_id, self.msg.timestamp,
                       self.msg.message)
         self.db.add_obj(msg)
@@ -202,8 +209,8 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
         out_msg = self.msg
         out_msg.msg_id = msg.id
         out_msg.user = {"user_id": self.user.id, "user_name": self.user.name}
-        print("handler_msg out_msg:", out_msg)
-        self.send_to_all(msg.chat_id, out_msg)
+        # print("handler_msg out_msg:", out_msg)
+        self.send_to_chat(msg.chat_id, out_msg)
 
     @_login_required
     def handler_presence(self):
@@ -239,13 +246,13 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
             "action": "contact_list",
             "contacts": users
         }
-        print("_get_contacts out_msg:", msg)
+        # print("_get_contacts out_msg:", msg)
         self.send(msg)
 
     @_login_required
     def handler_add_contact(self):
         """ Обработчик события ADD_CONTACT """
-        print("handler_add_contact msg:", self.msg)
+        # print("handler_add_contact msg:", self.msg)
         contact_name = self.msg["user_name"]
         contact_id = self.db.get_user_id(contact_name)
         if not contact_id:
@@ -266,7 +273,7 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
     @_login_required
     def handler_del_contact(self):
         """ Обработчик события del_contact. """
-        print("handler_del_contact msg:", self.msg)
+        # print("handler_del_contact msg:", self.msg)
         self.db.del_contact(self.user.id, self.msg.user_id)
         self.send(self.msg)
 
@@ -281,7 +288,7 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
         for user_id in chat_user_ids:
             self.db.add_user_to_chat(chat.id, user_id)
         msg = self.get_chat_info(chat.id)
-        self.send_to_all(chat.id, msg)
+        self.send_to_chat(chat.id, msg)
 
     @_login_required
     def get_chat_info(self, chat_id):
@@ -310,7 +317,7 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
             chat_users.append(chat_user)
         print(chat_users)
         msg = {
-            "action": "chat_info",
+            "action": JIMMessage.CHAT_INFO,
             "chat": {
                 "chat_id": chat.id,
                 "chat_name": chat.name
@@ -331,18 +338,37 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
 
     def send_avatar(self, user_id):
         """ Отправить аватарку пользователю. """
+        # avatar_str = ""
         path_to_avatar = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
-            "avatars", str(user_id) + ".png")
-        if not os.path.isfile(path_to_avatar):
-            path_to_avatar = os.path.join(
-                os.path.dirname(path_to_avatar),
-                "default_avatar.png"
-            )
-        with open(path_to_avatar, "rb") as avatar:
-            msg = {
-                "action": "avatar",
-                "user_id": user_id,
-                "avatar": base64.b64encode(avatar.read()).decode()
-            }
-            self.send(msg)
+            "avatars", str(user_id))
+        if os.path.isfile(path_to_avatar):
+            with open(path_to_avatar, "r") as avatar:
+                msg = {
+                    "action": "avatar",
+                    "user_id": user_id,
+                    "avatar": avatar.read()
+                }
+                self.send(msg)
+
+    @_login_required
+    def handler_new_avatar(self):
+        """ Получить и сохранить аватарку от пользователя. """
+        print("*** message new_avatar ***")
+        path_to_avatar = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "avatars", str(self.user.id)
+        )
+        with open(path_to_avatar, "w") as avatar_file:
+            image = base64.b64decode(self.msg["avatar"])
+            avatar_file.write(self.msg["avatar"])
+        info_msg = {
+            "action": JIMMessage.AVATAR_CHANGED,
+            "user_id": self.user.id
+        }
+        self.send_to_all(info_msg)
+
+    @_login_required
+    def handler_get_avatar(self):
+        """ Обработчик сообщения get_avatar. """
+        self.send_avatar(self.msg["user_id"])

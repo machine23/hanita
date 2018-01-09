@@ -36,7 +36,8 @@ class Client:
             JIMMessage.DEL_CONTACT: self.handle_del_contact,
             JIMMessage.LEAVE: self.handle_leave,
             JIMMessage.AUTHENTICATE: self.handle_authenticate,
-            JIMMessage.AVATAR: self.handle_avatar
+            JIMMessage.AVATAR: self.handle_avatar,
+            JIMMessage.AVATAR_CHANGED: self.handle_avatar_changed,
         }
         try:
             self.connection.connect()
@@ -99,11 +100,13 @@ class Client:
     def handle_avatar(self, msg):
         """ Обработка сообщения avatar. """
         # print(msg)
-        image_raw = msg["avatar"]
-        image = base64.b64decode(image_raw)
-        self.client_db.update_user(msg["user_id"], avatar_bytes=image)
-        
+        image_str = msg["avatar"]
+        # image = base64.b64decode(image_raw)
+        self.client_db.update_user(msg["user_id"], avatar_bytes=image_str)
 
+    def handle_avatar_changed(self, msg):
+        """ Обработка сообщения об изменении аватарки пользователя. """
+        self.send_to_server(JIMClientMessage.get_avatar(msg["user_id"]))
 
     def handle_msg(self, msg):
         """ Обработка сообщения msg """
@@ -142,6 +145,7 @@ class Client:
 
         for user in chat_users:
             self.client_db.update_user(user["user_id"], user["user_name"])
+            self.send_to_server(JIMClientMessage.get_avatar(user["user_id"]))
 
     def handle_leave(self, msg):
         """ Обработка сообщения покинуть чат leave. """
