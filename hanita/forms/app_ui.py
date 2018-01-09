@@ -231,7 +231,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 "Open Your Avatar",
                 filter="*.jpg *.gif *.png"
             )
-            if avatar_name:
+            if avatar_name[0]:
                 self.avatar = QtGui.QPixmap(avatar_name[0])
                 self.ui.l_main_avatar.setPixmap(self.avatar)
                 with Image.open(avatar_name[0]) as avatar_file:
