@@ -27,5 +27,8 @@ Hanita - это простой мессенджер для обмена сооб
     python3 -m hanita
 
 ### Зависимости
-PyQt5 == 5.9 (для клиента)<br>
-SQLAlchemy == 1.1.15 (для сервера)
+PyQt5 == 5.9<br>
+Jinja2 == 2.10<br>
+Pillow == 5.0.0<br>
+PyOpenGL == 3.1.0<br>
+SQLAlchemy == 1.1.15
