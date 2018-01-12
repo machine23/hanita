@@ -1,9 +1,10 @@
-import json
 import base64
+import json
 import os
 import socket
 import socketserver
 import threading
+import time
 from pprint import pprint
 
 from hanita_JIM import JIMMessage, JIMResponse
@@ -12,6 +13,24 @@ from .models import *
 from .server_db import ServerDB
 
 RECV_BUFFER = 1024
+
+
+def history_it(user_id, action):
+    """ Функция пробует связаться с микросервисом ms_hanita_hist и,
+    в случае успеха, передает туда сообщения о входе/выходе пользователей.
+    Выполнение сервиса не является обязательным, поэтому ошибки игнорируются.
+    """
+    try:
+        with socket.create_connection(("127.0.0.1", 5555)) as conn:
+            data = {
+                "user_id": user_id,
+                "action": action,
+                "timestamp": time.time()
+            }
+            json_data = json.dumps(data)
+            conn.send(json_data.encode())
+    except:
+        pass
 
 
 ###############################################################################
@@ -177,6 +196,9 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
             print("\nauthentication response:")
             pprint(response)
             self.send(response)
+
+            # внести вход в историю, если запущен ms_hanita_hist
+            history_it(self.user.id, "enter")
         else:
             self.send(JIMResponse(400))
 
@@ -195,6 +217,9 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
 
         self.__quit = True
         self.send(JIMResponse(200))
+
+        # внести выход в историю, если запущен ms_hanita_hist
+        history_it(self.user.id, "quit")
 
     @_login_required
     def handler_msg(self):
