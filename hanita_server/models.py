@@ -28,8 +28,8 @@ class User(Base):
 
 
     def __repr__(self):
-        return "User (userid = {}, name = {})".format(
-            self.id, self.name)
+        return "User(userid: {}, name: {}, status: {}, online: {}, fileno: {})" \
+            .format(self.id, self.name, self.status, self.online, self.fileno)
 
 
 
