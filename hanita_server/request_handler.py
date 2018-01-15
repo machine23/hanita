@@ -88,8 +88,8 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
                         break
                     if msg.action and msg.action in self.action_handlers:
                         self.msg = msg
-                        if self.user:
-                            self.msg["from"] = self.user.id
+                        # if self.user:
+                        #     self.msg["from"] = self.user.id
                         action_handler = self.action_handlers[msg.action]
                         action_handler()
                         # self.send(resp)
@@ -223,10 +223,34 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
 
     @_login_required
     def handler_msg(self):
-        """ Обработчик события MSG """
+        """ Обработчик события MSG.
+        Принимает сообщение вида:
+            {
+                "action": "msg",
+                "chat_id": ...,
+                "timestamp": ...,
+                "message": ...,
+            }
+
+        Сохраняет в базе.
+        Если есть пользователи онлайн, то пересылает им это сообщение,
+        предварительно добавив поле user, определяющее автора сообшение.
+        Т.е. отсылает следующую структуру:
+            {
+                "action": "msg",
+                "chat_id": ...,
+                "timestamp": ...,
+                "user": {
+                    "user_id": self.user.id,
+                    "user_name": self.user.name,
+                }
+                "message": ...,
+            }
+
+        """
         if self.msg.action != JIMMessage.MSG:
             raise
-        # print("handler_msg self.msg:", self.msg)
+        print("handler_msg self.msg:", self.msg)
         msg = ChatMsg(self.user.id, self.msg.chat_id, self.msg.timestamp,
                       self.msg.message)
         self.db.add_obj(msg)
@@ -234,7 +258,7 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
         out_msg = self.msg
         out_msg.msg_id = msg.id
         out_msg.user = {"user_id": self.user.id, "user_name": self.user.name}
-        # print("handler_msg out_msg:", out_msg)
+        print("handler_msg out_msg:", out_msg)
         self.send_to_chat(msg.chat_id, out_msg)
 
     @_login_required
