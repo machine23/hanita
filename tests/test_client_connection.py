@@ -68,7 +68,7 @@ def test_send(conn):
 
 def test_get(conn):
     conn.connect()
-    assert conn.get() == {"action": "test"}
+    assert conn.get() == [{"action": "test"},]
 
 
 def test_close(conn):

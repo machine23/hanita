@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker
 
 from hanita_server import ServerDB, ServerDBError, Base
 from hanita_server import User, Chat, ChatUser, ChatMsg, Contact
-from JIM import JIMClientMessage
+from hanita_JIM import JIMClientMessage
 
 
 @pytest.fixture
@@ -174,7 +174,7 @@ def test_del_contact(db):
 
 
 def test_set_user_status(db):
-    db.set_user_status(1, "online", 33)
+    db.set_user_status(1, "active")
     user = db.get_obj(User, 1)
-    assert user.status == "online"
-    assert user.fileno == 33
+    print("*"*40, user)
+    assert user.status == "active"

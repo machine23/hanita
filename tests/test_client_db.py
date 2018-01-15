@@ -2,7 +2,7 @@ import pytest
 import sqlite3
 import time
 
-from JIM import JIMClientMessage, JIMMessage
+from hanita_JIM import JIMClientMessage, JIMMessage
 
 from hanita import ClientDB, ClientDBError
 

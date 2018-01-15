@@ -90,6 +90,6 @@ class ClientConnection:
     def close(self):
         """ Закрывает соединение с сервером """
         if self.connection:
-            self.connection.shutdown(socket.SHUT_RDWR)
+            # self.connection.shutdown(socket.SHUT_RDWR)
             self.connection.close()
             self.connection = None

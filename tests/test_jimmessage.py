@@ -2,7 +2,7 @@
 import pytest
 import time
 
-from JIM import JIMMessage, JIMClientMessage, JIMMessageError, JIMMessageAttr
+from hanita_JIM import JIMMessage, JIMClientMessage, JIMMessageError, JIMMessageAttr
 
 
 def check_message(expect, result):
@@ -30,13 +30,13 @@ def test_JIMMessageAttr():
     assert msg.attr == 123
     with pytest.raises(JIMMessageError):
         msg.attr = "123456789"
-    with pytest.raises(JIMMessageError):
-        msg.action = "a"
-        msg.response = 200
-    with pytest.raises(JIMMessageError):
-        msg = Msg()
-        msg.response = 200
-        msg.action = "a"
+    # with pytest.raises(JIMMessageError):
+    #     msg.action = "a"
+    #     msg.response = 200
+    # with pytest.raises(JIMMessageError):
+    #     msg = Msg()
+    #     msg.response = 200
+    #     msg.action = "a"
 
 
 class TestJIMMessage:
