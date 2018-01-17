@@ -163,11 +163,13 @@ class ClientDB:
             contact = contact or False
             self.add_user(user_id, user_name, contact)
 
-    def get_contacts(self, user_id):
+    def get_contacts(self, user_id, filter_str=""):
         """ Получить список контактов. """
-        cmd = "SELECT user_id, user_name FROM users WHERE contact = 1"
+        filter_str = "%"+filter_str+"%"
+        print(filter_str)
+        cmd = "SELECT user_id, user_name FROM users WHERE contact = 1 AND user_name LIKE ?"
         self.lock.acquire()
-        self.cursor.execute(cmd)
+        self.cursor.execute(cmd, (filter_str,))
         users_data = self.cursor.fetchall()
         self.lock.release()
         user_keys = "user_id", "user_name"
@@ -175,6 +177,7 @@ class ClientDB:
         for data in users_data:
             contact = dict(zip(user_keys, data))
             contacts.append(contact)
+        print("db.get_contacts:", contacts)
         return contacts
 
     ############################################################################

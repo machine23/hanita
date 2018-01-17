@@ -62,12 +62,14 @@ class QtClientView(MainWindow):
                 chats.append(chat)
         return chats
 
-    def get_contactlist(self):
+    def get_contactlist(self, filter_str=""):
         """ Получить список контактов. """
+        if filter_str:
+            print("get_contactlist filter_str", filter_str)
         contacts = []
         if self.client_db:
             contacts = self.client_db.get_contacts(
-                self.current_user["user_id"])
+                self.current_user["user_id"], filter_str)
         return contacts
 
     def get_msgslist(self):

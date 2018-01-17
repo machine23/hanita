@@ -19,6 +19,7 @@ if sys.platform.startswith('linux'):
 
 class ContactsDialog(QtWidgets.QDialog):
     handle_msg = QtCore.pyqtSignal(dict)
+    filter_msg = QtCore.pyqtSignal(str)
 
     def __init__(self, parent=None, user_list=None):
         QtWidgets.QDialog.__init__(self, parent)
@@ -33,7 +34,12 @@ class ContactsDialog(QtWidgets.QDialog):
 
         self.ui.lw_contacts.itemDoubleClicked.connect(self.chat_with)
         self.ui.pb_add_contact.clicked.connect(self.add_contact)
+        self.ui.le_add_input.textEdited.connect(self.filter_contact)
         self.parent().redraw_contacts.connect(self.redraw)
+
+    def filter_contact(self, data):
+        print("filter", data)
+        self.filter_msg.emit(data)
 
     @QtCore.pyqtSlot(list)
     def redraw(self, data):
@@ -348,7 +354,11 @@ class MainWindow(QtWidgets.QMainWindow):
         """ Показать окно контактов """
         dialog = self.contacts_dialog(self, self.get_contactlist())
         dialog.handle_msg.connect(self.get_handle_msg)
+        dialog.filter_msg.connect(self.filter_contacts)
         dialog.exec_()
+
+    def filter_contacts(self, data):
+        self.redraw_contacts.emit(self.get_contactlist(data))
 
     def draw_chatlist(self):
         """ Перерисовать окно chatlist """
@@ -390,7 +400,7 @@ class MainWindow(QtWidgets.QMainWindow):
         """
         return self.storage["chats"]
 
-    def get_contactlist(self):
+    def get_contactlist(self, filter_str=""):
         """ Получить список контактов.
             Данный метод нужно переопределить.
         """
