@@ -132,7 +132,7 @@ class Client:
 
     def handle_chat_info(self, msg):
         """ Обработка сообщения chat_list """
-        print("chat_info")
+        # print("chat_info")
         chat_id = msg.chat["chat_id"]
         chat_name = msg.chat["chat_name"]
         chat_users = msg.chat_users
