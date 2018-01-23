@@ -66,13 +66,13 @@ class ClientConnection:
                 try:
                     data = self.connection.recv(BUFFERSIZE)
                 except socket.timeout:
-                    pass
+                    _get_data = False
                 except OSError:
                     print("потеряна связь с сервером")
                     _get_data = False
                 else:
-                    if not data or data.endswith(b"}"):
-                        _get_data = False
+                    # if not data or data.endswith(b"}"):
+                    #     _get_data = False
                     byte_msg += data
             if byte_msg:
                 msgs = byte_msg.decode().replace(

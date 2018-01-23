@@ -54,7 +54,8 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
             JIMMessage.GET_CHATS: self.handler_get_chats,
             JIMMessage.LEAVE: self.handler_leave,
             JIMMessage.NEW_AVATAR: self.handler_new_avatar,
-            JIMMessage.GET_AVATAR: self.handler_get_avatar
+            JIMMessage.GET_AVATAR: self.handler_get_avatar,
+            JIMMessage.GET_MSGS: self.handler_get_msgs,
         }
         # yapf: enable
         self.__quit = False
@@ -82,17 +83,12 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
             msgs = self.get()
             if msgs:
                 for msg in msgs:
-                    print("\nserver handle msg:")
-                    # pprint(msg)
                     if self.__quit:
                         break
                     if msg.action and msg.action in self.action_handlers:
                         self.msg = msg
-                        # if self.user:
-                        #     self.msg["from"] = self.user.id
                         action_handler = self.action_handlers[msg.action]
                         action_handler()
-                        # self.send(resp)
                         self.msg = None
                     else:
                         self.send(JIMResponse(400))
@@ -408,7 +404,7 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
             "avatars", str(self.user.id)
         )
         with open(path_to_avatar, "w") as avatar_file:
-            image = base64.b64decode(self.msg["avatar"])
+            # image = base64.b64decode(self.msg["avatar"])
             avatar_file.write(self.msg["avatar"])
         info_msg = {
             "action": JIMMessage.AVATAR_CHANGED,
@@ -419,4 +415,14 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
     @_login_required
     def handler_get_avatar(self):
         """ Обработчик сообщения get_avatar. """
+        print("get_avatar")
+        print(self.msg)
         self.send_avatar(self.msg["user_id"])
+
+    @_login_required
+    def handler_get_msgs(self):
+        """ Обработчик сообщения get_msgs """
+        msgs = self.db.get_chat_msgs(self.msg["chat_id"])
+        for msg in msgs:
+            msg["_id"] = str(msg["_id"])
+            self.send(msg)

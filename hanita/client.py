@@ -132,6 +132,7 @@ class Client:
 
     def handle_chat_info(self, msg):
         """ Обработка сообщения chat_list """
+        print("chat_info")
         chat_id = msg.chat["chat_id"]
         chat_name = msg.chat["chat_name"]
         chat_users = msg.chat_users
@@ -146,6 +147,8 @@ class Client:
         for user in chat_users:
             self.client_db.update_user(user["user_id"], user["user_name"])
             self.send_to_server(JIMClientMessage.get_avatar(user["user_id"]))
+        
+        self.send_to_server(JIMClientMessage.get_msgs(chat_id))
 
     def handle_leave(self, msg):
         """ Обработка сообщения покинуть чат leave. """

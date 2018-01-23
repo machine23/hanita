@@ -38,7 +38,7 @@ class ContactsDialog(QtWidgets.QDialog):
         self.parent().redraw_contacts.connect(self.redraw)
 
     def filter_contact(self, data):
-        print("filter", data)
+        # print("filter", data)
         self.filter_msg.emit(data)
 
     @QtCore.pyqtSlot(list)
@@ -247,7 +247,7 @@ class MainWindow(QtWidgets.QMainWindow):
                     avatar_bytes.seek(0)
                     avatar = base64.b64encode(avatar_bytes.read()).decode()
                     # avatar_str = base64.b64encode(avatar_resized.tobytes()).decode()
-                    print("*" * 50, avatar)
+                    # print("*" * 50, avatar)
                     message = {
                         "action": "new_avatar",
                         "avatar": avatar

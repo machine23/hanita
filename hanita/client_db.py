@@ -166,7 +166,7 @@ class ClientDB:
     def get_contacts(self, user_id, filter_str=""):
         """ Получить список контактов. """
         filter_str = "%"+filter_str+"%"
-        print(filter_str)
+        # print(filter_str)
         cmd = "SELECT user_id, user_name FROM users WHERE contact = 1 AND user_name LIKE ?"
         self.lock.acquire()
         self.cursor.execute(cmd, (filter_str,))
@@ -177,7 +177,7 @@ class ClientDB:
         for data in users_data:
             contact = dict(zip(user_keys, data))
             contacts.append(contact)
-        print("db.get_contacts:", contacts)
+        # print("db.get_contacts:", contacts)
         return contacts
 
     ############################################################################
@@ -276,6 +276,8 @@ class ClientDB:
         """
         if action and action != "msg":
             raise ClientDBError
+        if self.msg_exists(msg_id):
+            return
         cmd = "INSERT INTO messages(msg_id, user_id, chat_id, time, message)" \
             "VALUES (?, ?, ?, ?, ?)"
         self.lock.acquire()

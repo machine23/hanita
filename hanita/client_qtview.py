@@ -64,8 +64,8 @@ class QtClientView(MainWindow):
 
     def get_contactlist(self, filter_str=""):
         """ Получить список контактов. """
-        if filter_str:
-            print("get_contactlist filter_str", filter_str)
+        # if filter_str:
+        #     print("get_contactlist filter_str", filter_str)
         contacts = []
         if self.client_db:
             contacts = self.client_db.get_contacts(
