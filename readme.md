@@ -26,9 +26,13 @@ Hanita - это простой мессенджер для обмена сооб
 
     python3 -m hanita
 
+
+<b>Для работы сервера необходимо наличие MongoDB</b>
+
 ### Зависимости
 PyQt5 == 5.9<br>
 Jinja2 == 2.10<br>
 Pillow == 5.0.0<br>
 PyOpenGL == 3.1.0<br>
-SQLAlchemy == 1.1.15
+SQLAlchemy == 1.1.15<br>
+pymongo == 3.6.0
