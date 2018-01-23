@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="Hanita",
-    version='0.1.2',
+    version='0.1.3',
     description='Simple messenger.',
     long_description='Hanita is simple messenger with multiusers chats.',
     url='https://github.com/machine23/hanita',
@@ -28,6 +28,7 @@ setup(
         'SQLAlchemy==1.1.15',
         'Jinja2==2.10',
         'Pillow==5.0.0',
-        'PyOpenGL==3.1.0'
+        'PyOpenGL==3.1.0',
+        'pymongo==3.6.0',
     ],
 )
