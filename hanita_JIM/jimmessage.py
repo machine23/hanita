@@ -68,12 +68,13 @@ class JIMMessage(dict):
     NEW_AVATAR = "new_avatar"
     GET_AVATAR = "get_avatar"
     AVATAR_CHANGED = "avatar_changed"
+    GET_MSGS = "get_msgs"
 
     actions = (AUTHENTICATE, QUIT, PRESENCE, PROBE,
                MSG, JOIN, LEAVE, GET_CONTACTS, CONTACT_LIST,
                ADD_CONTACT, DEL_CONTACT, WHO_ONLINE, ONLINE_LIST,
                NEW_CHAT, GET_CHATS, CHAT_INFO, AVATAR, NEW_AVATAR, GET_AVATAR,
-               AVATAR_CHANGED)
+               AVATAR_CHANGED, GET_MSGS)
 
     status = {
         100: "базовое уведомление",
@@ -247,12 +248,13 @@ class JIMClientMessage(JIMMessage):
         msg = JIMClientMessage(JIMMessage.GET_AVATAR)
         msg.user_id = user_id
         return msg
-    # @staticmethod
-    # def online_list(user_id):
-    #     """ Онлайн лист """
-    #     msg = JIMClientMessage(JIMMessage.ONLINE_LIST)
-    #     msg.user_id = user_id
-    #     return msg
+
+    @staticmethod
+    def get_msgs(chat_id):
+        """ Онлайн лист """
+        msg = JIMClientMessage(JIMMessage.GET_MSGS)
+        msg.chat_id = chat_id
+        return msg
 
 
 ###############################################################################
