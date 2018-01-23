@@ -3,6 +3,7 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import sessionmaker
 
 from .models import Chat, ChatMsg, ChatUser, Contact, User
+from pymongo import MongoClient
 
 
 @event.listens_for(Engine, "connect")
@@ -37,6 +38,8 @@ class ServerDB:
             })
         self.base = base
         self.session = None
+        self.mng_client = MongoClient()
+        self.mng_db = self.mng_client.main_db
         try:
             self.setup()
         except Exception as err:
@@ -223,6 +226,10 @@ class ServerDB:
             .first()
         self.del_obj(Contact, contact.id)
 
+    def add_chat_msg(self, msg):
+        """ Сохранить сообщение в БД """
+        self.mng_db.messages.insert_one(msg)
+
     def get_chat_msgs(self, chat_id):
         """
         Получить сообщения для чата.
@@ -235,20 +242,8 @@ class ServerDB:
             raise ServerDBError(
                 "Нельзя получить сообщения для несуществующего/удаленного чата"
             )
-        msgs = self.session.query(ChatMsg) \
-            .filter(ChatMsg.chat_id == chat_id) \
-            .all()
-        jim_msgs = [
-            {
-                "action": "msg",
-                "timestamp": m.time,
-                "user_id": m.user_id,
-                "chat_id": m.chat_id,
-                "message": m.message
-            }
-            for m in msgs
-        ]
-        return jim_msgs
+        msgs = self.mng_db.messages.find({"chat_id": chat_id})
+        return list(msgs)
 
     def setup(self):
         """ Загрузка БД """

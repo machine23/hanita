@@ -110,7 +110,7 @@ class Client:
 
     def handle_msg(self, msg):
         """ Обработка сообщения msg """
-        msg_id = msg.msg_id
+        msg_id = msg["_id"]
         user = msg.user
         chat_id = msg.chat_id
         if not self.client_db.msg_exists(msg_id):

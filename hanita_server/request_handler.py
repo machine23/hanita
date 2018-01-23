@@ -110,6 +110,8 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
 
     def send_to_chat(self, chat_id, message):
         """ Отправить сообщение всем авторизованным пользователям чата. """
+        if "_id" in message:
+            message["_id"] = str(message["_id"])
         online_users = self.db.get_online_users(chat_id)
         print("\nsend_to_chat online_users:")
         pprint(online_users)
@@ -251,15 +253,12 @@ class ClientRequestHandler(socketserver.BaseRequestHandler):
         if self.msg.action != JIMMessage.MSG:
             raise
         print("handler_msg self.msg:", self.msg)
-        msg = ChatMsg(self.user.id, self.msg.chat_id, self.msg.timestamp,
-                      self.msg.message)
-        self.db.add_obj(msg)
         self.send(JIMResponse(200))
         out_msg = self.msg
-        out_msg.msg_id = msg.id
         out_msg.user = {"user_id": self.user.id, "user_name": self.user.name}
+        self.db.add_chat_msg(out_msg)
         print("handler_msg out_msg:", out_msg)
-        self.send_to_chat(msg.chat_id, out_msg)
+        self.send_to_chat(self.msg.chat_id, out_msg)
 
     @_login_required
     def handler_presence(self):
