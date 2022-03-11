@@ -27,7 +27,7 @@ setup(
         'PyQt5==5.9',
         'SQLAlchemy==1.1.15',
         'Jinja2==2.10',
-        'Pillow==5.0.0',
+        'Pillow==9.0.1',
         'PyOpenGL==3.1.0',
         'pymongo==3.6.0',
     ],
